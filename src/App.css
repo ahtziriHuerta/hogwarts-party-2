@@ -1,0 +1,893 @@
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  background: #080b19;
+}
+
+.game {
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: clip;
+  overflow-y: auto; 
+  color: #fff1c9;
+  font-family: Georgia, serif;
+  background:
+    radial-gradient(ellipse at 50% 70%, #28345c 0%, transparent 65%),
+    linear-gradient(135deg, #080b19, #17112b, #080b19);
+}
+
+.welcome {
+  position: relative;
+  z-index: 1;
+  width: min(90%, 700px);
+  padding: 30px 15px;
+  text-align: center;
+}
+
+.castle {
+  font-size: clamp(45px, 8vw, 85px);
+}
+
+.subtitle {
+  color: #d7b66e;
+  font-size: clamp(9px, 1.4vw, 13px);
+  letter-spacing: 4px;
+}
+
+h1 {
+  margin: 15px 0;
+  font-size: clamp(38px, 7vw, 76px);
+  color: #ffd978;
+  text-shadow: 0 4px 25px #b77b2780;
+}
+
+.description {
+  font-size: clamp(13px, 2vw, 18px);
+  line-height: 1.6;
+  color: #e5d9c7;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+button {
+  min-height: 48px;
+  padding: 13px 25px;
+  border-radius: 12px;
+  border: 1px solid #d6ac59;
+  font-weight: bold;
+  font-size: 15px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.primary {
+  background: linear-gradient(135deg, #ffdf88, #bd822c);
+  color: #211509;
+}
+
+.secondary {
+  background: #17172bcc;
+  color: #ffdf88;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+.footer {
+  margin-top: 35px;
+  font-size: 12px;
+  color: #a99d8d;
+}
+
+@media (max-height: 450px) and (orientation: landscape) {
+  .welcome {
+    padding: 8px;
+  }
+
+  .castle {
+    font-size: 32px;
+  }
+
+  h1 {
+    margin: 6px 0;
+    font-size: 36px;
+  }
+
+  .buttons {
+    margin-top: 12px;
+  }
+
+  .footer {
+    margin-top: 12px;
+  }
+}
+
+
+/* ESPACIADO DE LA PANTALLA DE INICIO */
+
+.welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.castle {
+  margin-bottom: 30px;
+}
+
+.subtitle {
+  margin: 0 0 2px;
+  line-height: 1.6;
+}
+
+.welcome h1 {
+  margin: 0 0 28px;
+  line-height: 1.15;
+  letter-spacing: 2px;
+}
+
+.description {
+  margin: 0 auto 11 px;
+  max-width: 580px;
+  line-height: 1.8;
+}
+
+.buttons {
+  margin-top: 0;
+  gap: 22px;
+}
+
+.footer {
+  margin-top: 45px;
+}
+
+/* Adaptación a celulares horizontales */
+@media (max-height: 450px) and (orientation: landscape) {
+  .castle {
+    margin-bottom: 5px;
+  }
+
+  .subtitle {
+    margin-bottom: 8px;
+  }
+
+  .welcome h1 {
+    margin-bottom: 10px;
+  }
+
+  .description {
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  .buttons {
+    gap: 12px;
+  }
+
+  .footer {
+    margin-top: 12px;
+  }
+}
+
+/* Separación entre descripción y botones */
+.welcome .description {
+  margin-bottom: 48px;
+}
+
+/* Ajuste para celular horizontal */
+@media (max-height: 450px) and (orientation: landscape) {
+  .welcome .description {
+    margin-bottom: 14px;
+  }
+}
+
+
+
+/* PANTALLAS CREAR Y UNIRSE */
+
+.room-form {
+  max-width: 480px;
+}
+
+.room-form h2 {
+  font-size: clamp(28px, 4vw, 44px);
+  color: #ffda80;
+  margin: 10px 0 20px;
+}
+
+.room-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.room-form label {
+  text-align: left;
+  font-size: 14px;
+  color: #e8cf96;
+}
+
+.room-form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #a77c39;
+  background: #111426;
+  color: white;
+  font-size: 16px;
+  outline: none;
+}
+
+.room-form input:focus {
+  border-color: #ffda80;
+}
+
+.continue-button {
+  margin-top: 12px;
+}
+
+.continue-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.back-button {
+  align-self: flex-start;
+  background: transparent;
+  color: #e8cf96;
+  border: none;
+  padding: 8px;
+}
+
+@media (max-height: 450px) and (orientation: landscape) {
+  .room-form {
+    max-width: 560px;
+    padding: 10px;
+  }
+
+  .room-form .castle {
+    display: none;
+  }
+
+  .room-form h2 {
+    margin: 0 0 8px;
+  }
+
+  .room-form .description {
+    margin-bottom: 8px;
+  }
+
+  .room-form form {
+    gap: 6px;
+  }
+
+  .room-form input {
+    min-height: 40px;
+  }
+}
+
+
+
+/* SELECCIÓN DE PERSONAJES */
+
+.character-selection {
+  width: min(95%, 850px);
+  max-height: 100dvh;
+  overflow-y: auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.character-selection h2 {
+  color: #ffda80;
+  font-size: clamp(26px, 4vw, 42px);
+  margin: 8px 0;
+}
+
+.character-selection p {
+  color: #e5d9c7;
+  margin-bottom: 20px;
+}
+
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 22px;
+}
+
+.character-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px;
+  background: #151b35;
+  color: #ffda80;
+  border: 2px solid #63537b;
+  border-radius: 15px;
+}
+
+.character-card svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.character-card.selected {
+  border-color: #ffda80;
+  background: #333052;
+  box-shadow: 0 0 18px #ffda8055;
+}
+
+.character-selection > .primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 550px) {
+  .character-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-height: 450px) and (orientation: landscape) {
+  .character-selection {
+    padding: 8px 15px;
+  }
+
+  .character-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .character-card svg {
+    width: 75px;
+  }
+}
+.character-house {
+  font-size: 12px;
+  color: #d5c8b4;
+}
+
+
+.player-two-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(100%, 380px);
+  margin: 20px auto;
+}
+
+.player-two-form input {
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid #d6ac59;
+  border-radius: 12px;
+  background: #151b35;
+  color: #fff1c9;
+  font-size: 16px;
+}
+
+
+
+/* PERSONAJES OCUPADOS */
+
+.character-card.character-taken {
+  opacity: 0.4;
+  filter: grayscale(85%);
+  cursor: not-allowed;
+  border-color: #555;
+  position: relative;
+}
+
+.character-card.character-taken:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.taken-label {
+  display: inline-block;
+  padding: 5px 10px;
+  background: #321d2a;
+  border: 1px solid #9b6578;
+  border-radius: 20px;
+  color: #ffd4d4;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* INDICADOR DEL JUGADOR */
+
+.character-selection h2 {
+  color: #ffda80;
+}
+
+.character-card:disabled {
+  pointer-events: none;
+}
+
+
+/* PANTALLA DE DOS JUGADORES LISTOS */
+
+.ready-players {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: min(100%, 600px);
+  margin: 20px auto;
+}
+
+.ready-player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 18px 12px;
+  background: #151b35;
+  border: 2px solid #685580;
+  border-radius: 20px;
+}
+
+.ready-player-card h3 {
+  margin: 0;
+  color: #ffda80;
+}
+
+.ready-player-card strong {
+  color: #fff1c9;
+  font-size: 18px;
+}
+
+.ready-player-card p {
+  margin: 0;
+  color: #ffda80;
+}
+
+.ready-player-card small {
+  color: #d5c8b4;
+}
+
+@media (max-width: 480px) {
+  .ready-players {
+    gap: 10px;
+  }
+
+  .ready-player-card {
+    padding: 12px 6px;
+  }
+
+  .ready-player-card svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+
+/* SALA MULTIJUGADOR */
+
+.room-lobby {
+  width: min(95%, 650px);
+}
+
+.room-code-display {
+  margin: 20px auto;
+  padding: 25px;
+  background: #151b35;
+  border: 2px solid #d6ac59;
+  border-radius: 20px;
+}
+
+.room-code-display span {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #d5c8b4;
+}
+
+.room-code-display h1 {
+  margin: 15px 0;
+  color: #ffda80;
+  font-size: clamp(32px, 7vw, 55px);
+  letter-spacing: 6px;
+}
+
+.room-player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 15px 0;
+}
+
+.room-player {
+  padding: 15px;
+  background: #242844;
+  border: 1px solid #685580;
+  border-radius: 12px;
+  color: #fff1c9;
+}
+
+.room-error {
+  color: #ffb4b4;
+  background: #5b2435;
+  border: 1px solid #c96b79;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+
+/* PRUEBA: VISIBILIDAD DEL FORMULARIO */
+
+.room-form {
+  max-height: none !important;
+  overflow-y: auto !important;
+}
+
+.room-form form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  width: min(100%, 380px);
+}
+
+.room-form .continue-button {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  position: relative !important;
+  min-height: 50px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+
+
+/* ==========================================
+   RESPONSIVE - PANTALLAS PRINCIPALES
+   ========================================== */
+
+.welcome,
+.room-form,
+.room-lobby,
+.character-selection {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* CELULARES EN VERTICAL */
+
+@media (max-width: 600px) {
+  .game {
+    min-height: 100dvh;
+    height: auto;
+    align-items: flex-start;
+  }
+
+  .welcome {
+    width: 100%;
+    min-height: 100dvh;
+    padding: 28px 16px;
+    justify-content: center;
+  }
+
+  .welcome .castle {
+    margin-bottom: 12px;
+    font-size: 48px;
+  }
+
+  .welcome .subtitle {
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+
+  .welcome h1 {
+    margin: 8px 0 14px;
+    font-size: clamp(28px, 8vw, 42px);
+    letter-spacing: 0;
+  }
+
+  .welcome .description {
+    max-width: 100%;
+    margin: 0 0 22px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .welcome .buttons {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .welcome .buttons button {
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .welcome .footer {
+    margin-top: 20px;
+  }
+}
+
+/* CELULARES EN HORIZONTAL */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .game {
+    min-height: 100dvh;
+    height: auto;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .welcome {
+    width: min(100%, 900px);
+    min-height: 100dvh;
+    height: auto;
+    padding: 10px 20px;
+    justify-content: center;
+  }
+
+  .welcome .castle {
+    margin: 0 0 3px;
+    font-size: 28px;
+    line-height: 1;
+  }
+
+  .welcome .subtitle {
+    margin: 0 0 4px;
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+
+  .welcome h1 {
+    margin: 3px 0 8px;
+    font-size: clamp(26px, 5vw, 38px);
+    letter-spacing: 0;
+    line-height: 1.1;
+  }
+
+  .welcome .description {
+    max-width: 650px;
+    margin: 0 0 12px;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .welcome .buttons {
+    margin: 0;
+    gap: 10px;
+  }
+
+  .welcome .buttons button {
+    min-height: 38px;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .welcome .footer {
+    margin-top: 10px;
+    font-size: 10px;
+  }
+
+  .room-form,
+  .room-lobby,
+  .character-selection {
+    max-height: none;
+    height: auto;
+    overflow-y: visible;
+  }
+}
+
+
+/* ==========================================
+   CORRECCIÓN DE BIENVENIDA EN CELULAR
+   ========================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+
+  .game {
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: clip;
+    overflow-y: visible;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .welcome {
+    width: min(100%, 850px);
+    height: auto;
+    min-height: 0;
+    max-height: none;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+
+    gap: 5px;
+    padding: 10px 16px 16px;
+    margin: 0 auto;
+    overflow: visible;
+  }
+
+  .welcome .castle {
+    font-size: 28px;
+    line-height: 1;
+    margin: 0;
+  }
+
+  .welcome .subtitle {
+    font-size: 10px;
+    letter-spacing: 2px;
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .welcome h1 {
+    font-size: clamp(26px, 5vw, 38px);
+    line-height: 1.1;
+    letter-spacing: 0;
+    margin: 3px 0;
+  }
+
+  .welcome .description {
+    max-width: 650px;
+    font-size: 13px;
+    line-height: 1.3;
+    margin: 4px 0 8px;
+  }
+
+  .welcome .buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+  }
+
+  .welcome .buttons button {
+    width: auto;
+    min-height: 38px;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .welcome .footer {
+    font-size: 10px;
+    margin: 8px 0 0;
+  }
+}
+
+
+
+/* ==========================================
+   HOGWARTS - BIENVENIDA EN CELULAR HORIZONTAL
+   ========================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+
+  .game {
+    width: 100%;
+    min-height: 100dvh;
+    height: auto;
+    overflow: visible;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  /* Solo pantalla de inicio */
+  .game > .welcome:not(.room-form):not(.room-lobby) {
+    width: min(100%, 850px);
+    min-height: 100dvh;
+    height: auto;
+    max-height: none;
+    margin: 0 auto;
+    padding: 12px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    overflow: visible;
+  }
+
+  .welcome:not(.room-form):not(.room-lobby) .castle {
+    font-size: 28px;
+    margin: 0;
+    line-height: 1;
+  }
+
+  .welcome:not(.room-form):not(.room-lobby) .subtitle {
+    font-size: 10px;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: 2px;
+  }
+
+  .welcome:not(.room-form):not(.room-lobby) h1 {
+    font-size: clamp(26px, 4vw, 38px);
+    margin: 4px 0;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+
+  .welcome:not(.room-form):not(.room-lobby) .description {
+    font-size: 13px;
+    line-height: 1.3;
+    margin: 5px 0 10px;
+    max-width: 650px;
+  }
+
+  .welcome:not(.room-form):not(.room-lobby) .buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+  }
+
+  .welcome:not(.room-form):not(.room-lobby) .buttons button {
+    min-height: 38px;
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .welcome:not(.room-form):not(.room-lobby) .footer {
+    margin: 8px 0 0;
+    font-size: 10px;
+  }
+
+  /* Formularios: permitir desplazamiento */
+  .game > .room-form {
+    width: min(100%, 560px);
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    margin: 0 auto;
+    padding: 12px 18px 24px;
+    overflow: visible !important;
+  }
+
+  .room-form h2 {
+    font-size: 26px;
+    margin: 0 0 8px;
+  }
+
+  .room-form .description {
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .room-form form {
+    gap: 8px !important;
+    margin-top: 4px;
+  }
+}

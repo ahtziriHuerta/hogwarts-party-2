@@ -1,0 +1,1852 @@
+
+/* PANTALLA DEL TABLERO */
+
+.magic-board-screen {
+  width: 100%;
+  min-height: 100dvh;
+  padding: 24px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #fff1c9;
+  text-align: center;
+  overflow-x: hidden;
+}
+
+.magic-board-screen > .back-button {
+  align-self: flex-start;
+}
+
+.magic-board-screen h2 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 48px);
+  color: #ffda80;
+}
+
+.magic-board-screen > p {
+  margin: 0 0 8px;
+}
+
+/* INFORMACIÓN DEL JUGADOR */
+
+.board-player {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 10px 20px;
+  background: #151b35;
+  border: 2px solid #685580;
+  border-radius: 20px;
+}
+
+.board-player h3 {
+  color: #ffda80;
+  margin: 0 0 5px;
+}
+
+.board-player p {
+  margin: 4px 0;
+}
+
+.board-player strong {
+  color: #ffda80;
+}
+
+/* ESCENARIO */
+
+.board-landscape {
+  position: relative;
+  width: min(100%, 1100px);
+  aspect-ratio: 1000 / 600;
+  min-height: 350px;
+  margin: 15px auto;
+  isolation: isolate;
+  border: 5px solid #67517e;
+  border-radius: 35px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 85%, #476b69 0%, transparent 55%),
+    linear-gradient(
+      180deg,
+      #15162f 0%,
+      #28375d 45%,
+      #274e47 75%,
+      #182d30 100%
+    );
+  box-shadow:
+    0 25px 50px #0008,
+    inset 0 0 50px #0006;
+}
+
+/* DECORACIONES */
+
+.board-moon {
+  position: absolute;
+  top: 5%;
+  right: 7%;
+  font-size: clamp(30px, 5vw, 65px);
+  color: #ffdf91;
+  text-shadow: 0 0 25px #ffd66b;
+  z-index: 1;
+}
+
+.board-castle {
+  position: absolute;
+  top: 2%;
+  left: 6%;
+  font-size: clamp(45px, 8vw, 110px);
+  filter: drop-shadow(0 12px 8px #0008);
+  z-index: 1;
+}
+
+.board-trees {
+  position: absolute;
+  bottom: 4%;
+  right: 4%;
+  font-size: clamp(24px, 4vw, 55px);
+  opacity: .8;
+  z-index: 1;
+}
+
+/* CAMINO */
+
+.board-path {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* CASILLAS */
+
+.path-space {
+  position: absolute;
+  z-index: 3;
+  width: 6.5%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%) rotateX(22deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #bba3d3;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #4e5f91, #252d52);
+  box-shadow:
+    0 8px 0 #11162b,
+    0 13px 15px #0008,
+    inset 0 4px 10px #ffffff22;
+}
+
+.path-space small {
+  position: absolute;
+  top: 6%;
+  left: 14%;
+  font-size: clamp(8px, 1vw, 12px);
+  color: #fff;
+}
+
+.path-space > span {
+  font-size: clamp(15px, 2vw, 26px);
+}
+
+.path-space.bonus {
+  background: linear-gradient(145deg, #ffe58a, #9e691e);
+  border-color: #ffe18a;
+}
+
+.path-space.challenge {
+  background: linear-gradient(145deg, #68b6ec, #254a88);
+  border-color: #8ecfff;
+}
+
+.path-space.trap {
+  background: linear-gradient(145deg, #ac5a86, #502b55);
+  border-color: #dc8cbd;
+}
+
+.path-space.finish {
+  background: linear-gradient(145deg, #ffe79c, #bd822c);
+  border-color: #fff1b5;
+}
+
+.path-space.active {
+  box-shadow:
+    0 8px 0 #11162b,
+    0 0 25px #ffdb75,
+    0 0 40px #ffdb7588;
+}
+
+/* PERSONAJE SOBRE EL TABLERO */
+
+.board-character-token,
+.board-start-token {
+  position: absolute;
+  z-index: 6;
+  width: 75px;
+  height: 75px;
+  transform: translate(-50%, -95%);
+  pointer-events: none;
+  filter: drop-shadow(0 8px 5px #0008);
+}
+
+.board-character-token {
+  left: 50%;
+  top: 0;
+}
+
+.board-start-token {
+  z-index: 6;
+}
+
+/* CONTROLES */
+
+.board-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+}
+
+.dice-display {
+  font-size: 35px;
+}
+
+.board-message {
+  margin: 0;
+  color: #e5d9c7;
+}
+
+.board-controls button {
+  min-width: 210px;
+}
+
+/* CELULARES EN HORIZONTAL */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .magic-board-screen {
+    padding: 8px;
+    gap: 5px;
+  }
+
+  .magic-board-screen h2 {
+    font-size: 22px;
+  }
+
+  .board-player {
+    padding: 4px 12px;
+  }
+
+  .board-player > svg {
+    width: 55px;
+    height: 55px;
+  }
+
+  .board-landscape {
+    width: min(100%, 800px);
+    min-height: 240px;
+    margin: 5px auto;
+  }
+
+  .board-controls {
+    gap: 5px;
+  }
+
+  .board-controls button {
+    min-height: 35px;
+    padding: 6px 15px;
+  }
+
+  .board-character-token,
+  .board-start-token {
+    width: 45px;
+    height: 45px;
+  }
+
+  .board-character-token svg,
+  .board-start-token svg {
+    width: 45px;
+    height: 45px;
+  }
+}
+
+/* PERSONAJE ANIMADO SOBRE EL CAMINO */
+
+.board-moving-token {
+  position: absolute;
+  z-index: 30;
+  width: 75px;
+  height: 94px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+
+  transform: translate(-50%, -80%);
+
+  transition:
+    left 0.35s ease-in-out,
+    top 0.35s ease-in-out;
+}
+
+.board-moving-token svg {
+  width: 75px;
+  height: auto;
+  filter: drop-shadow(0 8px 5px rgba(0,0,0,.45));
+}
+
+.board-moving-token.is-walking svg {
+  animation: magic-walk .25s ease-in-out infinite alternate;
+}
+
+@keyframes magic-walk {
+  from {
+    transform: translateY(0) rotate(-3deg);
+  }
+  to {
+    transform: translateY(-9px) rotate(3deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-moving-token,
+  .board-moving-token svg {
+    transition: none;
+    animation: none !important;
+  }
+}
+
+/* =====================================
+   HOGWARTS PARTY - ESCENARIO MAGICO
+   ===================================== */
+
+.board-landscape {
+  background:
+    radial-gradient(
+      ellipse at 75% 12%,
+      rgba(255, 219, 136, .14),
+      transparent 30%
+    ),
+    radial-gradient(
+      ellipse at 50% 85%,
+      rgba(53, 119, 93, .65),
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      #0e1029 0%,
+      #242c52 36%,
+      #334f56 65%,
+      #16392f 100%
+    );
+
+  box-shadow:
+    0 30px 0 #111426,
+    0 45px 65px rgba(0, 0, 0, .55),
+    inset 0 0 70px rgba(0, 0, 0, .35);
+}
+
+/* Castillo principal */
+
+.board-castle {
+  top: 1%;
+  left: 3%;
+  font-size: clamp(65px, 10vw, 145px);
+  filter:
+    drop-shadow(0 10px 3px #0b0d20)
+    drop-shadow(0 0 25px #f6c76a55);
+}
+
+/* Luna iluminada */
+
+.board-moon {
+  top: 3%;
+  right: 5%;
+  color: #ffe5a1;
+  text-shadow:
+    0 0 12px #ffe5a1,
+    0 0 40px #f7c86b,
+    0 0 70px #f7c86b88;
+}
+
+/* Jardines */
+
+.board-trees {
+  bottom: 2%;
+  right: 3%;
+  font-size: clamp(28px, 4.5vw, 60px);
+  filter: drop-shadow(0 9px 4px #0008);
+}
+
+/* Estrellas */
+
+.board-landscape::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  background-image:
+    radial-gradient(2px 2px at 12% 15%, #fff7d4 95%, transparent),
+    radial-gradient(2px 2px at 32% 8%, #fff7d4 95%, transparent),
+    radial-gradient(3px 3px at 55% 12%, #ffe49a 95%, transparent),
+    radial-gradient(2px 2px at 82% 8%, #fff7d4 95%, transparent),
+    radial-gradient(2px 2px at 93% 35%, #fff7d4 95%, transparent),
+    radial-gradient(2px 2px at 45% 24%, #fff7d4 95%, transparent);
+
+  animation: board-stars 4s ease-in-out infinite alternate;
+}
+
+@keyframes board-stars {
+  from { opacity: .4; }
+  to { opacity: 1; }
+}
+
+/* Suelo decorativo */
+
+.board-landscape::after {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -25%;
+  height: 65%;
+  z-index: 0;
+  pointer-events: none;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(73, 123, 77, .35),
+      transparent 70%
+    );
+}
+
+/* Casillas más tridimensionales */
+
+.path-space {
+  box-shadow:
+    0 5px 0 #292039,
+    0 11px 0 #111424,
+    0 17px 18px rgba(0, 0, 0, .5),
+    inset 0 4px 10px rgba(255, 255, 255, .25);
+}
+
+.path-space.active {
+  border-color: #ffe58c;
+  box-shadow:
+    0 6px 0 #86612c,
+    0 12px 0 #38291c,
+    0 0 24px #ffdc75,
+    0 0 45px #ffdc7588;
+}
+
+/* Movimiento del personaje */
+
+.board-moving-token {
+  filter: drop-shadow(0 12px 7px #0009);
+}
+
+/* Accesibilidad */
+
+@media (prefers-reduced-motion: reduce) {
+  .board-landscape::before {
+    animation: none;
+  }
+}
+
+.board-castle {
+  position: absolute;
+  top: 1%;
+  left: 2%;
+  width: 28%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.board-castle img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter:
+    drop-shadow(0 15px 12px rgba(0, 0, 0, .6))
+    drop-shadow(0 0 20px rgba(255, 200, 100, .2));
+}
+
+
+/* DOS JUGADORES */
+
+.board-players {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: min(100%, 800px);
+}
+
+.board-players .board-player {
+  min-width: 0;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.board-player-active {
+  border-color: #ffda80;
+  box-shadow: 0 0 22px #ffda8055;
+}
+
+/* PERSONAJES EN MOVIMIENTO */
+
+.moving-player {
+  position: absolute;
+  z-index: 10;
+  width: 70px;
+  height: 70px;
+  transform: translate(-50%, -85%);
+  transition:
+    left 0.28s ease-in-out,
+    top 0.28s ease-in-out;
+  pointer-events: none;
+  filter: drop-shadow(0 7px 5px #0009);
+}
+
+.moving-player.player-1 {
+  margin-left: -16px;
+}
+
+.moving-player.player-2 {
+  margin-left: 16px;
+}
+
+.moving-player-label {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  background: #211a3b;
+  border: 1px solid #ffda80;
+  border-radius: 12px;
+  color: #ffda80;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.board-victory {
+  padding: 18px 25px;
+  border: 2px solid #ffda80;
+  border-radius: 20px;
+  background: #252044;
+  box-shadow: 0 0 25px #ffda8033;
+}
+
+.board-victory h2,
+.board-victory h3 {
+  color: #ffda80;
+}
+
+.board-victory p {
+  color: #fff1c9;
+}
+
+@media (max-width: 600px) {
+  .board-players {
+    gap: 8px;
+  }
+
+  .board-players .board-player {
+    padding: 8px;
+    gap: 5px;
+  }
+
+  .board-players .board-player > svg {
+    width: 55px;
+    height: 55px;
+  }
+
+  .board-players .board-player h3 {
+    font-size: 14px;
+  }
+
+  .board-players .board-player p,
+  .board-players .board-player strong {
+    font-size: 11px;
+  }
+
+  .moving-player,
+  .moving-player svg {
+    width: 45px;
+    height: 45px;
+  }
+
+  .moving-player.player-1 {
+    margin-left: -9px;
+  }
+
+  .moving-player.player-2 {
+    margin-left: 9px;
+  }
+}
+
+.moving-player {
+  transition:
+    left 0.65s ease-in-out,
+    top 0.65s ease-in-out;
+}
+
+
+/* ==========================================
+   HOGWARTS PARTY - RETOS DE HARRY POTTER
+   ========================================== */
+
+/* Fondo oscuro detrás de la pregunta */
+
+.challenge-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(5, 7, 22, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  animation: challenge-appear 0.3s ease-out;
+}
+
+/* Ventana principal */
+
+.challenge-modal {
+  width: min(100%, 540px);
+  max-height: 90dvh;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+
+  padding: 30px 25px;
+
+  border: 3px solid #d9b66d;
+  border-radius: 28px;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(126, 87, 180, 0.35),
+      transparent 55%
+    ),
+    linear-gradient(
+      160deg,
+      #252044,
+      #11172e
+    );
+
+  color: #fff1c9;
+  text-align: center;
+
+  box-shadow:
+    0 0 35px rgba(255, 218, 128, 0.25),
+    0 25px 70px rgba(0, 0, 0, 0.7);
+
+  animation: challenge-rise 0.4s ease-out;
+}
+
+.challenge-icon {
+  font-size: 52px;
+  filter: drop-shadow(0 0 12px #ffda80);
+}
+
+.challenge-modal h2 {
+  margin: 0;
+  color: #ffda80;
+  font-size: clamp(24px, 5vw, 34px);
+}
+
+/* Dificultad y puntos */
+
+.challenge-meta {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.challenge-meta span {
+  padding: 7px 14px;
+
+  border: 1px solid #b79a62;
+  border-radius: 20px;
+
+  background: #342c51;
+  color: #ffe3a1;
+
+  font-size: 13px;
+  font-weight: bold;
+}
+
+/* Pregunta */
+
+.challenge-question {
+  margin: 8px 0;
+
+  color: #fff6dc;
+  font-size: clamp(18px, 3vw, 23px);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+/* Respuestas */
+
+.challenge-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 11px;
+
+  width: 100%;
+}
+
+.challenge-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 56px;
+
+  padding: 12px 15px;
+
+  border: 2px solid #6c5c91;
+  border-radius: 15px;
+
+  background: #252b4d;
+  color: #fff1c9;
+
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.challenge-option:hover:not(:disabled) {
+  background: #383c68;
+  border-color: #d9b66d;
+  transform: translateY(-2px);
+}
+
+.challenge-option.selected {
+  background: #554477;
+  border-color: #ffda80;
+
+  box-shadow: 0 0 14px #ffda8033;
+}
+
+.challenge-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.challenge-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: 32px;
+  height: 32px;
+
+  border-radius: 50%;
+
+  background: #151b35;
+  border: 1px solid #bca06a;
+
+  color: #ffda80;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* Botón de responder */
+
+.challenge-submit {
+  width: 100%;
+  max-width: 300px;
+  min-height: 48px;
+}
+
+.challenge-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.challenge-waiting {
+  margin: 0;
+  color: #d5c9e9;
+  font-size: 14px;
+}
+
+/* Animaciones de la ventana */
+
+@keyframes challenge-appear {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes challenge-rise {
+  from {
+    opacity: 0;
+    transform: translateY(25px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Estela mágica: compatible con el JSX nuevo */
+
+.magic-trail {
+  position: absolute;
+  z-index: 8;
+
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+
+  color: #ffdf82;
+  font-size: 26px;
+
+  text-shadow:
+    0 0 8px currentColor,
+    0 0 18px currentColor;
+
+  animation: magic-trail-fade 800ms ease-out forwards;
+}
+
+.magic-trail-2 {
+  color: #a9d8ff;
+}
+
+@keyframes magic-trail-fade {
+  0% {
+    opacity: 1;
+    transform:
+      translate(-50%, -50%)
+      scale(0.4);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform:
+      translate(-50%, -95%)
+      scale(1.2);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(-50%, -170%)
+      scale(0.1);
+  }
+}
+
+.moving-player {
+  transition:
+    left 390ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 390ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.moving-player-animated .moving-player-character {
+  animation: magic-hop 420ms ease-in-out infinite;
+}
+
+@keyframes magic-hop {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  45% {
+    transform: translateY(-14px);
+  }
+
+  75% {
+    transform: translateY(-4px);
+  }
+}
+
+@media (max-width: 600px) {
+  .challenge-modal {
+    padding: 22px 16px;
+    gap: 12px;
+  }
+
+  .challenge-option {
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .challenge-overlay,
+  .challenge-modal,
+  .magic-trail,
+  .moving-player-animated .moving-player-character {
+    animation: none !important;
+  }
+
+  .moving-player {
+    transition: none;
+  }
+}
+
+
+/* TIENDA DE TROFEOS */
+
+.trophy-goal {
+  color: #ffda80;
+  font-weight: 700;
+  text-align: center;
+}
+
+.trophy-shop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+
+  width: 100%;
+  max-width: 430px;
+  margin: 18px auto;
+  padding: 20px;
+
+  background: linear-gradient(145deg, #252044, #151b35);
+  border: 2px solid #b9945d;
+  border-radius: 20px;
+
+  box-shadow: 0 0 20px rgba(255, 218, 128, 0.12);
+  text-align: center;
+}
+
+.trophy-shop h3 {
+  margin: 0;
+  color: #ffda80;
+}
+
+.trophy-shop p {
+  margin: 0;
+}
+
+.trophy-buy-button {
+  width: 100%;
+  max-width: 320px;
+  min-height: 48px;
+}
+
+.trophy-buy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.trophy-hint {
+  color: #d6c9e9;
+  font-size: 13px;
+}
+
+
+/* ==========================================
+   HOGWARTS PARTY 2 - DISTRIBUCIÓN COMPACTA
+   ========================================== */
+
+@media (min-width: 900px) {
+
+  .magic-board-screen {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    padding: 8px 20px 12px;
+    gap: 5px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .magic-board-screen > .back-button {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .magic-board-screen > h2 {
+    margin: 0;
+    font-size: 27px;
+    line-height: 1.1;
+    flex-shrink: 0;
+  }
+
+  .board-turn-description,
+  .trophy-goal {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.2;
+    flex-shrink: 0;
+  }
+
+  /* JUGADORES */
+
+  .board-players {
+    width: min(100%, 1050px);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 5px 0;
+    flex-shrink: 0;
+  }
+
+  .board-player {
+    min-width: 0;
+    padding: 8px 16px;
+    gap: 14px;
+    border-radius: 15px;
+  }
+
+  .board-player h3 {
+    margin: 0 0 3px;
+    font-size: 18px;
+  }
+
+  .board-player p {
+    margin: 2px 0;
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .board-player strong {
+    font-size: 14px;
+  }
+
+  /* TABLERO */
+
+  .board-landscape {
+    box-sizing: border-box;
+    width: min(100%, 1050px);
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    flex: 1 1 0;
+    margin: 4px auto;
+    overflow: hidden;
+    border-radius: 24px;
+  }
+
+  .path-space {
+    width: clamp(32px, 5.5vh, 54px);
+    height: clamp(32px, 5.5vh, 54px);
+    min-width: 0;
+    min-height: 0;
+  }
+
+  /* CONTROLES INFERIORES */
+
+  .board-compact-spacer {
+    display: none;
+  }
+
+  .board-controls {
+    box-sizing: border-box;
+    width: min(100%, 1050px);
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(115px, 1fr)
+                           70px
+                           minmax(145px, 1fr)
+                           minmax(290px, 2fr);
+    grid-template-areas:
+      "turn dice roll shop"
+      "message message message message"
+      "restart restart restart restart";
+    align-items: center;
+    gap: 8px 12px;
+    padding: 12px 16px;
+    margin: 0;
+    border: 1px solid #685580;
+    border-radius: 16px;
+    background: #151b35;
+  }
+
+  .board-controls > h3 {
+    grid-area: turn;
+    margin: 0;
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .dice-display {
+    grid-area: dice;
+    margin: 0;
+    min-width: 0;
+    font-size: 26px;
+    justify-content: center;
+  }
+
+  .board-controls > .primary {
+    grid-area: roll;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  .board-message {
+    grid-area: message;
+    margin: 0;
+    font-size: 13px;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .board-controls > .secondary {
+    grid-area: restart;
+    justify-self: center;
+    width: auto;
+    min-height: 34px;
+    margin: 0;
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+
+  .board-controls > .room-error {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
+  /* TIENDA DE TROFEOS */
+
+  .trophy-shop {
+    grid-area: shop;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 5px 10px;
+    align-items: center;
+    padding: 8px 12px;
+    margin: 0;
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .trophy-shop h3 {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 15px;
+    text-align: left;
+  }
+
+  .trophy-shop p {
+    margin: 0;
+    font-size: 12px;
+    text-align: left;
+  }
+
+  .trophy-shop .trophy-buy-button {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    width: auto;
+    min-width: 165px;
+    min-height: 43px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .trophy-shop .trophy-hint {
+    display: none;
+  }
+
+  /* VICTORIA */
+
+  .board-victory {
+    grid-area: turn;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: center;
+  }
+
+  .board-victory h2,
+  .board-victory h3,
+  .board-victory p {
+    margin: 0;
+    font-size: 12px;
+  }
+}
+
+/* PANTALLAS DE ESCRITORIO CON MENOS ALTURA */
+
+@media (min-width: 900px) and (max-height: 800px) {
+  .magic-board-screen {
+    padding: 5px 12px;
+    gap: 3px;
+  }
+
+  .board-player {
+    padding: 5px 10px;
+  }
+
+  .board-player p {
+    font-size: 11px;
+    margin: 1px 0;
+  }
+
+  .board-landscape {
+    margin: 2px auto;
+  }
+
+  .board-controls {
+    padding: 7px 12px;
+    gap: 5px 10px;
+  }
+}
+
+/* CELULARES */
+
+@media (max-width: 899px) {
+  .magic-board-screen {
+    height: auto;
+    min-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .board-landscape {
+    flex: none;
+    min-height: 350px;
+  }
+
+  .board-controls {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .trophy-shop {
+    width: 100%;
+  }
+}
+
+
+
+/* ==========================================
+   HOGWARTS PARTY 2
+   CORRECCIÓN RESPONSIVE PARA CELULARES
+   ========================================== */
+
+/* Evitar que el contenido ensanche la pantalla */
+
+.magic-board-screen,
+.magic-board-screen * {
+  box-sizing: border-box;
+}
+
+.magic-board-screen {
+  max-width: 100%;
+}
+
+.board-players,
+.board-player,
+.board-landscape,
+.board-controls,
+.trophy-shop {
+  min-width: 0;
+}
+
+/* CELULAR EN VERTICAL */
+
+@media (max-width: 899px) {
+
+  .magic-board-screen {
+    width: 100%;
+    height: auto;
+    min-height: 100dvh;
+    max-height: none;
+    padding: 12px 10px 24px;
+    gap: 10px;
+    overflow-x: hidden;
+    overflow-y: visible;
+  }
+
+  .magic-board-screen > h2 {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .board-turn-description,
+  .trophy-goal {
+    font-size: 12px;
+    margin: 0;
+  }
+
+  .board-players {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .board-player {
+    width: 100%;
+    min-width: 0;
+    padding: 8px;
+    gap: 5px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .board-player h3 {
+    font-size: 15px;
+  }
+
+  .board-player p,
+  .board-player strong {
+    font-size: 11px;
+    margin: 2px 0;
+  }
+
+  .board-landscape {
+    width: 100%;
+    height: auto;
+    min-height: 250px;
+    aspect-ratio: 1.65 / 1;
+    flex: none;
+    margin: 0;
+    border-radius: 16px;
+  }
+
+  .path-space {
+    width: clamp(20px, 5vw, 32px);
+    height: clamp(20px, 5vw, 32px);
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .path-space small {
+    font-size: 8px;
+  }
+
+  .board-controls {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .board-controls > .primary,
+  .board-controls > .secondary {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .trophy-shop {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+    gap: 7px;
+    padding: 12px;
+    margin: 0;
+  }
+
+  .trophy-buy-button {
+    width: 100%;
+  }
+
+  .board-message {
+    font-size: 12px;
+  }
+}
+
+/* CELULAR EN HORIZONTAL:
+   como el iPhone 16 Pro de tu captura */
+
+@media (max-height: 500px) and (orientation: landscape) {
+
+  .magic-board-screen {
+    width: 100%;
+    height: auto;
+    min-height: 100dvh;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: visible;
+    padding: 8px 12px 20px;
+    gap: 6px;
+  }
+
+  .magic-board-screen > h2 {
+    font-size: 21px;
+  }
+
+  .magic-board-screen > .back-button {
+    font-size: 11px;
+  }
+
+  .board-turn-description,
+  .trophy-goal {
+    font-size: 11px;
+  }
+
+  .board-players {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(100%, 800px);
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .board-player {
+    width: 100%;
+    min-width: 0;
+    padding: 5px 10px;
+    gap: 8px;
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .board-player h3 {
+    font-size: 14px;
+  }
+
+  .board-player p,
+  .board-player strong {
+    font-size: 11px;
+    margin: 1px 0;
+  }
+
+  .board-landscape {
+    width: min(100%, 850px);
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: 1.65 / 1;
+    flex: none;
+    margin: 4px auto;
+    overflow: hidden;
+  }
+
+  .path-space {
+    width: clamp(25px, 4vw, 42px);
+    height: clamp(25px, 4vw, 42px);
+  }
+
+  .board-controls {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 850px);
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .board-controls > .primary,
+  .board-controls > .secondary {
+    width: auto;
+    min-width: 130px;
+  }
+
+  .trophy-shop {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: none;
+    padding: 8px;
+  }
+
+  .trophy-buy-button {
+    width: auto;
+  }
+}
+
+
+/* ==========================================
+   AJUSTE PARA IPHONE EN HORIZONTAL
+   ========================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+
+  .game:has(.magic-board-screen) {
+    height: 100dvh !important;
+    min-height: 0 !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+  }
+
+  .magic-board-screen {
+    height: 100dvh !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 5px 10px !important;
+    gap: 2px !important;
+    overflow: hidden !important;
+    justify-content: flex-start !important;
+  }
+
+  .magic-board-screen > .back-button {
+    padding: 0 5px !important;
+    font-size: 10px !important;
+    min-height: 18px !important;
+  }
+
+  .magic-board-screen > h2 {
+    font-size: 17px !important;
+    line-height: 1 !important;
+  }
+
+  .board-turn-description,
+  .trophy-goal {
+    font-size: 10px !important;
+    margin: 0 !important;
+    line-height: 1.1 !important;
+  }
+
+  .board-players {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    margin: 2px 0 !important;
+    width: 100% !important;
+  }
+
+  .board-player {
+    flex: 1 1 0 !important;
+    max-width: 320px !important;
+    padding: 3px 6px !important;
+    gap: 5px !important;
+    min-height: 0 !important;
+  }
+
+  .board-player > div:first-child {
+    transform: scale(0.55);
+    transform-origin: center;
+    width: 50px;
+    flex-shrink: 0;
+  }
+
+  .board-player h3 {
+    font-size: 11px !important;
+    margin: 0 !important;
+  }
+
+  .board-player p,
+  .board-player strong {
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+  }
+
+  .board-game-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr) !important;
+    gap: 8px !important;
+    align-items: start !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 2px 0 0 !important;
+  }
+
+  .board-landscape {
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 1000 / 600 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .board-controls {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 5px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+  }
+
+  .board-controls h3,
+  .trophy-shop h3 {
+    font-size: 11px !important;
+    margin: 0 !important;
+  }
+
+  .dice-display {
+    font-size: 18px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .board-message,
+  .trophy-shop p,
+  .trophy-hint {
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+  }
+
+  .board-controls button {
+    width: 100% !important;
+    min-height: 26px !important;
+    padding: 4px 6px !important;
+    font-size: 9px !important;
+  }
+
+  .trophy-shop {
+    width: 100% !important;
+    padding: 5px !important;
+    margin: 0 !important;
+  }
+
+  .path-space {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .path-space small {
+    font-size: 7px !important;
+  }
+
+  .path-space span {
+    font-size: 11px !important;
+  }
+
+  .moving-player-character {
+    transform: scale(0.55);
+    transform-origin: center;
+  }
+}
+
+
+/* ==========================================
+   AJUSTE FINAL - IPHONE HORIZONTAL
+   ========================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+
+  /* Dar más espacio vertical al tablero */
+  .magic-board-screen {
+    padding: 3px 8px !important;
+    gap: 1px !important;
+  }
+
+  /* Encabezado más compacto */
+  .magic-board-screen > .back-button {
+    min-height: 14px !important;
+    font-size: 9px !important;
+    padding: 0 4px !important;
+  }
+
+  .magic-board-screen > h2 {
+    font-size: 15px !important;
+    line-height: 1 !important;
+  }
+
+  .board-turn-description,
+  .trophy-goal {
+    font-size: 9px !important;
+    line-height: 1 !important;
+  }
+
+  /* Reducir la altura de las tarjetas */
+  .board-players {
+    margin: 1px auto !important;
+    gap: 5px !important;
+  }
+
+  .board-player {
+    padding: 2px 5px !important;
+  }
+
+  .board-player h3 {
+    font-size: 10px !important;
+  }
+
+  .board-player p,
+  .board-player strong {
+    font-size: 8px !important;
+    line-height: 1 !important;
+  }
+
+  /* Limitar el ancho para reducir también la altura */
+  .board-game-layout {
+    grid-template-columns:
+      minmax(0, 1.55fr)
+      minmax(0, 1fr) !important;
+
+    max-width: 850px !important;
+    gap: 7px !important;
+    margin: 1px auto 0 !important;
+  }
+
+  .board-landscape {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1000 / 600 !important;
+    max-height: 280px !important;
+    margin: 0 !important;
+  }
+
+  /* Mantener controles compactos */
+  .board-controls {
+    padding: 4px !important;
+    gap: 2px !important;
+  }
+
+  .board-controls button {
+    min-height: 24px !important;
+  }
+
+  .trophy-shop {
+    padding: 4px !important;
+  }
+}
+
+
+/* ==========================================
+   PREGUNTAS - CELULAR HORIZONTAL
+   ========================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+
+  .challenge-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px !important;
+    overflow: hidden !important;
+  }
+
+  .challenge-modal {
+    box-sizing: border-box !important;
+    width: min(94vw, 780px) !important;
+    max-width: 780px !important;
+    max-height: calc(100dvh - 16px) !important;
+    height: auto !important;
+    padding: 12px 18px !important;
+    margin: 0 !important;
+    border-radius: 18px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    overflow-y: auto !important;
+  }
+
+  /* Varita */
+  .challenge-icon {
+    font-size: 23px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+  }
+
+  /* Título */
+  .challenge-modal h2 {
+    font-size: 21px !important;
+    line-height: 1.1 !important;
+    margin: 0 !important;
+  }
+
+  /* Dificultad y puntos */
+  .challenge-meta {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+  }
+
+  .challenge-meta span {
+    padding: 3px 10px !important;
+    font-size: 11px !important;
+  }
+
+  /* Pregunta */
+  .challenge-question {
+    font-size: 17px !important;
+    line-height: 1.2 !important;
+    margin: 3px 0 !important;
+  }
+
+  /* Opciones en dos columnas */
+  .challenge-options {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .challenge-option {
+    min-width: 0 !important;
+    min-height: 42px !important;
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+    text-align: left !important;
+  }
+
+  .challenge-letter {
+    width: 25px !important;
+    height: 25px !important;
+    min-width: 25px !important;
+    font-size: 12px !important;
+  }
+
+  /* Mensaje del otro jugador */
+  .challenge-waiting {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+  }
+
+  /* Botón responder */
+  .challenge-submit {
+    width: 100% !important;
+    min-height: 34px !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+    margin: 0 !important;
+  }
+}

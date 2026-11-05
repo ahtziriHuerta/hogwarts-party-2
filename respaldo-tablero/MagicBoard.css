@@ -1,0 +1,147 @@
+.magic-board-screen {
+  width: min(1100px, 95%);
+  margin: 30px auto;
+  text-align: center;
+  color: #f5e8ce;
+}
+
+.magic-board-screen h2 {
+  color: #ffd875;
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin-bottom: 10px;
+}
+
+.board-player {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin: 25px auto;
+  padding: 12px 24px;
+  background: #171d39;
+  border: 2px solid #675477;
+  border-radius: 20px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.board-player h3 {
+  color: #ffd875;
+  margin: 0;
+}
+
+.board-player p {
+  margin: 6px 0;
+}
+
+.board-player strong {
+  color: #ffd875;
+}
+
+.magic-board {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  margin: 30px auto;
+}
+
+.magic-space {
+  position: relative;
+  min-height: 105px;
+  background: #202743;
+  border: 2px solid #665579;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.magic-space small {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  color: #d8c8e5;
+}
+
+.magic-space > span {
+  font-size: 29px;
+}
+
+.magic-space.bonus {
+  background: #514321;
+  border-color: #d9ae39;
+}
+
+.magic-space.trap {
+  background: #472a43;
+  border-color: #a7659e;
+}
+
+.magic-space.challenge {
+  background: #263d63;
+  border-color: #6288c7;
+}
+
+.magic-space.finish {
+  background: #594820;
+  border-color: #ffd875;
+}
+
+.magic-space.active {
+  box-shadow: 0 0 22px #ffd875;
+  transform: scale(1.05);
+  border-color: #ffd875;
+}
+
+.magic-space .player-token {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  font-size: 24px;
+}
+
+.board-controls {
+  margin: 25px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.dice-display {
+  font-size: 42px;
+  color: #ffd875;
+}
+
+.board-message {
+  color: #f5e8ce;
+  min-height: 28px;
+}
+
+.board-controls button {
+  min-width: 220px;
+}
+
+@media (max-width: 650px) {
+  .magic-board {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .magic-space {
+    min-height: 75px;
+    border-radius: 12px;
+  }
+
+  .magic-space > span {
+    font-size: 23px;
+  }
+
+  .board-player {
+    gap: 8px;
+    padding: 10px;
+  }
+}
