@@ -92,32 +92,57 @@ function App() {
           nickname: name,
           code: roomCode.trim().toUpperCase(),
         };
+    
+    const sendRoomRequest = () => {
+      socket.timeout(15000).emit(
+        eventName,
+        payload,
+        (timeoutError, response) => {
+          setLoading(false);
 
-    socket.timeout(5000).emit(
-      eventName,
-      payload,
-      (timeoutError, response) => {
+          if (timeoutError) {
+            console.error("Error al crear/unirse a sala:", timeoutError);
+            setError("El servidor no respondió a la solicitud.");
+            return;
+          }
+
+          if (!response?.ok) {
+            setError(
+              response?.error || "No se pudo entrar a la sala."
+            );
+            return;
+          }
+
+          console.log("✅ Sala creada o encontrada:", response.room);
+
+          setRoom(response.room);
+          setRoomCode(response.room.code);
+          setScreen("lobby");
+        }
+      );
+    };
+
+    if (socket.connected) {
+      sendRoomRequest();
+    } else {
+      socket.connect();
+
+      socket
+        .timeout(20000)
+        .connect();
+
+      socket.once("connect", () => {
+        sendRoomRequest();
+      });
+
+      socket.once("connect_error", (err) => {
+        console.error("Error de conexión:", err);
         setLoading(false);
+        setError("No se pudo conectar con el servidor.");
+      });
+    }
 
-        if (timeoutError) {
-          setError("El servidor no respondió.");
-          return;
-        }
-
-        if (!response?.ok) {
-          setError(
-            response?.error || "No se pudo entrar a la sala."
-          );
-          return;
-        }
-
-        console.log("✅ Sala creada o encontrada:", response.room);
-
-        setRoom(response.room);
-        setRoomCode(response.room.code);
-        setScreen("lobby");
-      }
-    );
+    
   }
 
   // SELECCIONAR PERSONAJE
