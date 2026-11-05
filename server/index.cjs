@@ -7,6 +7,8 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 
+
+
 const io = new Server(server, {
   cors: {
     origin: [
@@ -14,10 +16,13 @@ const io = new Server(server, {
       "http://127.0.0.1:5173",
       "http://localhost:5174",
       "http://127.0.0.1:5174",
+      "https://regal-pothos-2022c1.netlify.app",
     ],
     methods: ["GET", "POST"],
   },
 });
+
+
 
 const rooms = new Map();
 
