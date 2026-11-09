@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import CharacterSelection from "./CharacterSelection";
 import MagicBoard from "./MagicBoard";
@@ -14,11 +13,11 @@ function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const pendingConnection = useRef(null);
+
   // CONEXIÓN CON EL SERVIDOR
   useEffect(() => {
     const handleRoomUpdated = (updatedRoom) => {
-      console.log("🏠 Sala actualizada:", updatedRoom);
-
       setRoom(updatedRoom);
 
       if (
@@ -27,14 +26,11 @@ function App() {
       ) {
         setScreen("board");
       } else {
-        setScreen((previous) =>
-          previous === "board" ? "lobby" : previous
-        );
+        setScreen((previous) => (previous === "board" ? "lobby" : previous));
       }
     };
 
     const handleDisconnect = () => {
-      console.log("🔌 Servidor desconectado");
       setRoom(null);
       setScreen("home");
       setError("Se perdió la conexión con el servidor.");
@@ -46,6 +42,8 @@ function App() {
     socket.connect();
 
     return () => {
+      // Cada intento elimina sus listeners: una reconexión no debe repetir solicitudes.
+      pendingConnection.current?.();
       socket.off("room-updated", handleRoomUpdated);
       socket.off("disconnect", handleDisconnect);
     };
@@ -82,9 +80,7 @@ function App() {
     setError("");
     setLoading(true);
 
-    const eventName = creating
-      ? "create-room"
-      : "join-room";
+    const eventName = creating ? "create-room" : "join-room";
 
     const payload = creating
       ? { nickname: name }
@@ -92,12 +88,11 @@ function App() {
           nickname: name,
           code: roomCode.trim().toUpperCase(),
         };
-    
+
     const sendRoomRequest = () => {
-      socket.timeout(15000).emit(
-        eventName,
-        payload,
-        (timeoutError, response) => {
+      socket
+        .timeout(15000)
+        .emit(eventName, payload, (timeoutError, response) => {
           setLoading(false);
 
           if (timeoutError) {
@@ -107,141 +102,135 @@ function App() {
           }
 
           if (!response?.ok) {
-            setError(
-              response?.error || "No se pudo entrar a la sala."
-            );
+            setError(response?.error || "No se pudo entrar a la sala.");
             return;
           }
-
-          console.log("✅ Sala creada o encontrada:", response.room);
 
           setRoom(response.room);
           setRoomCode(response.room.code);
           setScreen("lobby");
-        }
-      );
+        });
     };
 
     if (socket.connected) {
       sendRoomRequest();
     } else {
-      socket.connect();
-
-      socket
-        .timeout(20000)
-        .connect();
-
-      socket.once("connect", () => {
+      // Cada intento elimina sus listeners: una reconexión no debe repetir solicitudes.
+      pendingConnection.current?.();
+      let timer;
+      const cleanup = () => {
+        clearTimeout(timer);
+        socket.off("connect", onConnect);
+        socket.off("connect_error", onError);
+        pendingConnection.current = null;
+      };
+      const onConnect = () => {
+        cleanup();
         sendRoomRequest();
-      });
-
-      socket.once("connect_error", (err) => {
-        console.error("Error de conexión:", err);
+      };
+      const onError = () => {
+        cleanup();
         setLoading(false);
-        setError("No se pudo conectar con el servidor.");
-      });
+        setError(
+          "No se pudo conectar. Comprueba tu conexión y vuelve a intentar.",
+        );
+      };
+      pendingConnection.current = cleanup;
+      socket.once("connect", onConnect);
+      socket.once("connect_error", onError);
+      timer = setTimeout(onError, 20000);
+      socket.connect();
     }
-
-    
   }
 
   // SELECCIONAR PERSONAJE
   function selectCharacter(character) {
     setError("");
 
-    socket.timeout(5000).emit(
-      "select-character",
-      { character },
-      (timeoutError, response) => {
+    socket
+      .timeout(5000)
+      .emit("select-character", { character }, (timeoutError, response) => {
         if (timeoutError) {
           setError("El servidor no respondió.");
           return;
         }
 
         if (!response?.ok) {
-          setError(
-            response?.error || "No se pudo elegir personaje."
-          );
+          setError(response?.error || "No se pudo elegir personaje.");
           return;
         }
 
         setRoom(response.room);
         setScreen("lobby");
-      }
-    );
+      });
   }
 
   // INICIAR PARTIDA
   function startGame() {
-    console.log("🏰 Comenzar aventura");
-
     setError("");
 
-    socket.timeout(5000).emit(
-      "start-game",
-      {},
-      (timeoutError, response) => {
-        console.log("🎮 Respuesta del servidor:", response);
-
-        if (timeoutError) {
-          setError("El servidor no respondió.");
-          return;
-        }
-
-        if (!response?.ok) {
-          setError(
-            response?.error || "No se pudo iniciar la partida."
-          );
-        }
+    socket.timeout(5000).emit("start-game", {}, (timeoutError, response) => {
+      if (timeoutError) {
+        setError("El servidor no respondió.");
+        return;
       }
-    );
+
+      if (!response?.ok) {
+        setError(response?.error || "No se pudo iniciar la partida.");
+      }
+    });
   }
 
   // ACCIONES DEL TABLERO
   function sendGameAction(eventName, done) {
-    socket.timeout(5000).emit(
-      eventName,
-      {},
-      (timeoutError, response) => {
-        if (timeoutError) {
-          done?.({
-            ok: false,
-            error: "El servidor no respondió.",
-          });
-          return;
-        }
-
-        done?.(
-          response || {
-            ok: false,
-            error: "Error desconocido.",
-          }
-        );
+    socket.timeout(5000).emit(eventName, {}, (timeoutError, response) => {
+      if (timeoutError) {
+        done?.({
+          ok: false,
+          error: "El servidor no respondió.",
+        });
+        return;
       }
-    );
+
+      done?.(
+        response || {
+          ok: false,
+          error: "Error desconocido.",
+        },
+      );
+    });
   }
 
   const isHost = room?.players?.[0]?.id === socket.id;
 
   return (
     <main className="game">
-
       {/* PANTALLA DE INICIO */}
       {screen === "home" && (
         <section className="welcome">
-          <div className="castle">🏰</div>
+          <div className="hero-crest" aria-hidden="true">
+            🏰
+          </div>
 
-          <p className="subtitle">
-            EL MUNDO MÁGICO TE ESPERA
-          </p>
+          <p className="subtitle">EL MUNDO MÁGICO TE ESPERA</p>
 
           <h1>Hogwarts Party</h1>
 
           <p className="description">
-            Lanza los dados, supera desafíos mágicos
-            y compite por la Copa de Hogwarts.
+            Lanza los dados, supera desafíos mágicos y compite por la Copa de
+            Hogwarts.
           </p>
 
+          <div className="game-facts">
+            <span>2 jugadores</span>
+            <span>24 casillas</span>
+            <span>Una copa en juego</span>
+          </div>
+          {error && (
+            <p className="room-error" role="alert">
+              {error}
+            </p>
+          )}
           <div className="buttons">
             <button
               type="button"
@@ -270,19 +259,31 @@ function App() {
             </button>
           </div>
 
-          <p className="footer">
-            Una aventura mágica multijugador
-          </p>
+          <details className="rules">
+            <summary>Cómo jugar</summary>
+            <ol>
+              <li>Crea una sala y comparte el código con tu compañero.</li>
+              <li>Elijan sus personajes. El creador inicia la aventura.</li>
+              <li>
+                Lancen el dado por turnos: respondan retos y reúnan puntos.
+              </li>
+              <li>
+                Compra un trofeo con 100 puntos. ¡El primero en conseguir dos
+                gana!
+              </li>
+            </ol>
+          </details>
+          <p className="footer">Una aventura mágica multijugador</p>
         </section>
       )}
 
       {/* CREAR SALA O UNIRSE */}
       {(screen === "create" || screen === "join") && (
         <section className="welcome room-form">
-
           <button
             type="button"
             className="back-button"
+            disabled={loading}
             onClick={() => {
               setError("");
               setScreen("home");
@@ -293,11 +294,7 @@ function App() {
 
           <div className="castle">🧙‍♂️</div>
 
-          <h2>
-            {screen === "create"
-              ? "Crear sala mágica"
-              : "Unirse a sala"}
-          </h2>
+          <h2>{screen === "create" ? "Crear sala mágica" : "Unirse a sala"}</h2>
 
           <p className="description">
             {screen === "create"
@@ -306,10 +303,7 @@ function App() {
           </p>
 
           <form onSubmit={submitRoom}>
-
-            <label htmlFor="nickname">
-              Tu nombre de jugador
-            </label>
+            <label htmlFor="nickname">Tu nombre de jugador</label>
 
             <input
               id="nickname"
@@ -317,17 +311,13 @@ function App() {
               placeholder="Ej. Ahtziri"
               maxLength={20}
               value={nickname}
-              onChange={(event) =>
-                setNickname(event.target.value)
-              }
+              onChange={(event) => setNickname(event.target.value)}
               required
             />
 
             {screen === "join" && (
               <>
-                <label htmlFor="room-code">
-                  Código de sala
-                </label>
+                <label htmlFor="room-code">Código de sala</label>
 
                 <input
                   id="room-code"
@@ -336,9 +326,7 @@ function App() {
                   maxLength={6}
                   value={roomCode}
                   onChange={(event) =>
-                    setRoomCode(
-                      event.target.value.toUpperCase()
-                    )
+                    setRoomCode(event.target.value.toUpperCase())
                   }
                   required
                 />
@@ -363,10 +351,9 @@ function App() {
               {loading
                 ? "Conectando..."
                 : screen === "create"
-                ? "✨ Crear sala"
-                : "🪄 Unirse a sala"}
+                  ? "✨ Crear sala"
+                  : "🪄 Unirse a sala"}
             </button>
-
           </form>
         </section>
       )}
@@ -397,9 +384,7 @@ function App() {
           <CharacterSelection
             nickname={nickname}
             playerNumber={
-              room.players.findIndex(
-                (player) => player.id === socket.id
-              ) + 1
+              room.players.findIndex((player) => player.id === socket.id) + 1
             }
             takenCharacterIds={room.players
               .filter((player) => player.id !== socket.id)
@@ -415,19 +400,15 @@ function App() {
       )}
 
       {/* TABLERO MULTIJUGADOR */}
-      {screen === "board" && (
-        room?.game ? (
+      {screen === "board" &&
+        (room?.game ? (
           <MagicBoard
             game={room.game}
             mySocketId={socket.id}
             isHost={isHost}
             onBack={leaveRoom}
-            onRollDice={(done) =>
-              sendGameAction("roll-dice", done)
-            }
-            onRestart={(done) =>
-              sendGameAction("restart-game", done)
-            }
+            onRollDice={(done) => sendGameAction("roll-dice", done)}
+            onRestart={(done) => sendGameAction("restart-game", done)}
           />
         ) : (
           <section className="welcome">
@@ -435,9 +416,7 @@ function App() {
             <h2>Preparando tablero...</h2>
             <p>Esperando información de la partida.</p>
           </section>
-        )
-      )}
-
+        ))}
     </main>
   );
 }

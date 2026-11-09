@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket";
 import MagicCharacter from "./MagicCharacter";
@@ -8,12 +7,30 @@ const TOTAL = 24;
 const STEP_DURATION = 420;
 
 const path = [
-  [9, 82], [21, 82], [33, 82], [45, 82],
-  [57, 82], [69, 82], [81, 82], [90, 70],
-  [81, 58], [69, 58], [57, 58], [45, 58],
-  [33, 58], [21, 58], [10, 46], [21, 34],
-  [33, 34], [45, 34], [57, 34], [69, 34],
-  [81, 34], [90, 22], [78, 12], [65, 12],
+  [9, 82],
+  [21, 82],
+  [33, 82],
+  [45, 82],
+  [57, 82],
+  [69, 82],
+  [81, 82],
+  [90, 70],
+  [81, 58],
+  [69, 58],
+  [57, 58],
+  [45, 58],
+  [33, 58],
+  [21, 58],
+  [10, 46],
+  [21, 34],
+  [33, 34],
+  [45, 34],
+  [57, 34],
+  [69, 34],
+  [81, 34],
+  [90, 22],
+  [78, 12],
+  [65, 12],
 ];
 
 const spaces = Array.from({ length: TOTAL }, (_, i) => {
@@ -41,10 +58,7 @@ const spaces = Array.from({ length: TOTAL }, (_, i) => {
 function getCoordinates(position) {
   if (position === 0) return [5, 82];
 
-  const safe = Math.max(
-    1,
-    Math.min(TOTAL, Number(position) || 1)
-  );
+  const safe = Math.max(1, Math.min(TOTAL, Number(position) || 1));
 
   return path[safe - 1];
 }
@@ -63,9 +77,7 @@ function CharacterAvatar({ character, size = 70 }) {
   );
 }
 
-// ==========================================
 // MOVIMIENTO ANIMADO DE LOS JUGADORES
-// ==========================================
 
 function AnimatedToken({ player, index, resetKey }) {
   const targetSteps = Number(player.totalSteps) || 0;
@@ -114,11 +126,11 @@ function AnimatedToken({ player, index, resetKey }) {
       return;
     }
 
-    let cancelled = false;
+    const movement = new AbortController();
     setMoving(true);
 
     function advance() {
-      if (cancelled) return;
+      if (movement.signal.aborted) return;
 
       if (currentRef.current >= targetSteps) {
         setMoving(false);
@@ -133,36 +145,26 @@ function AnimatedToken({ player, index, resetKey }) {
       setVisualSteps(next);
 
       const previousPosition =
-        previous === 0
-          ? 0
-          : ((previous - 1) % TOTAL) + 1;
+        previous === 0 ? 0 : ((previous - 1) % TOTAL) + 1;
 
       const [x, y] = getCoordinates(previousPosition);
       const id = ++trailIdRef.current;
 
-      setTrail((items) => [
-        ...items.slice(-8),
-        { id, x, y },
-      ]);
+      setTrail((items) => [...items.slice(-8), { id, x, y }]);
 
       const trailTimer = setTimeout(() => {
-        setTrail((items) =>
-          items.filter((star) => star.id !== id)
-        );
+        setTrail((items) => items.filter((star) => star.id !== id));
       }, 800);
 
       trailTimersRef.current.push(trailTimer);
 
-      timerRef.current = setTimeout(
-        advance,
-        STEP_DURATION
-      );
+      timerRef.current = setTimeout(advance, STEP_DURATION);
     }
 
     advance();
 
     return () => {
-      cancelled = true;
+      movement.abort();
 
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -181,9 +183,7 @@ function AnimatedToken({ player, index, resetKey }) {
   }, []);
 
   const visualPosition =
-    visualSteps === 0
-      ? 0
-      : ((visualSteps - 1) % TOTAL) + 1;
+    visualSteps === 0 ? 0 : ((visualSteps - 1) % TOTAL) + 1;
 
   const [x, y] = getCoordinates(visualPosition);
 
@@ -212,35 +212,23 @@ function AnimatedToken({ player, index, resetKey }) {
         }}
       >
         <div className="moving-player-character">
-          <CharacterAvatar
-            character={player.character}
-            size={70}
-          />
+          <CharacterAvatar character={player.character} size={70} />
         </div>
 
-        <span className="moving-player-label">
-          J{index + 1}
-        </span>
+        <span className="moving-player-label">J{index + 1}</span>
       </div>
     </>
   );
 }
 
-// ==========================================
 // VENTANA DE PREGUNTAS
-// ==========================================
 
-function ChallengeModal({
-  challenge,
-  mySocketId,
-  onAnswer,
-}) {
+function ChallengeModal({ challenge, mySocketId, onAnswer }) {
   const [selected, setSelected] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const isMyChallenge =
-    challenge.playerId === mySocketId;
+  const isMyChallenge = challenge.playerId === mySocketId;
 
   function submitAnswer() {
     if (!isMyChallenge || selected === null || busy) {
@@ -254,9 +242,7 @@ function ChallengeModal({
       setBusy(false);
 
       if (!result?.ok) {
-        setError(
-          result?.error || "No se pudo enviar la respuesta."
-        );
+        setError(result?.error || "No se pudo enviar la respuesta.");
       }
     });
   }
@@ -278,9 +264,7 @@ function ChallengeModal({
           <span>⭐ {challenge.points} puntos</span>
         </div>
 
-        <p className="challenge-question">
-          {challenge.question}
-        </p>
+        <p className="challenge-question">{challenge.question}</p>
 
         {!isMyChallenge && (
           <p className="challenge-waiting">
@@ -324,18 +308,14 @@ function ChallengeModal({
             {busy ? "Comprobando..." : "✨ Responder"}
           </button>
         ) : (
-          <p className="challenge-waiting">
-            Esperando la respuesta...
-          </p>
+          <p className="challenge-waiting">Esperando la respuesta...</p>
         )}
       </div>
     </div>
   );
 }
 
-// ==========================================
 // TABLERO PRINCIPAL
-// ==========================================
 
 export default function MagicBoard({
   game,
@@ -369,9 +349,7 @@ export default function MagicBoard({
     );
   }
 
-  const players = Array.isArray(game.players)
-    ? game.players
-    : [];
+  const players = Array.isArray(game.players) ? game.players : [];
 
   if (players.length !== 2) {
     return (
@@ -392,20 +370,14 @@ export default function MagicBoard({
 
   const current = players[turn] || players[0];
 
-  const myPlayer = players.find(
-    (player) => player.id === mySocketId
-  );
+  const myPlayer = players.find((player) => player.id === mySocketId);
 
-  const winningPlayer =
-    winner === null ? null : players[winner] || null;
+  const winningPlayer = winner === null ? null : players[winner] || null;
 
   const trophyPrice = game.trophyPrice ?? 100;
   const trophiesToWin = game.trophiesToWin ?? 2;
 
-  const isMyTurn =
-    winner === null &&
-    !challenge &&
-    current.id === mySocketId;
+  const isMyTurn = winner === null && !challenge && current.id === mySocketId;
 
   const canBuyTrophy =
     Boolean(myPlayer) &&
@@ -425,38 +397,17 @@ export default function MagicBoard({
       setBusy(false);
 
       if (!result?.ok) {
-        setError(
-          result?.error || "No se pudo completar la acción."
-        );
+        setError(result?.error || "No se pudo completar la acción.");
       }
     });
   }
 
   function answerChallenge(challengeId, answer, done) {
-    socket.timeout(10000).emit(
-      "answer-challenge",
-      { challengeId, answer },
-      (timeoutError, result) => {
-        if (timeoutError) {
-          done({
-            ok: false,
-            error: "El servidor no respondió.",
-          });
-          return;
-        }
-
-        done(result);
-      }
-    );
-  }
-
-  function buyTrophy() {
-    if (!canBuyTrophy) return;
-
-    performAction((done) => {
-      socket.timeout(10000).emit(
-        "buy-trophy",
-        {},
+    socket
+      .timeout(10000)
+      .emit(
+        "answer-challenge",
+        { challengeId, answer },
         (timeoutError, result) => {
           if (timeoutError) {
             done({
@@ -467,21 +418,33 @@ export default function MagicBoard({
           }
 
           done(result);
-        }
+        },
       );
+  }
+
+  function buyTrophy() {
+    if (!canBuyTrophy) return;
+
+    performAction((done) => {
+      socket.timeout(10000).emit("buy-trophy", {}, (timeoutError, result) => {
+        if (timeoutError) {
+          done({
+            ok: false,
+            error: "El servidor no respondió.",
+          });
+          return;
+        }
+
+        done(result);
+      });
     });
   }
 
   return (
     <section className="magic-board-screen">
-
       {/* ENCABEZADO */}
 
-      <button
-        type="button"
-        className="back-button"
-        onClick={onBack}
-      >
+      <button type="button" className="back-button" onClick={onBack}>
         ← Salir de la partida
       </button>
 
@@ -491,15 +454,15 @@ export default function MagicBoard({
         {winningPlayer
           ? "🏆 ¡La aventura ha terminado!"
           : challenge
-          ? "🪄 ¡Hay un reto mágico pendiente!"
-          : isMyTurn
-          ? "🎲 ¡Es tu turno!"
-          : `⏳ Esperando a ${current.nickname}`}
+            ? "🪄 ¡Hay un reto mágico pendiente!"
+            : isMyTurn
+              ? "🎲 ¡Es tu turno!"
+              : `⏳ Esperando a ${current.nickname}`}
       </p>
 
       <p className="trophy-goal">
-        🏆 Consigue {trophiesToWin} trofeos para ganar.
-        Cada uno cuesta {trophyPrice} ⭐.
+        🏆 Consigue {trophiesToWin} trofeos para ganar. Cada uno cuesta{" "}
+        {trophyPrice} ⭐.
       </p>
 
       {/* TARJETAS DE LOS JUGADORES */}
@@ -509,17 +472,16 @@ export default function MagicBoard({
           <div
             key={player.id}
             className={`board-player ${
-              turn === index && winner === null
-                ? "board-player-active"
-                : ""
+              turn === index && winner === null ? "board-player-active" : ""
             }`}
           >
-            <CharacterAvatar
-              character={player.character}
-              size={85}
-            />
+            <CharacterAvatar character={player.character} size={85} />
 
             <div>
+              <span className="player-status">
+                {player.id === mySocketId ? "TÚ" : "COMPAÑERO"}
+                {turn === index && winner === null ? " · EN TURNO" : ""}
+              </span>
               <h3>{player.nickname}</h3>
 
               <p>
@@ -528,9 +490,7 @@ export default function MagicBoard({
                 {player.character?.house ?? "Hogwarts"}
               </p>
 
-              <strong>
-                ⭐ {player.points ?? 0} puntos
-              </strong>
+              <strong>⭐ {player.points ?? 0} puntos</strong>
 
               <p>
                 🏆 {player.trophies ?? 0}/{trophiesToWin} trofeos
@@ -540,23 +500,28 @@ export default function MagicBoard({
                 Casilla: {player.position ?? 0}/{TOTAL}
               </p>
 
-              <p>
-                🔄 Vueltas: {player.laps ?? 0}
-              </p>
+              <p>🔄 Vueltas: {player.laps ?? 0}</p>
             </div>
           </div>
         ))}
       </div>
 
+      <p className="board-legend" aria-label="Tipos de casilla">
+        <span>⭐ Magia +20</span>
+        <span>🕷️ Trampa −10</span>
+        <span>🪄 Reto +10–30</span>
+        <span>🏰 Vuelta +20</span>
+      </p>
       {/* CONTENEDOR DEL TABLERO Y LOS CONTROLES */}
 
       <div className="board-game-layout">
-
         {/* TABLERO */}
 
         <div className="board-landscape">
           <div className="board-moon">☾</div>
-          <div className="board-castle">🏰</div>
+          <div className="board-castle" aria-hidden="true">
+            🏰
+          </div>
           <div className="board-trees">🌲 🌲 🌲</div>
 
           <svg
@@ -566,9 +531,7 @@ export default function MagicBoard({
             aria-hidden="true"
           >
             <polyline
-              points={path
-                .map(([x, y]) => `${x * 10},${y * 6}`)
-                .join(" ")}
+              points={path.map(([x, y]) => `${x * 10},${y * 6}`).join(" ")}
               fill="none"
               stroke="#12132c"
               strokeWidth="65"
@@ -577,9 +540,7 @@ export default function MagicBoard({
             />
 
             <polyline
-              points={path
-                .map(([x, y]) => `${x * 10},${y * 6}`)
-                .join(" ")}
+              points={path.map(([x, y]) => `${x * 10},${y * 6}`).join(" ")}
               fill="none"
               stroke="#b9945d"
               strokeWidth="48"
@@ -634,18 +595,13 @@ export default function MagicBoard({
                 {winningPlayer.character?.house ?? "Hogwarts"}
               </p>
 
-              <strong>
-                🏆 {winningPlayer.trophies} trofeos
-              </strong>
+              <strong>🏆 {winningPlayer.trophies} trofeos</strong>
             </div>
           ) : (
             <h3>🎮 Turno de {current.nickname}</h3>
           )}
 
-          <div
-            key={game.rollNumber ?? 0}
-            className="dice-display magical-dice"
-          >
+          <div key={game.rollNumber ?? 0} className="dice-display magical-dice">
             <span className="dice-sparkle">✦</span>
             <span className="dice-number">
               {dice === null ? "🎲" : `🎲 ${dice}`}
@@ -672,12 +628,12 @@ export default function MagicBoard({
             {busy
               ? "Procesando..."
               : winningPlayer
-              ? "🏆 Partida terminada"
-              : challenge
-              ? "🪄 Resuelve el reto"
-              : isMyTurn
-              ? "🎲 Lanzar dado"
-              : "⏳ Esperando tu turno"}
+                ? "🏆 Partida terminada"
+                : challenge
+                  ? "🪄 Resuelve el reto"
+                  : isMyTurn
+                    ? "🎲 Lanzar dado"
+                    : "⏳ Esperando tu turno"}
           </button>
 
           {/* TIENDA DE TROFEOS */}
@@ -685,13 +641,10 @@ export default function MagicBoard({
           <div className="trophy-shop">
             <h3>🏆 Tienda de trofeos</h3>
 
-            <p>
-              Tus puntos: ⭐ {myPlayer?.points ?? 0}
-            </p>
+            <p>Tus puntos: ⭐ {myPlayer?.points ?? 0}</p>
 
             <p>
-              Tus trofeos: 🏆 {myPlayer?.trophies ?? 0}/
-              {trophiesToWin}
+              Tus trofeos: 🏆 {myPlayer?.trophies ?? 0}/{trophiesToWin}
             </p>
 
             <button
@@ -707,9 +660,8 @@ export default function MagicBoard({
               !challenge &&
               (myPlayer?.points ?? 0) < trophyPrice && (
                 <p className="trophy-hint">
-                  Te faltan{" "}
-                  {trophyPrice - (myPlayer?.points ?? 0)}{" "}
-                  puntos para comprar un trofeo.
+                  Te faltan {trophyPrice - (myPlayer?.points ?? 0)} puntos para
+                  comprar un trofeo.
                 </p>
               )}
           </div>
@@ -725,7 +677,6 @@ export default function MagicBoard({
             </button>
           )}
         </div>
-
       </div>
       {/* FIN DE board-game-layout */}
 

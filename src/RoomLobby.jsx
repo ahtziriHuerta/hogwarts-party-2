@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { socket } from "./socket";
 
 export default function RoomLobby({
@@ -8,24 +8,28 @@ export default function RoomLobby({
   onStartGame,
   error,
 }) {
+  const [copyMessage, setCopyMessage] = useState("");
+
+  async function copyCode() {
+    try {
+      await navigator.clipboard.writeText(room.code);
+      setCopyMessage("¡Código copiado! Compártelo con tu compañero.");
+    } catch {
+      setCopyMessage("Selecciona el código y cópialo manualmente.");
+    }
+  }
+
   if (!room) return null;
 
   const isHost = room.players[0]?.id === socket.id;
   const isFull = room.players.length === 2;
-  const allSelected =
-    isFull && room.players.every((p) => p.character);
+  const allSelected = isFull && room.players.every((p) => p.character);
 
-  const myPlayer = room.players.find(
-    (p) => p.id === socket.id
-  );
+  const myPlayer = room.players.find((p) => p.id === socket.id);
 
   return (
     <section className="welcome room-lobby">
-      <button
-        type="button"
-        className="back-button"
-        onClick={onBack}
-      >
+      <button type="button" className="back-button" onClick={onBack}>
         ← Salir de la sala
       </button>
 
@@ -40,26 +44,20 @@ export default function RoomLobby({
         <span>CÓDIGO DE SALA</span>
         <h1>{room.code}</h1>
 
-        <button
-          type="button"
-          className="secondary"
-          onClick={() =>
-            navigator.clipboard.writeText(room.code)
-          }
-        >
+        <button type="button" className="secondary" onClick={copyCode}>
           📋 Copiar código
         </button>
+        <span className="copy-feedback" role="status">
+          {copyMessage}
+        </span>
       </div>
 
-      <h3>
-        Jugadores conectados ({room.players.length}/2)
-      </h3>
+      <h3>Jugadores conectados ({room.players.length}/2)</h3>
 
       <div className="room-player-list">
         {room.players.map((player, index) => (
           <div key={player.id} className="room-player">
             🧙 Jugador {index + 1}: {player.nickname}
-
             <p>
               {player.character
                 ? `✨ ${player.character.name} · ${player.character.house}`
@@ -76,14 +74,10 @@ export default function RoomLobby({
       )}
 
       {!isFull ? (
-        <p className="description">
-          ⏳ Esperando al segundo jugador...
-        </p>
+        <p className="description">⏳ Esperando al segundo jugador...</p>
       ) : (
         <>
-          <p className="description">
-            ✨ ¡Los dos jugadores están conectados!
-          </p>
+          <p className="description">✨ ¡Los dos jugadores están conectados!</p>
 
           <button
             type="button"
@@ -97,11 +91,7 @@ export default function RoomLobby({
 
           {allSelected ? (
             isHost ? (
-              <button
-                type="button"
-                className="primary"
-                onClick={onStartGame}
-              >
+              <button type="button" className="primary" onClick={onStartGame}>
                 🏰 Comenzar aventura
               </button>
             ) : (

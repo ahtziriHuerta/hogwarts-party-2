@@ -1,13 +1,11 @@
-
 const express = require("express");
+const characters = require("../shared/characters.json");
 const http = require("http");
 const crypto = require("crypto");
 const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-
-
 
 const io = new Server(server, {
   cors: {
@@ -22,29 +20,20 @@ const io = new Server(server, {
   },
 });
 
-
-
 const rooms = new Map();
 
 const TOTAL = 24;
 const TROPHY_PRICE = 100;
 const TROPHIES_TO_WIN = 2;
 
-// ==========================================
 // PREGUNTAS DE HARRY POTTER
-// ==========================================
 // answer indica el índice de la respuesta correcta:
 // 0 = A, 1 = B, 2 = C, 3 = D.
 
 const QUESTIONS = [
   {
     question: "¿A qué casa pertenece Harry Potter?",
-    options: [
-      "Slytherin",
-      "Ravenclaw",
-      "Gryffindor",
-      "Hufflepuff",
-    ],
+    options: ["Slytherin", "Ravenclaw", "Gryffindor", "Hufflepuff"],
     answer: 2,
     difficulty: "Fácil",
     points: 10,
@@ -123,7 +112,8 @@ const QUESTIONS = [
     points: 20,
   },
   {
-    question: "¿Qué objeto permite a Hermione asistir a varias clases a la vez?",
+    question:
+      "¿Qué objeto permite a Hermione asistir a varias clases a la vez?",
     options: ["Giratiempo", "Pensadero", "Traslador", "Recordadora"],
     answer: 0,
     difficulty: "Media",
@@ -152,12 +142,7 @@ const QUESTIONS = [
   },
   {
     question: "¿Quién es el padrino de Harry?",
-    options: [
-      "Sirius Black",
-      "Remus Lupin",
-      "Arthur Weasley",
-      "Severus Snape",
-    ],
+    options: ["Sirius Black", "Remus Lupin", "Arthur Weasley", "Severus Snape"],
     answer: 0,
     difficulty: "Media",
     points: 20,
@@ -176,12 +161,7 @@ const QUESTIONS = [
   },
   {
     question: "¿Qué hechizo abre cerraduras?",
-    options: [
-      "Expelliarmus",
-      "Expecto Patronum",
-      "Alohomora",
-      "Stupefy",
-    ],
+    options: ["Expelliarmus", "Expecto Patronum", "Alohomora", "Stupefy"],
     answer: 2,
     difficulty: "Media",
     points: 20,
@@ -278,13 +258,9 @@ const QUESTIONS = [
     points: 30,
   },
   {
-    question: "¿Quién fue el primer propietario conocido de la Varita de Saúco?",
-    options: [
-      "Dumbledore",
-      "Antioch Peverell",
-      "Grindelwald",
-      "Draco Malfoy",
-    ],
+    question:
+      "¿Quién fue el primer propietario conocido de la Varita de Saúco?",
+    options: ["Dumbledore", "Antioch Peverell", "Grindelwald", "Draco Malfoy"],
     answer: 1,
     difficulty: "Difícil",
     points: 30,
@@ -298,29 +274,20 @@ const QUESTIONS = [
   },
   {
     question: "¿Qué casa de Hogwarts fundó Rowena?",
-    options: [
-      "Ravenclaw",
-      "Hufflepuff",
-      "Slytherin",
-      "Gryffindor",
-    ],
+    options: ["Ravenclaw", "Hufflepuff", "Slytherin", "Gryffindor"],
     answer: 0,
     difficulty: "Difícil",
     points: 30,
   },
 ];
 
-// ==========================================
 // FUNCIONES DE SALAS
-// ==========================================
 
 function generateCode() {
   let code;
 
   do {
-    code = crypto.randomBytes(3)
-      .toString("hex")
-      .toUpperCase();
+    code = crypto.randomBytes(3).toString("hex").toUpperCase();
   } while (rooms.has(code));
 
   return code;
@@ -368,10 +335,7 @@ function publicRoom(room) {
 }
 
 function updateRoom(room) {
-  io.to(room.code).emit(
-    "room-updated",
-    publicRoom(room)
-  );
+  io.to(room.code).emit("room-updated", publicRoom(room));
 }
 
 function getPlayerRoom(socket) {
@@ -386,63 +350,49 @@ function getPlayerRoom(socket) {
   return room;
 }
 
-// ==========================================
 // EFECTOS DE CASILLAS
-// ==========================================
 
 function getSpaceEffect(position, nickname) {
   if (position === TOTAL) {
     return {
       points: 20,
-      message:
-        `🏰 ${nickname} completó una vuelta por Hogwarts: +20 puntos.`,
+      message: `🏰 ${nickname} completó una vuelta por Hogwarts: +20 puntos.`,
     };
   }
 
   if (position % 7 === 0) {
     return {
       points: -10,
-      message:
-        `🕷️ ${nickname} cayó en una trampa: -10 puntos.`,
+      message: `🕷️ ${nickname} cayó en una trampa: -10 puntos.`,
     };
   }
 
   if (position % 5 === 0) {
     return {
       points: 20,
-      message:
-        `⭐ ${nickname} encontró magia: +20 puntos.`,
+      message: `⭐ ${nickname} encontró magia: +20 puntos.`,
     };
   }
 
   return {
     points: 0,
-    message:
-      `✨ ${nickname} llegó a la casilla ${position}.`,
+    message: `✨ ${nickname} llegó a la casilla ${position}.`,
   };
 }
 
-// ==========================================
 // PREGUNTAS ALEATORIAS
-// ==========================================
 
 function chooseQuestion(game) {
   if (game.usedQuestions.length >= QUESTIONS.length) {
     game.usedQuestions = [];
   }
 
-  const available = QUESTIONS
-    .map((question, index) => ({
-      question,
-      index,
-    }))
-    .filter(
-      ({ index }) => !game.usedQuestions.includes(index)
-    );
+  const available = QUESTIONS.map((question, index) => ({
+    question,
+    index,
+  })).filter(({ index }) => !game.usedQuestions.includes(index));
 
-  const selected = available[
-    crypto.randomInt(0, available.length)
-  ];
+  const selected = available[crypto.randomInt(0, available.length)];
 
   game.usedQuestions.push(selected.index);
 
@@ -453,13 +403,10 @@ function chooseQuestion(game) {
 }
 
 function nextTurn(game) {
-  game.turn =
-    (game.turn + 1) % game.players.length;
+  game.turn = (game.turn + 1) % game.players.length;
 }
 
-// ==========================================
 // CONEXIONES MULTIJUGADOR
-// ==========================================
 
 io.on("connection", (socket) => {
   console.log("Conectado:", socket.id);
@@ -593,10 +540,7 @@ io.on("connection", (socket) => {
       });
     }
 
-    if (
-      room.status === "playing" ||
-      room.status === "finished"
-    ) {
+    if (room.status === "playing" || room.status === "finished") {
       return callback?.({
         ok: false,
         error: "La partida ya comenzó.",
@@ -618,9 +562,7 @@ io.on("connection", (socket) => {
     }
 
     const occupied = room.players.some(
-      (p) =>
-        p.id !== socket.id &&
-        p.character?.id === character.id
+      (p) => p.id !== socket.id && p.character?.id === character.id,
     );
 
     if (occupied) {
@@ -630,20 +572,11 @@ io.on("connection", (socket) => {
       });
     }
 
-    const player = room.players.find(
-      (p) => p.id === socket.id
-    );
+    const player = room.players.find((p) => p.id === socket.id);
 
+    // El cliente elige un ID; los datos visuales válidos vienen del catálogo compartido.
     player.character = {
-      id: character.id,
-      name: character.name,
-      house: character.house,
-      primary: character.primary,
-      secondary: character.secondary,
-      hair: character.hair,
-      skin: character.skin,
-      eyes: character.eyes,
-      hairstyle: character.hairstyle,
+      ...characters.find((item) => item.id === character.id),
     };
 
     updateRoom(room);
@@ -682,8 +615,7 @@ io.on("connection", (socket) => {
     ) {
       return callback?.({
         ok: false,
-        error:
-          "Ambos jugadores deben elegir personaje.",
+        error: "Ambos jugadores deben elegir personaje.",
       });
     }
 
@@ -703,8 +635,7 @@ io.on("connection", (socket) => {
       dice: null,
       winner: null,
 
-      message:
-        `🎲 ¡Comienza la aventura! Turno de ${room.players[0].nickname}.`,
+      message: `🎲 ¡Comienza la aventura! Turno de ${room.players[0].nickname}.`,
 
       rollNumber: 0,
       challenge: null,
@@ -726,11 +657,7 @@ io.on("connection", (socket) => {
   socket.on("roll-dice", (_data, callback) => {
     const room = getPlayerRoom(socket);
 
-    if (
-      !room ||
-      room.status !== "playing" ||
-      !room.game
-    ) {
+    if (!room || room.status !== "playing" || !room.game) {
       return callback?.({
         ok: false,
         error: "No hay una partida activa.",
@@ -742,8 +669,7 @@ io.on("connection", (socket) => {
     if (game.challenge) {
       return callback?.({
         ok: false,
-        error:
-          "Primero deben resolver el reto mágico.",
+        error: "Primero deben resolver el reto mágico.",
       });
     }
 
@@ -758,26 +684,19 @@ io.on("connection", (socket) => {
 
     const result = crypto.randomInt(1, 7);
 
-    
-    const previousPosition = player.position;
-
     // Acumulamos los pasos reales del dado.
     player.totalSteps = (player.totalSteps ?? 0) + result;
 
     // Calculamos la posición dentro de las 24 casillas.
-    const destination =
-      ((player.totalSteps - 1) % TOTAL) + 1;
+    const destination = ((player.totalSteps - 1) % TOTAL) + 1;
 
     // Calculamos las vueltas completadas.
-    const newLaps = Math.floor(
-      player.totalSteps / TOTAL
-    );
+    const newLaps = Math.floor(player.totalSteps / TOTAL);
 
     const completedLap = newLaps > (player.laps ?? 0);
 
     player.position = destination;
     player.laps = newLaps;
-
 
     game.dice = result;
     game.rollNumber += 1;
@@ -794,6 +713,10 @@ io.on("connection", (socket) => {
       destination % 5 !== 0 &&
       destination % 7 !== 0;
 
+    // Acreditar la vuelta antes del reto, que mantiene el turno y retorna aquí.
+    const lapBonus = completedLap && destination !== TOTAL ? 20 : 0;
+    player.points += lapBonus;
+
     if (isChallenge) {
       const question = chooseQuestion(game);
 
@@ -809,8 +732,7 @@ io.on("connection", (socket) => {
         points: question.points,
       };
 
-      game.message =
-        `🪄 ${player.nickname} debe responder un reto de Harry Potter.`;
+      game.message = `🪄 ${player.nickname} debe responder un reto de Harry Potter.`;
 
       // El turno se mantiene hasta responder.
       updateRoom(room);
@@ -818,26 +740,14 @@ io.on("connection", (socket) => {
       return callback?.({ ok: true });
     }
 
-    const effect = getSpaceEffect(
-      destination,
-      player.nickname
-    );
+    const effect = getSpaceEffect(destination, player.nickname);
 
-    const lapBonus =
-      completedLap && destination !== TOTAL
-        ? 20
-        : 0;
-
-    player.points = Math.max(
-      0,
-      player.points + effect.points + lapBonus
-    );
+    player.points = Math.max(0, player.points + effect.points);
 
     game.message = effect.message;
 
     if (lapBonus > 0) {
-      game.message +=
-        ` 🏰 ¡Vuelta completada! +20 puntos adicionales.`;
+      game.message += ` 🏰 ¡Vuelta completada! +20 puntos adicionales.`;
     }
 
     nextTurn(game);
@@ -854,11 +764,7 @@ io.on("connection", (socket) => {
   socket.on("answer-challenge", (data, callback) => {
     const room = getPlayerRoom(socket);
 
-    if (
-      !room ||
-      room.status !== "playing" ||
-      !room.game
-    ) {
+    if (!room || room.status !== "playing" || !room.game) {
       return callback?.({
         ok: false,
         error: "No hay una partida activa.",
@@ -878,8 +784,7 @@ io.on("connection", (socket) => {
     if (challenge.playerId !== socket.id) {
       return callback?.({
         ok: false,
-        error:
-          "Este reto pertenece al otro jugador.",
+        error: "Este reto pertenece al otro jugador.",
       });
     }
 
@@ -912,11 +817,9 @@ io.on("connection", (socket) => {
       });
     }
 
-    const correct =
-      answer === challenge.answer;
+    const correct = answer === challenge.answer;
 
-    const earned =
-      correct ? challenge.points : 0;
+    const earned = correct ? challenge.points : 0;
 
     player.points += earned;
 
@@ -945,11 +848,7 @@ io.on("connection", (socket) => {
   socket.on("buy-trophy", (_data, callback) => {
     const room = getPlayerRoom(socket);
 
-    if (
-      !room ||
-      room.status !== "playing" ||
-      !room.game
-    ) {
+    if (!room || room.status !== "playing" || !room.game) {
       return callback?.({
         ok: false,
         error: "No hay una partida activa.",
@@ -961,14 +860,11 @@ io.on("connection", (socket) => {
     if (game.challenge) {
       return callback?.({
         ok: false,
-        error:
-          "Primero deben resolver el reto mágico.",
+        error: "Primero deben resolver el reto mágico.",
       });
     }
 
-    const player = game.players.find(
-      (p) => p.id === socket.id
-    );
+    const player = game.players.find((p) => p.id === socket.id);
 
     if (!player) {
       return callback?.({
@@ -980,8 +876,7 @@ io.on("connection", (socket) => {
     if (player.points < TROPHY_PRICE) {
       return callback?.({
         ok: false,
-        error:
-          `Necesitas ${TROPHY_PRICE} puntos para comprar un trofeo.`,
+        error: `Necesitas ${TROPHY_PRICE} puntos para comprar un trofeo.`,
       });
     }
 
@@ -996,17 +891,13 @@ io.on("connection", (socket) => {
     player.trophies += 1;
 
     if (player.trophies >= TROPHIES_TO_WIN) {
-      game.winner = game.players.findIndex(
-        (p) => p.id === socket.id
-      );
+      game.winner = game.players.findIndex((p) => p.id === socket.id);
 
       room.status = "finished";
 
-      game.message =
-        `🏆 ¡${player.nickname} consiguió 2 trofeos y ganó la Copa de Hogwarts!`;
+      game.message = `🏆 ¡${player.nickname} consiguió 2 trofeos y ganó la Copa de Hogwarts!`;
     } else {
-      game.message =
-        `🏆 ${player.nickname} compró un trofeo. ¡Le falta uno para ganar!`;
+      game.message = `🏆 ${player.nickname} compró un trofeo. ¡Le falta uno para ganar!`;
     }
 
     updateRoom(room);
@@ -1028,16 +919,14 @@ io.on("connection", (socket) => {
     if (!room || !room.game) {
       return callback?.({
         ok: false,
-        error:
-          "No hay una partida para reiniciar.",
+        error: "No hay una partida para reiniciar.",
       });
     }
 
     if (room.players[0]?.id !== socket.id) {
       return callback?.({
         ok: false,
-        error:
-          "Solo el creador puede reiniciar.",
+        error: "Solo el creador puede reiniciar.",
       });
     }
 
@@ -1057,8 +946,7 @@ io.on("connection", (socket) => {
     room.game.usedQuestions = [];
     room.game.nextChallengeId = 0;
 
-    room.game.message =
-      "✨ ¡Nueva aventura! Jugador 1, lanza el dado.";
+    room.game.message = "✨ ¡Nueva aventura! Jugador 1, lanza el dado.";
 
     room.status = "playing";
 
@@ -1077,9 +965,7 @@ io.on("connection", (socket) => {
 
     if (!room) return;
 
-    room.players = room.players.filter(
-      (p) => p.id !== socket.id
-    );
+    room.players = room.players.filter((p) => p.id !== socket.id);
 
     if (room.players.length === 0) {
       rooms.delete(code);
@@ -1096,14 +982,10 @@ io.on("connection", (socket) => {
   });
 });
 
-// ==========================================
 // SERVIDOR HTTP
-// ==========================================
 
 app.get("/", (_req, res) => {
-  res.send(
-    "Servidor Hogwarts Party funcionando"
-  );
+  res.send("Servidor Hogwarts Party funcionando");
 });
 
 const PORT = process.env.PORT || 3001;
