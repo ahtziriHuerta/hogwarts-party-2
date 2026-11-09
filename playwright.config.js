@@ -16,7 +16,8 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "npm run server",
+      command:
+        "node --require ./tests/fixtures/fixed-dice.cjs server/index.cjs",
       env: { PORT: "3002" },
       url: "http://localhost:3002",
       reuseExistingServer: false,

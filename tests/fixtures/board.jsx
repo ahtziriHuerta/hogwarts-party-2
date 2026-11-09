@@ -17,23 +17,47 @@ const players = characters.slice(5, 7).map((character, index) => ({
   totalSteps: scene === "edge" ? 23 + index : 12,
   laps: 0,
 }));
-const challenge =
-  scene === "challenge"
-    ? {
-        id: 1,
-        playerId: "player-0",
-        difficulty: "Difícil",
-        points: 30,
-        question:
-          "¿Quién fue el primer propietario conocido de la Varita de Saúco?",
-        options: [
-          "Dumbledore",
-          "Antioch Peverell",
-          "Grindelwald",
-          "Draco Malfoy",
-        ],
-      }
-    : null;
+const now = Date.now();
+const isDuel = ["challenge", "boolean", "results"].includes(scene);
+const challenge = isDuel
+  ? {
+      id: "fixture-duel",
+      phase: scene === "results" ? "results" : "answering",
+      difficulty: "Difícil",
+      category: "Objetos",
+      kind: scene === "boolean" ? "true-false" : "trivia",
+      points: 30,
+      maxSpeedBonus: 10,
+      serverNow: now,
+      deadlineAt: now + 20_000,
+      durationMs: 20_000,
+      participantCount: 2,
+      answeredPlayerIds: scene === "results" ? ["player-0"] : [],
+      question:
+        scene === "boolean"
+          ? "La espada de Gryffindor fue fabricada por duendes."
+          : "¿Quién fue el primer propietario conocido de la Varita de Saúco?",
+      options:
+        scene === "boolean"
+          ? ["Verdadero", "Falso"]
+          : ["Dumbledore", "Antioch Peverell", "Grindelwald", "Draco Malfoy"],
+      ...(scene === "results"
+        ? {
+            correctAnswer: 1,
+            revealUntil: now + 5000,
+            results: players.map((player, index) => ({
+              playerId: player.id,
+              nickname: player.nickname,
+              correct: index === 0,
+              timedOut: index === 1,
+              basePoints: index === 0 ? 30 : 0,
+              speedBonus: index === 0 ? 10 : 0,
+              earned: index === 0 ? 40 : 0,
+            })),
+          }
+        : {}),
+    }
+  : null;
 const game = {
   players,
   turn: 0,

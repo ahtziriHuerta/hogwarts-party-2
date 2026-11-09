@@ -41,7 +41,14 @@ de partidas ni recuperación de sesión.
 
 - Dos jugadores eligen personajes distintos y lanzan un dado por turnos.
 - Magia: +20 puntos. Trampa: −10, sin bajar de cero.
-- Los retos otorgan 10, 20 o 30 puntos al acertar y mantienen el turno hasta responder.
+- Al caer en una casilla ⚡, **ambos jugadores** responden la misma pregunta en 20 segundos.
+- Toca una opción para enviarla: solo se acepta una respuesta por jugador.
+- Acertar da 10, 20 o 30 puntos según la dificultad, más hasta 10 por rapidez.
+- La solución se revela cuando ambos responden o termina el tiempo; no se revela al primero.
+- Los resultados duran 5 segundos y después continúa el siguiente turno automáticamente.
+- No responder o fallar el reto da 0 puntos; la trampa del tablero sigue quitando 10.
+- El banco tiene 60 preguntas: 50 de cuatro opciones y 10 de verdadero/falso, por categorías.
+- Las preguntas no se repiten hasta agotar el banco y las opciones se barajan en cada reto.
 - Completar una vuelta otorga +20 puntos, también al aterrizar en un reto.
 - Cada trofeo cuesta 100 puntos. Gana quien compre dos.
 
@@ -58,11 +65,14 @@ npm run build
 - `src/App.jsx`: navegación, conexión y acciones de sala.
 - `src/RoomLobby.jsx`: jugadores y código compartido.
 - `src/CharacterSelection.jsx`: selección del catálogo compartido.
-- `src/MagicBoard.jsx`: tablero, fichas animadas y retos.
+- `src/MagicBoard.jsx`: tablero, fichas animadas y acciones.
+- `src/LightningChallenge.jsx`: reloj, respuestas simultáneas y resultados.
 - `src/App.css`: diseño general y pantallas de entrada.
 - `src/MagicBoard.css`: tablero y adaptación a pantallas pequeñas.
 - `shared/characters.json`: catálogo único para navegador y servidor.
 - `server/index.cjs`: salas, turnos, puntuación y validación de acciones.
+- `server/challenges.cjs`: plazos, respuestas privadas y puntuación de los retos.
+- `server/questions.json`: banco de preguntas y soluciones, usado por el servidor.
 
 En celular horizontal, el inicio, crear/unirse a sala, la espera y la selección
 de personajes caben cada uno en una sola pantalla. Inicio y formularios usan
@@ -87,13 +97,21 @@ npm run test:ui
 ```
 
 Estas pruebas arrancan el frontend en el puerto 5174 y el servidor en 3002;
-deben estar disponibles. Las 11 pruebas comprueban inicio, guía, formularios,
+deben estar disponibles. Las 12 pruebas comprueban inicio, guía, formularios,
 sala de espera/lista, partida, errores, victoria, opciones y preguntas sin
 desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430. Incluyen nombres
 de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.
 También revisan que los ocho personajes y el botón de confirmación quepan en
 la selección, que los peinados tengan geometría distinta y que las trenzas y la
-coleta se conserven al iniciar una sala real de dos jugadores.
+coleta se conserven al iniciar una sala real de dos jugadores. Los retos de cuatro
+opciones, verdadero/falso y resultados se revisan en los cinco tamaños.
+
+La prueba del duelo usa dos navegadores y espera el plazo real de 20 segundos:
+comprueba respuestas ocultas, bloqueo después de responder, puntuaciones iguales
+y avance automático. Solo para estas pruebas, el dado se fija en 3 mediante
+`tests/fixtures/fixed-dice.cjs`, precargado por Playwright; el servidor normal
+mantiene su dado aleatorio. `npm test` ejecuta 13 pruebas del servidor con reloj
+simulado, incluyendo respuestas tardías o duplicadas, bonos, reinicios y desconexiones.
 
 Para usar un Chromium ya instalado, configura
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con la ruta del ejecutable. Las pruebas
@@ -120,3 +138,15 @@ Abre la dirección indicada por esa terminal y recarga sin caché
 servidor ya ocupa ese puerto. No borres `package-lock.json`: `npm ci` instala
 las versiones registradas ahí. Si persiste, conserva la nueva traza de la consola
 para identificar qué módulos está cargando el navegador.
+
+## Actualizar una partida con los retos nuevos
+
+Después de descargar estos cambios, detén **frontend y servidor** con Control+C.
+Arranca de nuevo `npm run server` y `npm run dev` en terminales distintas y crea
+una sala nueva. El protocolo de retos cambió: un servidor anterior no envía el
+reloj ni las respuestas simultáneas que usa la interfaz nueva.
+
+Los plazos y premios se calculan en el servidor; la cuenta atrás del navegador
+solo los muestra. Reiniciar o desconectar cancela también los temporizadores,
+para que un reto anterior no afecte a otra partida. Videos y casillas sorpresa
+quedan fuera de esta primera ampliación.

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket";
 import MagicCharacter from "./MagicCharacter";
+import LightningChallenge from "./LightningChallenge";
 import "./MagicBoard.css";
 
 const TOTAL = 24;
@@ -49,7 +50,7 @@ const spaces = Array.from({ length: TOTAL }, (_, i) => {
   }
 
   if (number % 3 === 0) {
-    return { number, type: "challenge", icon: "🪄" };
+    return { number, type: "challenge", icon: "⚡" };
   }
 
   return { number, type: "normal", icon: "✨" };
@@ -221,96 +222,6 @@ function AnimatedToken({ player, index, resetKey }) {
   );
 }
 
-// VENTANA DE PREGUNTAS
-
-function ChallengeModal({ challenge, mySocketId, onAnswer }) {
-  const [selected, setSelected] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  const isMyChallenge = challenge.playerId === mySocketId;
-
-  function submitAnswer() {
-    if (!isMyChallenge || selected === null || busy) {
-      return;
-    }
-
-    setBusy(true);
-    setError("");
-
-    onAnswer(challenge.id, selected, (result) => {
-      setBusy(false);
-
-      if (!result?.ok) {
-        setError(result?.error || "No se pudo enviar la respuesta.");
-      }
-    });
-  }
-
-  return (
-    <div className="challenge-overlay">
-      <div
-        className="challenge-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Reto de Harry Potter"
-      >
-        <div className="challenge-icon">🪄</div>
-
-        <h2>Desafío de Hogwarts</h2>
-
-        <div className="challenge-meta">
-          <span>{challenge.difficulty}</span>
-          <span>⭐ {challenge.points} puntos</span>
-        </div>
-
-        <p className="challenge-question">{challenge.question}</p>
-
-        <div className="challenge-options">
-          {challenge.options.map((option, index) => (
-            <button
-              key={index}
-              type="button"
-              className={`challenge-option ${
-                selected === index ? "selected" : ""
-              }`}
-              disabled={!isMyChallenge || busy}
-              onClick={() => setSelected(index)}
-            >
-              <span className="challenge-letter">
-                {String.fromCharCode(65 + index)}
-              </span>
-
-              <span>{option}</span>
-            </button>
-          ))}
-        </div>
-
-        {error && (
-          <p className="room-error" role="alert">
-            ⚠️ {error}
-          </p>
-        )}
-
-        {isMyChallenge ? (
-          <button
-            type="button"
-            className="primary challenge-submit"
-            disabled={selected === null || busy}
-            onClick={submitAnswer}
-          >
-            {busy ? "Comprobando..." : "✨ Responder"}
-          </button>
-        ) : (
-          <p className="challenge-waiting">
-            ⏳ El otro jugador está respondiendo...
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
 // El diálogo nativo administra el foco, Escape y el regreso al botón de opciones.
 function BoardOptions({ isHost, busy, onRestart, onClose }) {
   const dialog = useRef(null);
@@ -341,7 +252,10 @@ function BoardOptions({ isHost, busy, onRestart, onClose }) {
       <ul>
         <li>⭐ Magia: +20 puntos.</li>
         <li>🕷️ Trampa: −10 puntos, sin bajar de cero.</li>
-        <li>🪄 Reto: +10, +20 o +30 puntos al acertar.</li>
+        <li>
+          ⚡ Reto relámpago: ambos responden en 20 s. +10–30 al acertar y hasta
+          +10 por rapidez.
+        </li>
         <li>🏰 Completar una vuelta: +20 puntos.</li>
       </ul>
       {isHost && (
@@ -504,7 +418,7 @@ export default function MagicBoard({
             {winningPlayer
               ? `🏆 Ganó ${winningPlayer.nickname}`
               : challenge
-                ? "🪄 Reto mágico"
+                ? "⚡ ¡Ambos responden!"
                 : isMyTurn
                   ? "🎲 ¡Es tu turno!"
                   : `⏳ Turno de ${current.nickname}`}
@@ -569,7 +483,7 @@ export default function MagicBoard({
       <p className="board-legend" aria-label="Tipos de casilla">
         <span>⭐ Magia +20</span>
         <span>🕷️ Trampa −10</span>
-        <span>🪄 Reto +10–30</span>
+        <span>⚡ Reto +10–40</span>
         <span>🏰 Vuelta +20</span>
       </p>
       {/* CONTENEDOR DEL TABLERO Y LOS CONTROLES */}
@@ -664,7 +578,7 @@ export default function MagicBoard({
               : winningPlayer
                 ? "🏆 Partida terminada"
                 : challenge
-                  ? "🪄 Resuelve el reto"
+                  ? "⚡ Reto en curso"
                   : isMyTurn
                     ? "🎲 Lanzar dado"
                     : "⏳ Esperando tu turno"}
@@ -713,7 +627,7 @@ export default function MagicBoard({
       {/* PREGUNTA ALEATORIA */}
 
       {challenge && (
-        <ChallengeModal
+        <LightningChallenge
           key={challenge.id}
           challenge={challenge}
           mySocketId={mySocketId}

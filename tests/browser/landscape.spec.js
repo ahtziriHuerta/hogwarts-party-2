@@ -35,19 +35,45 @@ for (const size of sizes) {
 
     await page.goto("/tests/fixtures/board.html?scene=challenge");
     await expect(
-      page.getByRole("dialog", { name: "Reto de Harry Potter" }),
+      page.getByRole("dialog", { name: "Reto relámpago" }),
     ).toBeVisible();
     await expectOnScreen(page, [
       ".challenge-modal",
       ".challenge-option",
-      ".challenge-submit",
+      ".challenge-footer",
     ]);
     const modal = await page
       .locator(".challenge-modal")
       .evaluate((el) => ({ scroll: el.scrollHeight, client: el.clientHeight }));
     expect(modal.scroll).toBeLessThanOrEqual(modal.client + 1);
     await page.getByRole("button", { name: "B Antioch Peverell" }).click();
-    await expect(page.getByRole("button", { name: "Responder" })).toBeEnabled();
+    await expect(
+      page.getByRole("button", { name: "B Antioch Peverell" }),
+    ).toBeDisabled();
+    await expect(
+      page.locator('.challenge-options button[aria-pressed="true"]'),
+    ).toHaveCount(1);
+
+    await page.goto("/tests/fixtures/board.html?scene=boolean");
+    await expect(page.locator(".challenge-option")).toHaveCount(2);
+    await expectOnScreen(page, [
+      ".challenge-modal",
+      ".challenge-option",
+      ".challenge-footer",
+    ]);
+    await page.goto("/tests/fixtures/board.html?scene=results");
+    await expect(
+      page.getByRole("dialog", { name: "Resultados del reto" }),
+    ).toBeVisible();
+    await expectOnScreen(page, [
+      ".challenge-modal",
+      ".challenge-result",
+      ".challenge-footer",
+    ]);
+    const resultSize = await page
+      .locator(".challenge-modal")
+      .evaluate((el) => [el.scrollHeight, el.clientHeight]);
+    expect(resultSize[0]).toBeLessThanOrEqual(resultSize[1] + 1);
 
     await page.goto("/tests/fixtures/board.html?scene=winner");
     await expect(page.locator(".board-victory")).toBeVisible();

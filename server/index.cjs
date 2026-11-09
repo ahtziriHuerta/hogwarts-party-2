@@ -26,260 +26,8 @@ const TOTAL = 24;
 const TROPHY_PRICE = 100;
 const TROPHIES_TO_WIN = 2;
 
-// PREGUNTAS DE HARRY POTTER
-// answer indica el índice de la respuesta correcta:
-// 0 = A, 1 = B, 2 = C, 3 = D.
-
-const QUESTIONS = [
-  {
-    question: "¿A qué casa pertenece Harry Potter?",
-    options: ["Slytherin", "Ravenclaw", "Gryffindor", "Hufflepuff"],
-    answer: 2,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Cómo se llama la lechuza de Harry?",
-    options: ["Hedwig", "Errol", "Pigwidgeon", "Fawkes"],
-    answer: 0,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Cuál es el hechizo para desarmar?",
-    options: ["Lumos", "Accio", "Protego", "Expelliarmus"],
-    answer: 3,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Quién es el mejor amigo de Harry junto con Hermione?",
-    options: ["Draco", "Ron", "Neville", "Cedric"],
-    answer: 1,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Cuál es la plataforma del Expreso de Hogwarts?",
-    options: ["9¾", "7½", "10", "8¾"],
-    answer: 0,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Quién es el director de Hogwarts al comienzo de la saga?",
-    options: ["Snape", "Hagrid", "Dumbledore", "Lupin"],
-    answer: 2,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Qué deporte practican los estudiantes en escobas?",
-    options: ["Quidditch", "Críquet", "Polo", "Duelo"],
-    answer: 0,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Cuál es el nombre del banco de los magos?",
-    options: ["Azkaban", "Gringotts", "Ollivanders", "Honeydukes"],
-    answer: 1,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Qué hechizo produce luz en la punta de la varita?",
-    options: ["Nox", "Accio", "Lumos", "Reparo"],
-    answer: 2,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Quién enseña Pociones durante gran parte de la saga?",
-    options: ["McGonagall", "Flitwick", "Hagrid", "Snape"],
-    answer: 3,
-    difficulty: "Fácil",
-    points: 10,
-  },
-
-  // PREGUNTAS MEDIAS
-
-  {
-    question: "¿Cómo se llama el hipogrifo de Hagrid?",
-    options: ["Aragog", "Buckbeak", "Norbert", "Fang"],
-    answer: 1,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question:
-      "¿Qué objeto permite a Hermione asistir a varias clases a la vez?",
-    options: ["Giratiempo", "Pensadero", "Traslador", "Recordadora"],
-    answer: 0,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Cuál es el patronus de Harry?",
-    options: ["Lobo", "Cierva", "Ciervo", "Águila"],
-    answer: 2,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué hechizo sirve para atraer objetos?",
-    options: ["Reparo", "Accio", "Alohomora", "Obliviate"],
-    answer: 1,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué criatura vive en la Cámara de los Secretos?",
-    options: ["Dragón", "Acromántula", "Trol", "Basilisco"],
-    answer: 3,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Quién es el padrino de Harry?",
-    options: ["Sirius Black", "Remus Lupin", "Arthur Weasley", "Severus Snape"],
-    answer: 0,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué objeto elige la casa de cada estudiante?",
-    options: [
-      "Copa de Fuego",
-      "Sombrero Seleccionador",
-      "Varita de Saúco",
-      "Mapa del Merodeador",
-    ],
-    answer: 1,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué hechizo abre cerraduras?",
-    options: ["Expelliarmus", "Expecto Patronum", "Alohomora", "Stupefy"],
-    answer: 2,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Cómo se llama el elfo doméstico que ayuda a Harry?",
-    options: ["Kreacher", "Winky", "Hokey", "Dobby"],
-    answer: 3,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué dragón enfrenta Harry en el Torneo de los Tres Magos?",
-    options: [
-      "Colacuerno húngaro",
-      "Bola de Fuego chino",
-      "Hocicorto sueco",
-      "Verde galés",
-    ],
-    answer: 0,
-    difficulty: "Media",
-    points: 20,
-  },
-
-  // PREGUNTAS DIFÍCILES
-
-  {
-    question: "¿Cuál es el segundo nombre de Albus Dumbledore?",
-    options: ["Brian", "Percival", "Wulfric", "Aberforth"],
-    answer: 1,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Quién destruye el último horrocrux de Voldemort?",
-    options: ["Harry", "Hermione", "Neville", "Ron"],
-    answer: 2,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Cuál es el nombre completo de Voldemort antes de cambiarlo?",
-    options: [
-      "Tom Marvolo Riddle",
-      "Tom Sirius Riddle",
-      "Thomas Gaunt",
-      "Tom Salazar",
-    ],
-    answer: 0,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Qué criatura representa el patronus de Snape?",
-    options: ["Lobo", "Ciervo", "Fénix", "Cierva"],
-    answer: 3,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Quién fabricó la primera snitch dorada?",
-    options: [
-      "Garrick Ollivander",
-      "Bowman Wright",
-      "Nicolas Flamel",
-      "Godric Gryffindor",
-    ],
-    answer: 1,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Cómo se llama la madre de Voldemort?",
-    options: [
-      "Merope Gaunt",
-      "Bellatrix Lestrange",
-      "Walburga Black",
-      "Hepzibah Smith",
-    ],
-    answer: 0,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Cuál es el núcleo de la varita de Harry?",
-    options: [
-      "Pelo de unicornio",
-      "Fibra de corazón de dragón",
-      "Pluma de fénix",
-      "Pelo de thestral",
-    ],
-    answer: 2,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question:
-      "¿Quién fue el primer propietario conocido de la Varita de Saúco?",
-    options: ["Dumbledore", "Antioch Peverell", "Grindelwald", "Draco Malfoy"],
-    answer: 1,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Qué horrocrux destruye Ron?",
-    options: ["Diadema", "Diario", "Copa", "Guardapelo"],
-    answer: 3,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Qué casa de Hogwarts fundó Rowena?",
-    options: ["Ravenclaw", "Hufflepuff", "Slytherin", "Gryffindor"],
-    answer: 0,
-    difficulty: "Difícil",
-    points: 30,
-  },
-];
+const QUESTIONS = require("./questions.json");
+const { createChallengeController } = require("./challenges.cjs");
 
 // FUNCIONES DE SALAS
 
@@ -291,20 +39,6 @@ function generateCode() {
   } while (rooms.has(code));
 
   return code;
-}
-
-// No enviamos la respuesta correcta al navegador.
-function publicChallenge(challenge) {
-  if (!challenge) return null;
-
-  return {
-    id: challenge.id,
-    playerId: challenge.playerId,
-    question: challenge.question,
-    options: [...challenge.options],
-    difficulty: challenge.difficulty,
-    points: challenge.points,
-  };
 }
 
 function publicRoom(room) {
@@ -326,7 +60,7 @@ function publicRoom(room) {
           winner: room.game.winner,
           message: room.game.message,
           rollNumber: room.game.rollNumber,
-          challenge: publicChallenge(room.game.challenge),
+          challenge: challenges.publicChallenge(room.game.challenge),
           trophyPrice: TROPHY_PRICE,
           trophiesToWin: TROPHIES_TO_WIN,
         }
@@ -396,15 +130,27 @@ function chooseQuestion(game) {
 
   game.usedQuestions.push(selected.index);
 
+  // Barajar las opciones evita memorizar una letra en lugar de la respuesta.
+  const options = selected.question.options.map((text, index) => ({
+    text,
+    correct: index === selected.question.answer,
+  }));
+  for (let i = options.length - 1; i > 0; i -= 1) {
+    const j = crypto.randomInt(0, i + 1);
+    [options[i], options[j]] = [options[j], options[i]];
+  }
   return {
     ...selected.question,
-    options: [...selected.question.options],
+    options: options.map((option) => option.text),
+    answer: options.findIndex((option) => option.correct),
   };
 }
 
 function nextTurn(game) {
   game.turn = (game.turn + 1) % game.players.length;
 }
+
+const challenges = createChallengeController({ updateRoom, nextTurn });
 
 // CONEXIONES MULTIJUGADOR
 
@@ -640,7 +386,6 @@ io.on("connection", (socket) => {
       rollNumber: 0,
       challenge: null,
       usedQuestions: [],
-      nextChallengeId: 0,
     };
 
     room.status = "playing";
@@ -718,25 +463,7 @@ io.on("connection", (socket) => {
     player.points += lapBonus;
 
     if (isChallenge) {
-      const question = chooseQuestion(game);
-
-      game.nextChallengeId += 1;
-
-      game.challenge = {
-        id: game.nextChallengeId,
-        playerId: player.id,
-        question: question.question,
-        options: question.options,
-        answer: question.answer,
-        difficulty: question.difficulty,
-        points: question.points,
-      };
-
-      game.message = `🪄 ${player.nickname} debe responder un reto de Harry Potter.`;
-
-      // El turno se mantiene hasta responder.
-      updateRoom(room);
-
+      challenges.start(room, chooseQuestion(game));
       return callback?.({ ok: true });
     }
 
@@ -771,74 +498,7 @@ io.on("connection", (socket) => {
       });
     }
 
-    const game = room.game;
-    const challenge = game.challenge;
-
-    if (!challenge) {
-      return callback?.({
-        ok: false,
-        error: "No hay un reto pendiente.",
-      });
-    }
-
-    if (challenge.playerId !== socket.id) {
-      return callback?.({
-        ok: false,
-        error: "Este reto pertenece al otro jugador.",
-      });
-    }
-
-    if (data?.challengeId !== challenge.id) {
-      return callback?.({
-        ok: false,
-        error: "El reto ya cambió.",
-      });
-    }
-
-    const answer = data?.answer;
-
-    if (
-      !Number.isInteger(answer) ||
-      answer < 0 ||
-      answer >= challenge.options.length
-    ) {
-      return callback?.({
-        ok: false,
-        error: "Selecciona una respuesta válida.",
-      });
-    }
-
-    const player = game.players[game.turn];
-
-    if (player.id !== socket.id) {
-      return callback?.({
-        ok: false,
-        error: "No es tu turno.",
-      });
-    }
-
-    const correct = answer === challenge.answer;
-
-    const earned = correct ? challenge.points : 0;
-
-    player.points += earned;
-
-    game.message = correct
-      ? `✨ ¡${player.nickname} acertó! +${earned} puntos.`
-      : `❌ ${player.nickname} falló el reto. La respuesta era: ${challenge.options[challenge.answer]}.`;
-
-    game.challenge = null;
-
-    nextTurn(game);
-
-    updateRoom(room);
-
-    callback?.({
-      ok: true,
-      correct,
-      earned,
-      correctAnswer: challenge.answer,
-    });
+    callback?.(challenges.answer(room, socket.id, data));
   });
 
   // ========================================
@@ -930,6 +590,8 @@ io.on("connection", (socket) => {
       });
     }
 
+    challenges.cancel(room);
+
     room.game.players.forEach((p) => {
       p.position = 0;
       p.points = 0;
@@ -944,7 +606,6 @@ io.on("connection", (socket) => {
     room.game.rollNumber = 0;
     room.game.challenge = null;
     room.game.usedQuestions = [];
-    room.game.nextChallengeId = 0;
 
     room.game.message = "✨ ¡Nueva aventura! Jugador 1, lanza el dado.";
 
@@ -965,6 +626,7 @@ io.on("connection", (socket) => {
 
     if (!room) return;
 
+    challenges.cancel(room);
     room.players = room.players.filter((p) => p.id !== socket.id);
 
     if (room.players.length === 0) {
