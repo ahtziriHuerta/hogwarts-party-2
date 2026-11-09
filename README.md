@@ -98,3 +98,25 @@ coleta se conserven al iniciar una sala real de dos jugadores.
 Para usar un Chromium ya instalado, configura
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con la ruta del ejecutable. Las pruebas
 usan Chromium; queda pendiente comprobar Safari y dispositivos físicos.
+
+## Si aparece «Invalid hook call» al arrancar
+
+El código de `App` usa los hooks dentro del componente. Si el navegador falla
+en el primer `useState`, comprueba también la instalación y la caché de Vite.
+La configuración deduplica React y React DOM e incluye el renderizador desde
+la optimización inicial. Las pruebas usan otra caché, para no reescribir la del
+servidor de desarrollo abierto.
+
+Detén el frontend con Control+C antes de reinstalar o actualizar dependencias.
+Desde la carpeta del proyecto, ejecuta:
+
+```sh
+npm ci
+npm run dev -- --force --port 5173 --strictPort
+```
+
+Abre la dirección indicada por esa terminal y recarga sin caché
+(Command+Shift+R en Chrome para Mac). `--strictPort` muestra un error si otro
+servidor ya ocupa ese puerto. No borres `package-lock.json`: `npm ci` instala
+las versiones registradas ahí. Si persiste, conserva la nueva traza de la consola
+para identificar qué módulos está cargando el navegador.

@@ -15,6 +15,11 @@ for (const size of sizes) {
       page.on("pageerror", (error) => errors.push(error.message));
 
     await host.goto("/");
+    // Reabrir la página también debe funcionar con las dependencias ya en caché.
+    await expect(
+      host.getByRole("button", { name: "Crear partida" }),
+    ).toBeVisible();
+    await host.reload();
     await expect(
       host.getByRole("button", { name: "Crear partida" }),
     ).toBeVisible();

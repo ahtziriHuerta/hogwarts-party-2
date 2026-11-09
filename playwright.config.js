@@ -22,7 +22,8 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
-      command: "npm run dev -- --host 0.0.0.0 --port 5174 --strictPort",
+      command:
+        "npm run dev -- --mode browser-tests --host 0.0.0.0 --port 5174 --strictPort",
       env: { VITE_SERVER_URL: "http://localhost:3002" },
       url: "http://localhost:5174",
       reuseExistingServer: false,
