@@ -6,8 +6,8 @@
   },
   {
     "number": 2,
-    "type": "solo",
-    "icon": "🪄"
+    "type": "memory",
+    "icon": "🧠"
   },
   {
     "number": 3,
@@ -16,8 +16,8 @@
   },
   {
     "number": 4,
-    "type": "solo",
-    "icon": "🪄"
+    "type": "surprise",
+    "icon": "🎁"
   },
   {
     "number": 5,
@@ -41,8 +41,8 @@
   },
   {
     "number": 9,
-    "type": "duel",
-    "icon": "⚡"
+    "type": "memory",
+    "icon": "🧠"
   },
   {
     "number": 10,
@@ -61,13 +61,13 @@
   },
   {
     "number": 13,
-    "type": "solo",
-    "icon": "🪄"
+    "type": "surprise",
+    "icon": "🎁"
   },
   {
     "number": 14,
-    "type": "trap",
-    "icon": "🕷️"
+    "type": "solo",
+    "icon": "🪄"
   },
   {
     "number": 15,
@@ -76,13 +76,13 @@
   },
   {
     "number": 16,
-    "type": "solo",
-    "icon": "🪄"
+    "type": "memory",
+    "icon": "🧠"
   },
   {
     "number": 17,
-    "type": "duel",
-    "icon": "⚡"
+    "type": "surprise",
+    "icon": "🎁"
   },
   {
     "number": 18,
@@ -101,21 +101,81 @@
   },
   {
     "number": 21,
+    "type": "memory",
+    "icon": "🧠"
+  },
+  {
+    "number": 22,
     "type": "duel",
     "icon": "⚡"
   },
   {
-    "number": 22,
-    "type": "normal",
-    "icon": "✨"
+    "number": 23,
+    "type": "surprise",
+    "icon": "🎁"
   },
   {
-    "number": 23,
+    "number": 24,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 25,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 26,
+    "type": "memory",
+    "icon": "🧠"
+  },
+  {
+    "number": 27,
+    "type": "trap",
+    "icon": "🕷️"
+  },
+  {
+    "number": 28,
+    "type": "surprise",
+    "icon": "🎁"
+  },
+  {
+    "number": 29,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 30,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 31,
     "type": "bonus",
     "icon": "🪙"
   },
   {
-    "number": 24,
+    "number": 32,
+    "type": "memory",
+    "icon": "🧠"
+  },
+  {
+    "number": 33,
+    "type": "surprise",
+    "icon": "🎁"
+  },
+  {
+    "number": 34,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 35,
+    "type": "normal",
+    "icon": "✨"
+  },
+  {
+    "number": 36,
     "type": "finish",
     "icon": "🏰"
   }

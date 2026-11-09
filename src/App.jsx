@@ -3,6 +3,7 @@ import "./App.css";
 import CharacterSelection from "./CharacterSelection";
 import MagicBoard from "./MagicBoard";
 import RoomLobby from "./RoomLobby";
+import board from "../shared/board.json";
 import { socket } from "./socket";
 
 function App() {
@@ -225,7 +226,7 @@ function App() {
 
             <div className="game-facts">
               <span>2 jugadores</span>
-              <span>24 casillas</span>
+              <span>{board.length} casillas</span>
               <span>Una copa en juego</span>
             </div>
           </div>

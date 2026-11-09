@@ -40,13 +40,25 @@ de partidas ni recuperación de sesión.
 ## Reglas
 
 - Dos jugadores eligen personajes distintos y lanzan un dado por turnos.
-- **16 de las 24 casillas son preguntas**: 8 individuales 🪄 y 8 duelos ⚡.
-- Ambos formatos tienen un plazo de 20 segundos y 5 segundos de resultados.
+- **36 casillas**, con 28 actividades: 8 individuales 🪄, 8 duelos ⚡,
+  6 retos de memoria 🧠 y 6 cartas sorpresa 🎁.
+- Individuales y duelos tienen 20 segundos para responder y 5 de resultados.
 
 | Casilla       | Quién responde                    | Acierto                                   | Fallo o tiempo agotado                     |
 | ------------- | --------------------------------- | ----------------------------------------- | ------------------------------------------ |
 | 🪄 Individual | Solo quien cayó; el rival observa | +10, +20 o +30 monedas                    | 0, sin descuento                           |
 | ⚡ Duelo      | Ambos, a la vez                   | +10, +20 o +30, más hasta +10 por rapidez | −10 monedas para quien falle o no responda |
+| 🧠 Memoria    | Solo quien cayó; el rival observa | +25 monedas                               | 0, sin descuento                           |
+
+En memoria aparecen cinco símbolos durante 5 segundos. Después desaparecen y
+se pregunta cuál ocupaba una posición, con cuatro opciones y 20 segundos para
+responder. La pregunta se envía cuando termina la observación; las respuestas
+anticipadas se rechazan. Los resultados duran 5 segundos.
+
+Las cartas sorpresa se resuelven al caer y se muestran a ambos durante 5 segundos:
+premios de +15, +20 o +30, pérdida de hasta 10, tomar hasta 10 del rival o regalar
+10 a cada jugador. El resultado muestra el cambio real de cada saldo y después
+avanza el turno. El servidor elige la carta y aplica su efecto una sola vez.
 
 El saldo nunca baja de cero: con 7 monedas, la penalización descuenta 7.
 Cada jugador solo puede enviar una respuesta. Las soluciones permanecen ocultas
@@ -55,7 +67,7 @@ turno automáticamente. El observador de un reto individual no recibe premios
 ni descuentos.
 
 Hay además 4 casillas de bono (+20), 2 trampas (−10), 1 casilla normal y 1 castillo.
-Completar una vuelta otorga +20, también al caer en una pregunta. Estos bonos y
+Completar una vuelta otorga +20, también al caer en una actividad. Estos bonos y
 los retos individuales permiten recuperar saldo tras un duelo. Cada trofeo
 cuesta 100 monedas; gana quien compre dos.
 
@@ -81,9 +93,12 @@ npm run build
 - `src/MagicBoard.css`: tablero y adaptación a pantallas pequeñas.
 - `shared/characters.json`: catálogo único para navegador y servidor.
 - `shared/board.json`: mapa único de las casillas y tipos para navegador y servidor.
+- `shared/board-layout.js`: recorrido serpenteante generado a partir del número de casillas.
 - `server/index.cjs`: salas, turnos, puntuación y validación de acciones.
 - `server/challenges.cjs`: plazos, respuestas privadas y puntuación de los retos.
 - `server/questions.json`: banco de preguntas y soluciones, usado por el servidor.
+- `server/memory.cjs`: secuencias y preguntas de memoria aleatorias.
+- `server/surprises.cjs`: cartas sorpresa y cambios de saldo.
 
 En celular horizontal, el inicio, crear/unirse a sala, la espera y la selección
 de personajes caben cada uno en una sola pantalla. Inicio y formularios usan
@@ -115,17 +130,25 @@ de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.
 También revisan que los ocho personajes y el botón de confirmación quepan en
 la selección, que los peinados tengan geometría distinta y que las trenzas y la
 coleta se conserven al iniciar una sala real de dos jugadores. Los retos de cuatro
-opciones, verdadero/falso, individuales, vista del observador y resultados se
-revisan en los cinco tamaños.
+opciones, verdadero/falso, individuales, vista del observador, memoria, cartas
+sorpresa y resultados se revisan en los cinco tamaños, junto con las 36 casillas
+y las fichas en el final del recorrido.
 
 La prueba usa dos navegadores y espera el plazo real de 20 segundos:
 comprueba respuestas ocultas, bloqueo después de responder, saldos sincronizados,
 penalización de duelo, avance automático y un reto individual donde el rival no
-puede responder y fallar no cambia ningún saldo. Solo para estas pruebas, el dado se fija en 3 mediante
-`tests/fixtures/fixed-dice.cjs`, precargado por Playwright; el servidor normal
-mantiene su dado aleatorio. `npm test` ejecuta 18 pruebas del servidor con reloj
-simulado, incluyendo ambos tipos de reto, las 24 casillas, penalizaciones limitadas
-al saldo, respuestas tardías o duplicadas, bonos, reinicios y desconexiones.
+puede responder y fallar no cambia ningún saldo. También memoriza una secuencia,
+responde al desaparecer los símbolos y verifica el premio de +25 y una carta
+sorpresa en ambos navegadores. Solo para estas pruebas, el dado sigue una ruta
+determinista mediante `tests/fixtures/fixed-dice.cjs`, precargado por Playwright;
+el servidor normal mantiene su dado aleatorio.
+
+`npm test` ejecuta 25 pruebas: 24 del servidor y una del recorrido automático.
+Incluyen las 36 casillas, todos los tipos de actividad, privacidad de las
+respuestas, memoria en dos fases, las seis cartas, penalizaciones limitadas al
+saldo, respuestas tardías o duplicadas, bonos, reinicios y desconexiones. Los
+plazos se comprueban con reloj simulado; el recorrido se verifica con 1, 24, 36,
+48 y 60 casillas.
 
 Para usar un Chromium ya instalado, configura
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con la ruta del ejecutable. Las pruebas
@@ -157,10 +180,10 @@ para identificar qué módulos está cargando el navegador.
 
 Después de descargar estos cambios, detén **frontend y servidor** con Control+C.
 Arranca de nuevo `npm run server` y `npm run dev` en terminales distintas y crea
-una sala nueva. El protocolo de retos cambió: un servidor anterior no envía el
-reloj ni las respuestas simultáneas que usa la interfaz nueva.
+una sala nueva para jugar con el mapa de 36 casillas y todas las actividades.
+El frontend y el servidor deben usar la misma versión del mapa y del protocolo
+de retos.
 
 Los plazos, premios y descuentos se calculan en el servidor; la cuenta atrás del navegador
 solo los muestra. Reiniciar o desconectar cancela también los temporizadores,
-para que un reto anterior no afecte a otra partida. Videos y casillas sorpresa
-quedan fuera de esta primera ampliación.
+para que un reto anterior no afecte a otra partida.

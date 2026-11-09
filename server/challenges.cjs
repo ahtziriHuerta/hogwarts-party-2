@@ -2,6 +2,7 @@ const crypto = require("node:crypto");
 
 const ANSWER_MS = 20_000;
 const RESULTS_MS = 5_000;
+const MEMORY_PREVIEW_MS = 5_000;
 const MAX_SPEED_BONUS = 10;
 const DUEL_PENALTY = 10;
 
@@ -121,7 +122,11 @@ function createChallengeController({
       ...question,
       options: [...question.options],
       id: crypto.randomUUID(),
-      phase: "answering",
+      phase: question.kind === "memory" ? "memorizing" : "answering",
+      previewUntil:
+        question.kind === "memory" ? startedAt + MEMORY_PREVIEW_MS : undefined,
+      previewDurationMs:
+        question.kind === "memory" ? MEMORY_PREVIEW_MS : undefined,
       mode,
       playerName: room.game.players[room.game.turn].nickname,
       participantIds:
@@ -140,7 +145,41 @@ function createChallengeController({
       mode === "solo"
         ? `🪄 Reto individual de ${challenge.playerName}: acertar suma, fallar no resta.`
         : "⚡ Duelo: ambos responden. Fallar o dejar pasar el tiempo resta 10 monedas.";
-    schedule(room, challenge, ANSWER_MS, () => expire(room, challenge));
+    if (question.kind === "memory") {
+      room.game.message = `🧠 ${challenge.playerName} debe memorizar el orden de cinco símbolos.`;
+      schedule(room, challenge, MEMORY_PREVIEW_MS, () => {
+        challenge.phase = "answering";
+        challenge.startedAt = clock.now();
+        challenge.deadlineAt = clock.now() + ANSWER_MS;
+        schedule(room, challenge, ANSWER_MS, () => expire(room, challenge));
+        updateRoom(room);
+      });
+    } else schedule(room, challenge, ANSWER_MS, () => expire(room, challenge));
+    updateRoom(room);
+  }
+
+  function startSurprise(room, event) {
+    cancel(room);
+    const challenge = {
+      id: crypto.randomUUID(),
+      kind: "surprise",
+      mode: "event",
+      phase: "results",
+      category: "Sorpresa",
+      playerName: room.game.players[room.game.turn].nickname,
+      participantIds: [],
+      responses: new Map(),
+      points: 0,
+      maxSpeedBonus: 0,
+      wrongPenalty: 0,
+      eventTitle: event.title,
+      eventDescription: event.description,
+      results: event.results,
+      revealUntil: clock.now() + RESULTS_MS,
+    };
+    room.game.challenge = challenge;
+    room.game.message = `🎁 ${event.title}: ${event.description}`;
+    schedule(room, challenge, RESULTS_MS, () => finish(room));
     updateRoom(room);
   }
 
@@ -150,7 +189,13 @@ function createChallengeController({
     if (data?.challengeId !== challenge.id)
       return { ok: false, error: "El reto ya cambió." };
     if (challenge.phase !== "answering")
-      return { ok: false, error: "El reto ya terminó." };
+      return {
+        ok: false,
+        error:
+          challenge.phase === "memorizing"
+            ? "Primero memoriza la secuencia."
+            : "El reto ya terminó.",
+      };
     const receivedAt = clock.now();
     if (receivedAt >= challenge.deadlineAt) {
       reveal(room);
@@ -183,8 +228,6 @@ function createChallengeController({
     const visible = {
       id: challenge.id,
       phase: challenge.phase,
-      question: challenge.question,
-      options: [...challenge.options],
       category: challenge.category,
       kind: challenge.kind,
       difficulty: challenge.difficulty,
@@ -200,15 +243,29 @@ function createChallengeController({
       participantCount: challenge.participantIds.length,
       answeredPlayerIds: [...challenge.responses.keys()],
     };
+    if (challenge.kind === "surprise") {
+      visible.eventTitle = challenge.eventTitle;
+      visible.eventDescription = challenge.eventDescription;
+    } else if (challenge.phase === "memorizing") {
+      visible.memorySequence = challenge.memorySequence.map((symbol) => ({
+        ...symbol,
+      }));
+      visible.previewUntil = challenge.previewUntil;
+      visible.previewDurationMs = challenge.previewDurationMs;
+    } else {
+      visible.question = challenge.question;
+      visible.options = [...challenge.options];
+    }
     if (challenge.phase === "results") {
-      visible.correctAnswer = challenge.answer;
+      if (challenge.kind !== "surprise")
+        visible.correctAnswer = challenge.answer;
       visible.results = challenge.results.map((result) => ({ ...result }));
       visible.revealUntil = challenge.revealUntil;
     }
     return visible;
   }
 
-  return { start, answer, cancel, publicChallenge };
+  return { start, startSurprise, answer, cancel, publicChallenge };
 }
 
 module.exports = { createChallengeController };

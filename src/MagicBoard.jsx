@@ -3,40 +3,16 @@ import { socket } from "./socket";
 import MagicCharacter from "./MagicCharacter";
 import LightningChallenge from "./LightningChallenge";
 import spaces from "../shared/board.json";
+import { createBoardPath } from "../shared/board-layout";
 import "./MagicBoard.css";
 
 const TOTAL = spaces.length;
 const STEP_DURATION = 420;
 
-const path = [
-  [9, 82],
-  [21, 82],
-  [33, 82],
-  [45, 82],
-  [57, 82],
-  [69, 82],
-  [81, 82],
-  [90, 70],
-  [81, 58],
-  [69, 58],
-  [57, 58],
-  [45, 58],
-  [33, 58],
-  [21, 58],
-  [10, 46],
-  [21, 34],
-  [33, 34],
-  [45, 34],
-  [57, 34],
-  [69, 34],
-  [81, 34],
-  [90, 22],
-  [78, 12],
-  [65, 12],
-];
+const path = createBoardPath(TOTAL);
 
 function getCoordinates(position) {
-  if (position === 0) return [5, 82];
+  if (position === 0) return [path[0][0] - 5.5, path[0][1]];
 
   const safe = Math.max(1, Math.min(TOTAL, Number(position) || 1));
 
@@ -227,23 +203,14 @@ function BoardOptions({ isHost, busy, onRestart, onClose }) {
           Cerrar
         </button>
       </header>
-      <p>Consigue 2 trofeos para ganar. Cada trofeo cuesta 100 monedas.</p>
+      <p>{TOTAL} casillas · Gana dos trofeos de 100 monedas.</p>
       <ul>
-        <li>🪙 Magia: +20 monedas.</li>
-        <li>🕷️ Trampa: −10 monedas, sin bajar de cero.</li>
-        <li>
-          🪄 Individual: solo responde quien cayó. Acierto +10–30; fallo o
-          tiempo agotado no restan.
-        </li>
-        <li>
-          ⚡ Duelo: ambos responden. Acierto +10–30 y hasta +10 por rapidez;
-          fallo o tiempo agotado −10.
-        </li>
-        <li>
-          Hay 8 individuales y 8 duelos en 24 casillas. Tienen 20 segundos y el
-          saldo nunca baja de 0.
-        </li>
-        <li>🏰 Completar una vuelta: +20 monedas.</li>
+        <li>🪙 Bono/vuelta: +20 monedas.</li>
+        <li>🕷️ Trampa: −10; saldo mínimo 0.</li>
+        <li>🪄 Individual, 20 s: +10–30; fallo sin pérdida.</li>
+        <li>⚡ Duelo, 20 s: +10–40; fallo/tiempo −10.</li>
+        <li>🧠 Memoria: observa 5 s; acierto +25, fallo 0.</li>
+        <li>🎁 Sorpresa: premios, pérdidas o monedas del rival.</li>
       </ul>
       {isHost && (
         <button
@@ -474,6 +441,8 @@ export default function MagicBoard({
         <span>🕷️ Trampa −10</span>
         <span>🪄 Individual +10–30</span>
         <span>⚡ Duelo +10–40 / −10</span>
+        <span>🧠 Memoria +25</span>
+        <span>🎁 Sorpresa</span>
         <span>🏰 Vuelta +20</span>
       </p>
       {/* CONTENEDOR DEL TABLERO Y LOS CONTROLES */}
@@ -514,7 +483,7 @@ export default function MagicBoard({
               />
             </svg>
 
-            {/* LAS 24 CASILLAS */}
+            {/* CASILLAS DEL MAPA COMPARTIDO */}
 
             {spaces.map((space, index) => {
               const [x, y] = path[index];
@@ -523,7 +492,18 @@ export default function MagicBoard({
                 <div
                   key={space.number}
                   className={`path-space ${space.type}`}
-                  aria-label={`Casilla ${space.number}: ${{ solo: "reto individual", duel: "duelo contra rival", bonus: "bono de 20 monedas", trap: "trampa de 10 monedas", normal: "camino", finish: "vuelta completa" }[space.type]}`}
+                  aria-label={`Casilla ${space.number}: ${
+                    {
+                      solo: "reto individual",
+                      duel: "duelo contra rival",
+                      memory: "reto de memoria",
+                      surprise: "carta sorpresa",
+                      bonus: "bono de 20 monedas",
+                      trap: "trampa de 10 monedas",
+                      normal: "camino",
+                      finish: "vuelta completa",
+                    }[space.type]
+                  }`}
                   style={{
                     left: `${x}%`,
                     top: `${y}%`,

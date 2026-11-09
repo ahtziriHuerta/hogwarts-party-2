@@ -29,6 +29,8 @@ const TROPHIES_TO_WIN = 2;
 
 const QUESTIONS = require("./questions.json");
 const { createChallengeController } = require("./challenges.cjs");
+const { createMemoryQuestion } = require("./memory.cjs");
+const { SURPRISES, applySurprise } = require("./surprises.cjs");
 
 // FUNCIONES DE SALAS
 
@@ -433,7 +435,7 @@ io.on("connection", (socket) => {
     // Acumulamos los pasos reales del dado.
     player.totalSteps = (player.totalSteps ?? 0) + result;
 
-    // Calculamos la posición dentro de las 24 casillas.
+    // La longitud del recorrido viene del mapa compartido.
     const destination = ((player.totalSteps - 1) % TOTAL) + 1;
 
     // Calculamos las vueltas completadas.
@@ -456,6 +458,16 @@ io.on("connection", (socket) => {
 
     if (isChallenge) {
       challenges.start(room, chooseQuestion(game), space.type);
+      return callback?.({ ok: true });
+    }
+
+    if (space.type === "memory") {
+      challenges.start(room, createMemoryQuestion(), "solo");
+      return callback?.({ ok: true });
+    }
+    if (space.type === "surprise") {
+      const event = applySurprise(game, crypto.randomInt(0, SURPRISES.length));
+      challenges.startSurprise(room, event);
       return callback?.({ ok: true });
     }
 

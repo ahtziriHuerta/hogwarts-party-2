@@ -4,6 +4,7 @@ const vm = require("node:vm");
 const fs = require("node:fs");
 const { createRequire } = require("node:module");
 const path = require("node:path");
+const TOTAL = require("../shared/board.json").length;
 
 // Ejecutar los handlers reales con transportes simulados hace el dado determinista
 // y evita abrir puertos durante las pruebas de reglas del juego.
@@ -122,7 +123,12 @@ test("el catálogo del servidor reemplaza campos manipulados del cliente", () =>
 test("la vuelta se abona antes de descontar el fallo de un duelo", () => {
   const { host, guest, room, advance } = setup();
   const player = room.game.players[0];
-  Object.assign(player, { totalSteps: 23, position: 23, laps: 0, points: 0 });
+  Object.assign(player, {
+    totalSteps: TOTAL - 1,
+    position: TOTAL - 1,
+    laps: 0,
+    points: 0,
+  });
   assert.equal(host("roll-dice").ok, true);
   assert.equal(player.position, 3);
   assert.equal(player.laps, 1);
@@ -141,12 +147,17 @@ test("la vuelta se abona antes de descontar el fallo de un duelo", () => {
   assert.equal(room.game.turn, 1);
 });
 
-test("caer en 24 o cruzarla hacia un reto individual da un único bono", () => {
+test("caer en el castillo o cruzarlo hacia un reto individual da un único bono", () => {
   for (const roll of [1, 2]) {
     const { host, room, setDice } = setup();
     setDice(roll);
     const player = room.game.players[0];
-    Object.assign(player, { totalSteps: 23, position: 23, laps: 0, points: 0 });
+    Object.assign(player, {
+      totalSteps: TOTAL - 1,
+      position: TOTAL - 1,
+      laps: 0,
+      points: 0,
+    });
     host("roll-dice");
     assert.equal(player.points, 20);
   }
@@ -420,7 +431,7 @@ test("el reto individual premia acertar, sin bono por rapidez ni coste al dejarl
     const session = setup();
     const { host, room, advance } = session;
     room.game.players[0].points = 40;
-    session.setDice(2);
+    session.setDice(6);
     host("roll-dice");
     const challenge = room.game.challenge;
     if (correct)
@@ -496,15 +507,19 @@ test("el mapa tiene 16 preguntas y todas las casillas activan la regla anunciada
   assert.deepEqual(counts, {
     solo: 8,
     duel: 8,
+    memory: 6,
+    surprise: 6,
     bonus: 4,
     trap: 2,
     normal: 1,
     finish: 1,
   });
   assert.equal(
-    board.slice(0, 6).filter((space) => ["solo", "duel"].includes(space.type))
+    board
+      .slice(0, 6)
+      .filter((space) => ["solo", "duel", "memory"].includes(space.type))
       .length,
-    5,
+    4,
   );
   for (const space of board) {
     const session = setup();
@@ -522,6 +537,13 @@ test("el mapa tiene 16 preguntas y todas las casillas activan la regla anunciada
         space.type === "solo" ? 1 : 2,
       );
       assert.equal(player.points, 50);
+    } else if (space.type === "memory") {
+      assert.equal(room.game.challenge.kind, "memory");
+      assert.equal(room.game.challenge.phase, "memorizing");
+      assert.equal(player.points, 50);
+    } else if (space.type === "surprise") {
+      assert.equal(room.game.challenge.kind, "surprise");
+      assert.equal(player.points, 70); // Carta 0: bolsa de +20.
     } else {
       assert.equal(room.game.challenge, null);
       assert.equal(
@@ -533,5 +555,156 @@ test("el mapa tiene 16 preguntas y todas las casillas activan la regla anunciada
             : 50,
       );
     }
+  }
+});
+
+test("memoria: cinco símbolos, pregunta oculta y bloqueo hasta terminar la observación", () => {
+  const session = setup();
+  const { host, guest, room, view, advance } = session;
+  session.setDice(2);
+  host("roll-dice");
+  const challenge = room.game.challenge;
+  assert.equal(challenge.phase, "memorizing");
+  const preview = view().game.challenge;
+  assert.equal(preview.memorySequence.length, 5);
+  assert.equal(
+    new Set(preview.memorySequence.map((symbol) => symbol.name)).size,
+    5,
+  );
+  assert.equal(preview.question, undefined);
+  assert.equal(preview.options, undefined);
+  assert.equal(preview.correctAnswer, undefined);
+  assert.equal(
+    host("answer-challenge", {
+      challengeId: challenge.id,
+      answer: challenge.answer,
+    }).ok,
+    false,
+  );
+  advance(5000);
+  const question = view().game.challenge;
+  assert.equal(question.phase, "answering");
+  assert.equal(question.memorySequence, undefined);
+  assert.equal(question.deadlineAt - question.serverNow, 20_000);
+  assert.equal(
+    guest("answer-challenge", {
+      challengeId: challenge.id,
+      answer: challenge.answer,
+    }).ok,
+    false,
+  );
+  host("answer-challenge", {
+    challengeId: challenge.id,
+    answer: challenge.answer,
+  });
+  assert.equal(challenge.phase, "results");
+  assert.equal(room.game.players[0].points, 25);
+  assert.equal(room.game.players[1].points, 0);
+  advance(5000);
+  assert.equal(room.game.turn, 1);
+});
+
+test("memoria: fallar o dejar vencer el tiempo no resta monedas", () => {
+  for (const reply of [true, false]) {
+    const session = setup();
+    const { host, room, advance } = session;
+    room.game.players[0].points = 40;
+    session.setDice(2);
+    host("roll-dice");
+    const challenge = room.game.challenge;
+    advance(5000);
+    if (reply)
+      host("answer-challenge", {
+        challengeId: challenge.id,
+        answer: (challenge.answer + 1) % challenge.options.length,
+      });
+    else advance(20_000);
+    assert.equal(challenge.phase, "results");
+    assert.equal(room.game.players[0].points, 40);
+    assert.equal(challenge.results[0].penalty, 0);
+  }
+});
+
+test("reiniciar durante la memoria cancela también la transición a la pregunta", () => {
+  const session = setup();
+  const { host, room, advance, timers } = session;
+  session.setDice(2);
+  host("roll-dice");
+  host("restart-game");
+  assert.equal(timers.size, 0);
+  advance(30_000);
+  assert.equal(room.game.challenge, null);
+  assert.equal(room.game.turn, 0);
+});
+
+test("cartas sorpresa: premios, pérdida limitada al saldo, robo conservado y regalo a ambos", () => {
+  const { SURPRISES, applySurprise } = require("../server/surprises.cjs");
+  assert.equal(SURPRISES.length, 6);
+  const expected = [
+    [25, 7],
+    [35, 7],
+    [0, 7],
+    [12, 0],
+    [15, 17],
+    [20, 7],
+  ];
+  for (let index = 0; index < SURPRISES.length; index++) {
+    const game = {
+      turn: 0,
+      players: [
+        { id: "a", nickname: "A", points: 5 },
+        { id: "b", nickname: "B", points: 7 },
+      ],
+    };
+    const event = applySurprise(game, index);
+    assert.deepEqual(
+      game.players.map((player) => player.points),
+      expected[index],
+    );
+    assert.ok(event.title && event.description);
+    for (const result of event.results) {
+      const playerIndex = result.playerId === "a" ? 0 : 1;
+      assert.equal(
+        result.earned,
+        expected[index][playerIndex] - [5, 7][playerIndex],
+      );
+    }
+  }
+});
+
+test("la sorpresa se aplica una vez y bloquea el dado hasta volver al tablero", () => {
+  const session = setup();
+  const { host, guest, room, view, advance } = session;
+  session.setDice(4);
+  host("roll-dice");
+  const event = view().game.challenge;
+  assert.equal(event.kind, "surprise");
+  assert.equal(event.phase, "results");
+  assert.equal(room.game.players[0].points, 20);
+  assert.equal(event.question, undefined);
+  assert.equal(event.correctAnswer, undefined);
+  assert.equal(host("roll-dice").ok, false);
+  assert.equal(
+    host("answer-challenge", { challengeId: event.id, answer: 0 }).ok,
+    false,
+  );
+  assert.equal(guest("buy-trophy").ok, false);
+  advance(5000);
+  assert.equal(room.game.challenge, null);
+  assert.equal(room.game.turn, 1);
+  assert.equal(room.game.players[0].points, 20);
+});
+
+test("la respuesta de memoria corresponde a la posición preguntada", () => {
+  const { createMemoryQuestion } = require("../server/memory.cjs");
+  for (let i = 0; i < 30; i++) {
+    const question = createMemoryQuestion();
+    const position = Number(question.question.match(/\d+/)[0]);
+    const symbol = question.memorySequence[position - 1];
+    assert.equal(
+      question.options[question.answer],
+      `${symbol.icon} ${symbol.name}`,
+    );
+    assert.equal(new Set(question.options).size, 4);
   }
 });

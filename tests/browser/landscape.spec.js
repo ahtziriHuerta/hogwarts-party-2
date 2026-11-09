@@ -9,6 +9,28 @@ for (const size of sizes) {
     await page.setViewportSize(size);
     await page.goto("/tests/fixtures/board.html");
     await expect(page.locator(".board-landscape")).toBeVisible();
+    await expect(page.locator(".path-space")).toHaveCount(36);
+    const overlappingSpaces = await page
+      .locator(".path-space")
+      .evaluateAll((elements) => {
+        const bounds = elements.map((element) =>
+          element.getBoundingClientRect(),
+        );
+        return bounds.some((a, index) =>
+          bounds
+            .slice(index + 1)
+            .some(
+              (b) =>
+                a.left < b.right &&
+                a.right > b.left &&
+                a.top < b.bottom &&
+                a.bottom > b.top,
+            ),
+        );
+      });
+    expect(overlappingSpaces, "Las 36 casillas deben quedar separadas").toBe(
+      false,
+    );
     await expectOnScreen(page, [
       ".board-toolbar",
       ".board-player",
@@ -89,6 +111,32 @@ for (const size of sizes) {
           if (scene === "solo-watch") await expect(option).toBeDisabled();
           else await expect(option).toBeEnabled();
         }
+      }
+      expect(
+        await page
+          .locator(".challenge-modal")
+          .evaluate((el) => el.scrollHeight <= el.clientHeight + 1),
+      ).toBe(true);
+    }
+
+    for (const scene of [
+      "memory-preview",
+      "memory-question",
+      "memory-watch",
+      "memory-results",
+      "surprise",
+    ]) {
+      await page.goto(`/tests/fixtures/board.html?scene=${scene}`);
+      await expect(page.locator(".challenge-modal")).toBeVisible();
+      await expectOnScreen(page, [".challenge-modal", ".challenge-footer"]);
+      if (scene === "memory-preview") {
+        await expect(page.locator(".memory-sequence li")).toHaveCount(5);
+        await expect(page.locator(".challenge-option")).toHaveCount(0);
+        await expectOnScreen(page, [".memory-sequence li"]);
+      }
+      if (scene === "memory-watch") {
+        for (const option of await page.locator(".challenge-option").all())
+          await expect(option).toBeDisabled();
       }
       expect(
         await page

@@ -8,10 +8,30 @@ const questions = JSON.parse(
 );
 import { expectOnScreen } from "./helpers";
 
+async function chooseWrong(page) {
+  const text = await page.locator(".challenge-question").innerText();
+  const source = questions.find((item) => item.question === text);
+  expect(source).toBeTruthy();
+  const correctText = source.options[source.answer];
+  const texts = await page
+    .locator(".challenge-option > span:last-child")
+    .allTextContents();
+  await page
+    .locator(".challenge-option")
+    .nth(texts.findIndex((option) => option.trim() !== correctText))
+    .click();
+}
+function balance(text) {
+  return Number(text.match(/\d+/)[0]);
+}
+function delta(text) {
+  return Number(text.replace("−", "-").match(/[+-]?\d+/)[0]);
+}
+
 test("dos jugadores: una respuesta, resultado compartido y vencimiento automático", async ({
   context,
 }, testInfo) => {
-  test.setTimeout(75_000);
+  test.setTimeout(100_000);
   const host = await context.newPage();
   const guest = await context.newPage();
   const errors = [];
@@ -115,17 +135,7 @@ test("dos jugadores: una respuesta, resultado compartido y vencimiento automáti
   await expect(guest.locator(".challenge-footer")).toContainText(
     "Solo responde Luna",
   );
-  const text = await host.locator(".challenge-question").innerText();
-  const source = questions.find((item) => item.question === text);
-  expect(source).toBeTruthy();
-  const correctText = source.options[source.answer];
-  const texts = await host
-    .locator(".challenge-option > span:last-child")
-    .allTextContents();
-  await host
-    .locator(".challenge-option")
-    .nth(texts.findIndex((option) => option.trim() !== correctText))
-    .click();
+  await chooseWrong(host);
   for (const page of [host, guest]) {
     await expect(
       page.getByRole("dialog", { name: "Resultados del reto" }),
@@ -142,5 +152,82 @@ test("dos jugadores: una respuesta, resultado compartido y vencimiento automáti
       timeout: 8000,
     });
   await expect(host.locator(".player-stats > strong")).toHaveText(beforeSolo);
+  // El rival cae en el bono de la casilla 5; el creador llega después a memoria (9).
+  await guest.getByRole("button", { name: "Lanzar dado" }).click();
+  await expect(host.getByRole("button", { name: "Lanzar dado" })).toBeEnabled();
+  const beforeMemory = (
+    await host.locator(".player-stats > strong").allTextContents()
+  ).map(balance);
+  await host.getByRole("button", { name: "Lanzar dado" }).click();
+  await expect(
+    host.getByRole("dialog", { name: "Reto de memoria" }),
+  ).toBeVisible();
+  await expect(host.locator(".memory-sequence li")).toHaveCount(5);
+  await expect(host.locator(".challenge-option")).toHaveCount(0);
+  const sequence = await host
+    .locator(".memory-sequence strong")
+    .allTextContents();
+  await expect(host.locator(".challenge-option")).toHaveCount(4, {
+    timeout: 7000,
+  });
+  await expect(host.locator(".memory-sequence")).toHaveCount(0);
+  const position = Number(
+    (await host.locator(".challenge-question").innerText()).match(/\d+/)[0],
+  );
+  const answers = await host
+    .locator(".challenge-option > span:last-child")
+    .allTextContents();
+  for (const option of await guest.locator(".challenge-option").all())
+    await expect(option).toBeDisabled();
+  await host
+    .locator(".challenge-option")
+    .nth(answers.findIndex((text) => text.endsWith(sequence[position - 1])))
+    .click();
+  await expect(host.locator(".result-earned")).toHaveText("✓ +25 🪙");
+  for (const page of [host, guest])
+    await expect(page.locator(".challenge-modal")).toHaveCount(0, {
+      timeout: 8000,
+    });
+  await expect(host.locator(".player-stats > strong")).toHaveText([
+    `🪙 ${beforeMemory[0] + 25} monedas`,
+    `🪙 ${beforeMemory[1]} monedas`,
+  ]);
+
+  // Después de un individual del rival, el creador cae en la sorpresa de la casilla 13.
+  await guest.getByRole("button", { name: "Lanzar dado" }).click();
+  await expect(
+    guest.getByRole("dialog", { name: "Reto individual" }),
+  ).toBeVisible();
+  await chooseWrong(guest);
+  for (const page of [host, guest])
+    await expect(page.locator(".challenge-modal")).toHaveCount(0, {
+      timeout: 8000,
+    });
+  const beforeSurprise = (
+    await host.locator(".player-stats > strong").allTextContents()
+  ).map(balance);
+  await host.getByRole("button", { name: "Lanzar dado" }).click();
+  await expect(
+    host.getByRole("dialog", { name: "Casilla sorpresa" }),
+  ).toBeVisible();
+  const changes = (await host.locator(".result-earned").allTextContents()).map(
+    delta,
+  );
+  await expect(guest.locator(".result-earned")).toHaveText(
+    await host.locator(".result-earned").allTextContents(),
+  );
+  await host.screenshot({ path: testInfo.outputPath("surprise.png") });
+  for (const page of [host, guest])
+    await expect(page.locator(".challenge-modal")).toHaveCount(0, {
+      timeout: 8000,
+    });
+  expect(
+    (await host.locator(".player-stats > strong").allTextContents()).map(
+      balance,
+    ),
+  ).toEqual([
+    beforeSurprise[0] + changes[0],
+    beforeSurprise[1] + (changes[1] ?? 0),
+  ]);
   expect(errors).toEqual([]);
 });
