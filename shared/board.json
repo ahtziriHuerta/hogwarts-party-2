@@ -1,0 +1,122 @@
+[
+  {
+    "number": 1,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 2,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 3,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 4,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 5,
+    "type": "bonus",
+    "icon": "🪙"
+  },
+  {
+    "number": 6,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 7,
+    "type": "trap",
+    "icon": "🕷️"
+  },
+  {
+    "number": 8,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 9,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 10,
+    "type": "bonus",
+    "icon": "🪙"
+  },
+  {
+    "number": 11,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 12,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 13,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 14,
+    "type": "trap",
+    "icon": "🕷️"
+  },
+  {
+    "number": 15,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 16,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 17,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 18,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 19,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 20,
+    "type": "bonus",
+    "icon": "🪙"
+  },
+  {
+    "number": 21,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 22,
+    "type": "normal",
+    "icon": "✨"
+  },
+  {
+    "number": 23,
+    "type": "bonus",
+    "icon": "🪙"
+  },
+  {
+    "number": 24,
+    "type": "finish",
+    "icon": "🏰"
+  }
+]

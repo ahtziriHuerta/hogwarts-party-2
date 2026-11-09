@@ -18,21 +18,34 @@ const players = characters.slice(5, 7).map((character, index) => ({
   laps: 0,
 }));
 const now = Date.now();
-const isDuel = ["challenge", "boolean", "results"].includes(scene);
+const isDuel = [
+  "challenge",
+  "boolean",
+  "results",
+  "solo",
+  "solo-watch",
+  "solo-results",
+].includes(scene);
+const isSolo = scene?.startsWith("solo");
+const isResults = scene === "results" || scene === "solo-results";
 const challenge = isDuel
   ? {
       id: "fixture-duel",
-      phase: scene === "results" ? "results" : "answering",
+      phase: isResults ? "results" : "answering",
+      mode: isSolo ? "solo" : "duel",
+      playerName: players[0].nickname,
+      participantIds: isSolo ? ["player-0"] : ["player-0", "player-1"],
+      wrongPenalty: isSolo ? 0 : 10,
       difficulty: "Difícil",
       category: "Objetos",
       kind: scene === "boolean" ? "true-false" : "trivia",
       points: 30,
-      maxSpeedBonus: 10,
+      maxSpeedBonus: isSolo ? 0 : 10,
       serverNow: now,
       deadlineAt: now + 20_000,
       durationMs: 20_000,
-      participantCount: 2,
-      answeredPlayerIds: scene === "results" ? ["player-0"] : [],
+      participantCount: isSolo ? 1 : 2,
+      answeredPlayerIds: isResults ? ["player-0"] : [],
       question:
         scene === "boolean"
           ? "La espada de Gryffindor fue fabricada por duendes."
@@ -41,19 +54,22 @@ const challenge = isDuel
         scene === "boolean"
           ? ["Verdadero", "Falso"]
           : ["Dumbledore", "Antioch Peverell", "Grindelwald", "Draco Malfoy"],
-      ...(scene === "results"
+      ...(isResults
         ? {
             correctAnswer: 1,
             revealUntil: now + 5000,
-            results: players.map((player, index) => ({
-              playerId: player.id,
-              nickname: player.nickname,
-              correct: index === 0,
-              timedOut: index === 1,
-              basePoints: index === 0 ? 30 : 0,
-              speedBonus: index === 0 ? 10 : 0,
-              earned: index === 0 ? 40 : 0,
-            })),
+            results: players
+              .filter((_, index) => !isSolo || index === 0)
+              .map((player, index) => ({
+                playerId: player.id,
+                nickname: player.nickname,
+                correct: index === 0,
+                timedOut: index === 1,
+                basePoints: index === 0 ? 30 : 0,
+                speedBonus: index === 0 && !isSolo ? 10 : 0,
+                penalty: index === 0 || isSolo ? 0 : 10,
+                earned: index === 0 ? (isSolo ? 30 : 40) : -10,
+              })),
           }
         : {}),
     }
@@ -73,7 +89,7 @@ createRoot(document.getElementById("root")).render(
   <main className="game">
     <MagicBoard
       game={game}
-      mySocketId="player-0"
+      mySocketId={scene === "solo-watch" ? "player-1" : "player-0"}
       isHost
       onRollDice={(done) =>
         done({

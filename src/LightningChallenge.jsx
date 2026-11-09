@@ -35,7 +35,10 @@ export default function LightningChallenge({
   const remaining = useCountdown(challenge);
   const isResults = challenge.phase === "results";
   const answered = sent || challenge.answeredPlayerIds.includes(mySocketId);
-  const locked = isResults || answered || busy || remaining <= 0;
+  const canParticipate = challenge.participantIds.includes(mySocketId);
+  const isSolo = challenge.mode === "solo";
+  const locked =
+    !canParticipate || isResults || answered || busy || remaining <= 0;
   const count = challenge.answeredPlayerIds.length;
 
   useEffect(() => {
@@ -66,7 +69,11 @@ export default function LightningChallenge({
     >
       <header className="challenge-header">
         <h2 id="lightning-title">
-          ⚡ {isResults ? "Resultados del reto" : "Reto relámpago"}
+          {isResults
+            ? "✨ Resultados del reto"
+            : isSolo
+              ? "🪄 Reto individual"
+              : "⚡ Duelo contra rival"}
         </h2>
         <span
           className={`challenge-clock ${remaining <= 5000 && !isResults ? "clock-urgent" : ""}`}
@@ -81,7 +88,14 @@ export default function LightningChallenge({
         {challenge.kind === "true-false"
           ? "Verdadero o falso"
           : challenge.difficulty}{" "}
-        · ⭐ {challenge.points} + hasta {challenge.maxSpeedBonus} por rapidez
+        · 🪙 {challenge.points}
+        {challenge.maxSpeedBonus > 0
+          ? ` + hasta ${challenge.maxSpeedBonus} por rapidez`
+          : ""}
+        {" · "}Fallo/tiempo:{" "}
+        {challenge.wrongPenalty > 0
+          ? `−${challenge.wrongPenalty}`
+          : "sin pérdida"}
       </p>
       {!isResults && (
         <div className="challenge-progress" aria-hidden="true">
@@ -100,7 +114,7 @@ export default function LightningChallenge({
             ✓ Respuesta:{" "}
             <strong>{challenge.options[challenge.correctAnswer]}</strong>
           </p>
-          <div className="challenge-results">
+          <div className={`challenge-results ${isSolo ? "solo-results" : ""}`}>
             {challenge.results.map((result) => (
               <article
                 key={result.playerId}
@@ -111,14 +125,14 @@ export default function LightningChallenge({
                   {result.playerId === mySocketId ? " · Tú" : ""}
                 </strong>
                 <span className="result-earned">
-                  {result.correct ? "✓" : "✕"} +{result.earned} ⭐
+                  {result.correct ? "✓" : "✕"}{" "}
+                  {result.earned > 0 ? "+" : result.earned < 0 ? "−" : ""}
+                  {Math.abs(result.earned)} 🪙
                 </span>
                 <small>
-                  {result.timedOut
-                    ? "No respondió a tiempo"
-                    : result.correct
-                      ? `${result.basePoints} por acertar + ${result.speedBonus} de rapidez`
-                      : "Respuesta incorrecta"}
+                  {result.correct
+                    ? `${result.basePoints} por acertar${result.speedBonus > 0 ? ` + ${result.speedBonus} de rapidez` : ""}`
+                    : `${result.timedOut ? "Tiempo agotado" : "Respuesta incorrecta"} · ${result.penalty > 0 ? `−${result.penalty}` : challenge.wrongPenalty > 0 ? "saldo en 0" : "sin pérdida"}`}
                 </small>
               </article>
             ))}
@@ -152,13 +166,15 @@ export default function LightningChallenge({
             role={error ? "alert" : "status"}
           >
             {error ||
-              (busy
-                ? "Enviando…"
-                : answered
-                  ? `✓ Respuesta enviada · ${count}/${challenge.participantCount} respondieron`
-                  : remaining <= 0
-                    ? "¡Tiempo! Esperando resultados…"
-                    : `Toca una opción para responder · ${count}/${challenge.participantCount} respondieron`)}
+              (!canParticipate
+                ? `Solo responde ${challenge.playerName}. Tu saldo no cambia.`
+                : busy
+                  ? "Enviando…"
+                  : answered
+                    ? `✓ Respuesta enviada · ${count}/${challenge.participantCount} respondieron`
+                    : remaining <= 0
+                      ? "¡Tiempo! Esperando resultados…"
+                      : `Toca una opción para responder · ${count}/${challenge.participantCount} respondieron`)}
           </p>
         </>
       )}

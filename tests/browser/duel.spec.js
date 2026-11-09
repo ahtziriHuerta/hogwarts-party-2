@@ -1,10 +1,17 @@
 import { test, expect } from "@playwright/test";
+import fs from "node:fs";
+const questions = JSON.parse(
+  fs.readFileSync(
+    new URL("../../server/questions.json", import.meta.url),
+    "utf8",
+  ),
+);
 import { expectOnScreen } from "./helpers";
 
 test("dos jugadores: una respuesta, resultado compartido y vencimiento automático", async ({
   context,
 }, testInfo) => {
-  test.setTimeout(60_000);
+  test.setTimeout(75_000);
   const host = await context.newPage();
   const guest = await context.newPage();
   const errors = [];
@@ -37,7 +44,7 @@ test("dos jugadores: una respuesta, resultado compartido y vencimiento automáti
   await host.getByRole("button", { name: "Lanzar dado" }).click();
   for (const page of [host, guest]) {
     await expect(
-      page.getByRole("dialog", { name: "Reto relámpago" }),
+      page.getByRole("dialog", { name: "Duelo contra rival" }),
     ).toBeVisible();
     await expect(page.locator(".challenge-option").first()).toBeEnabled();
     await expectOnScreen(page, [".challenge-modal", ".challenge-option"]);
@@ -75,22 +82,65 @@ test("dos jugadores: una respuesta, resultado compartido y vencimiento automáti
   // El siguiente reto debe acabar aunque ambos abandonen la pregunta sin responder.
   await guest.getByRole("button", { name: "Lanzar dado" }).click();
   await expect(
-    host.getByRole("dialog", { name: "Reto relámpago" }),
+    host.getByRole("dialog", { name: "Duelo contra rival" }),
   ).toBeVisible();
   await expect(
     host.getByRole("dialog", { name: "Resultados del reto" }),
   ).toBeVisible({ timeout: 23000 });
-  await expect(
-    host.getByText("No respondió a tiempo", { exact: true }),
-  ).toHaveCount(2);
-  await expect(guest.locator(".result-earned")).toHaveText([
-    "✕ +0 ⭐",
-    "✕ +0 ⭐",
-  ]);
+  await expect(host.getByText(/Tiempo agotado ·/)).toHaveCount(2);
+  const previousBalances = scores.map((text) => Number(text.match(/\d+/)[0]));
+  await expect(guest.locator(".result-earned")).toHaveText(
+    previousBalances.map(
+      (balance) => `✕ ${balance > 0 ? "−" + Math.min(10, balance) : "0"} 🪙`,
+    ),
+  );
   for (const page of [host, guest])
     await expect(page.locator(".challenge-modal")).toHaveCount(0, {
       timeout: 8000,
     });
   await expect(host.getByRole("button", { name: "Lanzar dado" })).toBeEnabled();
+  // Con el dado de pruebas en 3, el siguiente salto del creador llega a la casilla 6: individual.
+  const beforeSolo = await host
+    .locator(".player-stats > strong")
+    .allTextContents();
+  await host.getByRole("button", { name: "Lanzar dado" }).click();
+  await expect(
+    host.getByRole("dialog", { name: "Reto individual" }),
+  ).toBeVisible();
+  await expect(
+    guest.getByRole("dialog", { name: "Reto individual" }),
+  ).toBeVisible();
+  for (const option of await guest.locator(".challenge-option").all())
+    await expect(option).toBeDisabled();
+  await expect(guest.locator(".challenge-footer")).toContainText(
+    "Solo responde Luna",
+  );
+  const text = await host.locator(".challenge-question").innerText();
+  const source = questions.find((item) => item.question === text);
+  expect(source).toBeTruthy();
+  const correctText = source.options[source.answer];
+  const texts = await host
+    .locator(".challenge-option > span:last-child")
+    .allTextContents();
+  await host
+    .locator(".challenge-option")
+    .nth(texts.findIndex((option) => option.trim() !== correctText))
+    .click();
+  for (const page of [host, guest]) {
+    await expect(
+      page.getByRole("dialog", { name: "Resultados del reto" }),
+    ).toBeVisible();
+    await expect(page.locator(".challenge-result")).toHaveCount(1);
+    await expect(page.locator(".result-earned")).toHaveText("✕ 0 🪙");
+    await expect(page.locator(".challenge-result small")).toContainText(
+      "sin pérdida",
+    );
+  }
+  await host.screenshot({ path: testInfo.outputPath("solo-result.png") });
+  for (const page of [host, guest])
+    await expect(page.locator(".challenge-modal")).toHaveCount(0, {
+      timeout: 8000,
+    });
+  await expect(host.locator(".player-stats > strong")).toHaveText(beforeSolo);
   expect(errors).toEqual([]);
 });

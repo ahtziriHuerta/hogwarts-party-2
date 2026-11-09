@@ -40,17 +40,27 @@ de partidas ni recuperación de sesión.
 ## Reglas
 
 - Dos jugadores eligen personajes distintos y lanzan un dado por turnos.
-- Magia: +20 puntos. Trampa: −10, sin bajar de cero.
-- Al caer en una casilla ⚡, **ambos jugadores** responden la misma pregunta en 20 segundos.
-- Toca una opción para enviarla: solo se acepta una respuesta por jugador.
-- Acertar da 10, 20 o 30 puntos según la dificultad, más hasta 10 por rapidez.
-- La solución se revela cuando ambos responden o termina el tiempo; no se revela al primero.
-- Los resultados duran 5 segundos y después continúa el siguiente turno automáticamente.
-- No responder o fallar el reto da 0 puntos; la trampa del tablero sigue quitando 10.
-- El banco tiene 60 preguntas: 50 de cuatro opciones y 10 de verdadero/falso, por categorías.
-- Las preguntas no se repiten hasta agotar el banco y las opciones se barajan en cada reto.
-- Completar una vuelta otorga +20 puntos, también al aterrizar en un reto.
-- Cada trofeo cuesta 100 puntos. Gana quien compre dos.
+- **16 de las 24 casillas son preguntas**: 8 individuales 🪄 y 8 duelos ⚡.
+- Ambos formatos tienen un plazo de 20 segundos y 5 segundos de resultados.
+
+| Casilla       | Quién responde                    | Acierto                                   | Fallo o tiempo agotado                     |
+| ------------- | --------------------------------- | ----------------------------------------- | ------------------------------------------ |
+| 🪄 Individual | Solo quien cayó; el rival observa | +10, +20 o +30 monedas                    | 0, sin descuento                           |
+| ⚡ Duelo      | Ambos, a la vez                   | +10, +20 o +30, más hasta +10 por rapidez | −10 monedas para quien falle o no responda |
+
+El saldo nunca baja de cero: con 7 monedas, la penalización descuenta 7.
+Cada jugador solo puede enviar una respuesta. Las soluciones permanecen ocultas
+hasta que respondan todos los participantes o venza el plazo. Después avanza el
+turno automáticamente. El observador de un reto individual no recibe premios
+ni descuentos.
+
+Hay además 4 casillas de bono (+20), 2 trampas (−10), 1 casilla normal y 1 castillo.
+Completar una vuelta otorga +20, también al caer en una pregunta. Estos bonos y
+los retos individuales permiten recuperar saldo tras un duelo. Cada trofeo
+cuesta 100 monedas; gana quien compre dos.
+
+El banco mantiene 60 preguntas: 50 de cuatro opciones y 10 de verdadero/falso,
+por categorías, sin repetición hasta agotarse. Las opciones se barajan.
 
 ## Comprobar cambios
 
@@ -70,6 +80,7 @@ npm run build
 - `src/App.css`: diseño general y pantallas de entrada.
 - `src/MagicBoard.css`: tablero y adaptación a pantallas pequeñas.
 - `shared/characters.json`: catálogo único para navegador y servidor.
+- `shared/board.json`: mapa único de las casillas y tipos para navegador y servidor.
 - `server/index.cjs`: salas, turnos, puntuación y validación de acciones.
 - `server/challenges.cjs`: plazos, respuestas privadas y puntuación de los retos.
 - `server/questions.json`: banco de preguntas y soluciones, usado por el servidor.
@@ -104,14 +115,17 @@ de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.
 También revisan que los ocho personajes y el botón de confirmación quepan en
 la selección, que los peinados tengan geometría distinta y que las trenzas y la
 coleta se conserven al iniciar una sala real de dos jugadores. Los retos de cuatro
-opciones, verdadero/falso y resultados se revisan en los cinco tamaños.
+opciones, verdadero/falso, individuales, vista del observador y resultados se
+revisan en los cinco tamaños.
 
-La prueba del duelo usa dos navegadores y espera el plazo real de 20 segundos:
-comprueba respuestas ocultas, bloqueo después de responder, puntuaciones iguales
-y avance automático. Solo para estas pruebas, el dado se fija en 3 mediante
+La prueba usa dos navegadores y espera el plazo real de 20 segundos:
+comprueba respuestas ocultas, bloqueo después de responder, saldos sincronizados,
+penalización de duelo, avance automático y un reto individual donde el rival no
+puede responder y fallar no cambia ningún saldo. Solo para estas pruebas, el dado se fija en 3 mediante
 `tests/fixtures/fixed-dice.cjs`, precargado por Playwright; el servidor normal
-mantiene su dado aleatorio. `npm test` ejecuta 13 pruebas del servidor con reloj
-simulado, incluyendo respuestas tardías o duplicadas, bonos, reinicios y desconexiones.
+mantiene su dado aleatorio. `npm test` ejecuta 18 pruebas del servidor con reloj
+simulado, incluyendo ambos tipos de reto, las 24 casillas, penalizaciones limitadas
+al saldo, respuestas tardías o duplicadas, bonos, reinicios y desconexiones.
 
 Para usar un Chromium ya instalado, configura
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con la ruta del ejecutable. Las pruebas
@@ -146,7 +160,7 @@ Arranca de nuevo `npm run server` y `npm run dev` en terminales distintas y crea
 una sala nueva. El protocolo de retos cambió: un servidor anterior no envía el
 reloj ni las respuestas simultáneas que usa la interfaz nueva.
 
-Los plazos y premios se calculan en el servidor; la cuenta atrás del navegador
+Los plazos, premios y descuentos se calculan en el servidor; la cuenta atrás del navegador
 solo los muestra. Reiniciar o desconectar cancela también los temporizadores,
 para que un reto anterior no afecte a otra partida. Videos y casillas sorpresa
 quedan fuera de esta primera ampliación.

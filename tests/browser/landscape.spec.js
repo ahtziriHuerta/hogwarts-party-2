@@ -35,7 +35,7 @@ for (const size of sizes) {
 
     await page.goto("/tests/fixtures/board.html?scene=challenge");
     await expect(
-      page.getByRole("dialog", { name: "Reto relámpago" }),
+      page.getByRole("dialog", { name: "Duelo contra rival" }),
     ).toBeVisible();
     await expectOnScreen(page, [
       ".challenge-modal",
@@ -74,6 +74,28 @@ for (const size of sizes) {
       .locator(".challenge-modal")
       .evaluate((el) => [el.scrollHeight, el.clientHeight]);
     expect(resultSize[0]).toBeLessThanOrEqual(resultSize[1] + 1);
+
+    for (const scene of ["solo", "solo-watch", "solo-results"]) {
+      await page.goto(`/tests/fixtures/board.html?scene=${scene}`);
+      await expect(page.locator(".challenge-modal")).toBeVisible();
+      await expectOnScreen(page, [".challenge-modal", ".challenge-footer"]);
+      if (scene === "solo-results")
+        await expect(page.locator(".challenge-result")).toHaveCount(1);
+      else {
+        await expect(
+          page.getByRole("dialog", { name: "Reto individual" }),
+        ).toBeVisible();
+        for (const option of await page.locator(".challenge-option").all()) {
+          if (scene === "solo-watch") await expect(option).toBeDisabled();
+          else await expect(option).toBeEnabled();
+        }
+      }
+      expect(
+        await page
+          .locator(".challenge-modal")
+          .evaluate((el) => el.scrollHeight <= el.clientHeight + 1),
+      ).toBe(true);
+    }
 
     await page.goto("/tests/fixtures/board.html?scene=winner");
     await expect(page.locator(".board-victory")).toBeVisible();

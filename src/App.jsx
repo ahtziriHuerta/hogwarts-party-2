@@ -289,11 +289,12 @@ function App() {
                 <li>Crea una sala y comparte el código con tu compañero.</li>
                 <li>Elijan sus personajes. El creador inicia la aventura.</li>
                 <li>
-                  Lancen el dado por turnos. En los retos, ambos responden a la
-                  vez: 20 segundos y bono por rapidez.
+                  Lancen el dado por turnos. Hay retos individuales sin
+                  penalización y duelos contra el rival: fallar resta 10
+                  monedas.
                 </li>
                 <li>
-                  Compra un trofeo con 100 puntos. ¡El primero en conseguir dos
+                  Compra un trofeo con 100 monedas. ¡El primero en conseguir dos
                   gana!
                 </li>
               </ol>

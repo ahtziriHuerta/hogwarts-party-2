@@ -3,8 +3,9 @@ const crypto = require("node:crypto");
 const ANSWER_MS = 20_000;
 const RESULTS_MS = 5_000;
 const MAX_SPEED_BONUS = 10;
+const DUEL_PENALTY = 10;
 
-// El servidor controla el plazo, los puntos y el avance del turno.
+// El servidor controla el plazo, las monedas y el avance del turno.
 // El reloj inyectable permite probar vencimientos sin esperar tiempo real.
 function createChallengeController({
   updateRoom,
@@ -59,35 +60,46 @@ function createChallengeController({
     clearTimer(room);
     challenge.phase = "results";
     challenge.revealUntil = clock.now() + RESULTS_MS;
-    challenge.results = game.players.map((player) => {
-      const response = challenge.responses.get(player.id);
-      const correct = response?.answer === challenge.answer;
-      const speedBonus = correct
-        ? Math.round(
-            MAX_SPEED_BONUS *
-              Math.max(
-                0,
-                Math.min(
-                  1,
-                  (challenge.deadlineAt - response.answeredAt) / ANSWER_MS,
+    challenge.results = game.players
+      .filter((player) => challenge.participantIds.includes(player.id))
+      .map((player) => {
+        const response = challenge.responses.get(player.id);
+        const correct = response?.answer === challenge.answer;
+        const speedBonus = correct
+          ? Math.round(
+              challenge.maxSpeedBonus *
+                Math.max(
+                  0,
+                  Math.min(
+                    1,
+                    (challenge.deadlineAt - response.answeredAt) / ANSWER_MS,
+                  ),
                 ),
-              ),
-          )
-        : 0;
-      const earned = correct ? challenge.points + speedBonus : 0;
-      player.points += earned;
-      return {
-        playerId: player.id,
-        nickname: player.nickname,
-        answer: response?.answer ?? null,
-        correct,
-        timedOut: !response,
-        basePoints: correct ? challenge.points : 0,
-        speedBonus,
-        earned,
-      };
-    });
-    game.message = "⚡ Reto relámpago terminado. ¡Mira los resultados!";
+            )
+          : 0;
+        // Solo el duelo arriesga monedas; el descuento real nunca supera el saldo.
+        const penalty = correct
+          ? 0
+          : Math.min(challenge.wrongPenalty, player.points);
+        const earned = correct
+          ? challenge.points + speedBonus
+          : penalty > 0
+            ? -penalty
+            : 0;
+        player.points += earned;
+        return {
+          playerId: player.id,
+          nickname: player.nickname,
+          answer: response?.answer ?? null,
+          correct,
+          timedOut: !response,
+          basePoints: correct ? challenge.points : 0,
+          speedBonus,
+          penalty,
+          earned,
+        };
+      });
+    game.message = "✨ Reto terminado. ¡Mira los resultados!";
     schedule(room, challenge, RESULTS_MS, () => finish(room));
     updateRoom(room);
   }
@@ -102,7 +114,7 @@ function createChallengeController({
     reveal(room);
   }
 
-  function start(room, question) {
+  function start(room, question, mode = "duel") {
     cancel(room);
     const startedAt = clock.now();
     const challenge = {
@@ -110,7 +122,14 @@ function createChallengeController({
       options: [...question.options],
       id: crypto.randomUUID(),
       phase: "answering",
-      participantIds: room.game.players.map((player) => player.id),
+      mode,
+      playerName: room.game.players[room.game.turn].nickname,
+      participantIds:
+        mode === "solo"
+          ? [room.game.players[room.game.turn].id]
+          : room.game.players.map((player) => player.id),
+      wrongPenalty: mode === "duel" ? DUEL_PENALTY : 0,
+      maxSpeedBonus: mode === "duel" ? MAX_SPEED_BONUS : 0,
       responses: new Map(),
       startedAt,
       deadlineAt: startedAt + ANSWER_MS,
@@ -118,7 +137,9 @@ function createChallengeController({
     };
     room.game.challenge = challenge;
     room.game.message =
-      "⚡ ¡Reto relámpago! Ambos tienen 20 segundos para responder.";
+      mode === "solo"
+        ? `🪄 Reto individual de ${challenge.playerName}: acertar suma, fallar no resta.`
+        : "⚡ Duelo: ambos responden. Fallar o dejar pasar el tiempo resta 10 monedas.";
     schedule(room, challenge, ANSWER_MS, () => expire(room, challenge));
     updateRoom(room);
   }
@@ -168,7 +189,11 @@ function createChallengeController({
       kind: challenge.kind,
       difficulty: challenge.difficulty,
       points: challenge.points,
-      maxSpeedBonus: MAX_SPEED_BONUS,
+      mode: challenge.mode,
+      playerName: challenge.playerName,
+      participantIds: [...challenge.participantIds],
+      wrongPenalty: challenge.wrongPenalty,
+      maxSpeedBonus: challenge.maxSpeedBonus,
       deadlineAt: challenge.deadlineAt,
       durationMs: challenge.durationMs,
       serverNow: clock.now(),

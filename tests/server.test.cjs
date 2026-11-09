@@ -119,7 +119,7 @@ test("el catálogo del servidor reemplaza campos manipulados del cliente", () =>
   assert.equal(room.players[1].character.name, "Mia");
 });
 
-test("completar una vuelta y caer en reto conserva el bono incluso al fallar", () => {
+test("la vuelta se abona antes de descontar el fallo de un duelo", () => {
   const { host, guest, room, advance } = setup();
   const player = room.game.players[0];
   Object.assign(player, { totalSteps: 23, position: 23, laps: 0, points: 0 });
@@ -136,12 +136,12 @@ test("completar una vuelta y caer en reto conserva el bono incluso al fallar", (
     challengeId: challenge.id,
     answer: (challenge.answer + 1) % challenge.options.length,
   });
-  assert.equal(player.points, 20);
+  assert.equal(player.points, 10);
   advance(5000);
   assert.equal(room.game.turn, 1);
 });
 
-test("caer exactamente en 24 o cruzarla a una casilla normal da un único bono", () => {
+test("caer en 24 o cruzarla hacia un reto individual da un único bono", () => {
   for (const roll of [1, 2]) {
     const { host, room, setDice } = setup();
     setDice(roll);
@@ -325,7 +325,7 @@ test("dados y compras permanecen bloqueados hasta terminar los resultados", () =
   const session = setup();
   const { host, guest, room, advance } = session;
   const challenge = beginDuel(session);
-  room.game.players[1].points = 100;
+  room.game.players[1].points = 110;
   for (const client of [host, guest])
     assert.equal(client("roll-dice").ok, false);
   assert.equal(guest("buy-trophy").ok, false);
@@ -379,4 +379,159 @@ test("60 preguntas válidas, dos formatos y ninguna repetida antes de agotar el 
     session.advance(5000);
   }
   assert.equal(seen.size, 60);
+});
+
+test("solo responde quien cayó en la casilla individual y el rival conserva su saldo", () => {
+  const session = setup();
+  const { host, guest, room, view, advance } = session;
+  room.game.players[0].points = 40;
+  room.game.players[1].points = 60;
+  session.setDice(1);
+  host("roll-dice");
+  const challenge = room.game.challenge;
+  assert.equal(challenge.mode, "solo");
+  assert.deepEqual([...view().game.challenge.participantIds], ["host"]);
+  assert.equal(
+    guest("answer-challenge", {
+      challengeId: challenge.id,
+      answer: challenge.answer,
+    }).ok,
+    false,
+  );
+  assert.equal(challenge.responses.size, 0);
+  assert.equal(
+    host("answer-challenge", {
+      challengeId: challenge.id,
+      answer: (challenge.answer + 1) % challenge.options.length,
+    }).ok,
+    true,
+  );
+  assert.equal(challenge.phase, "results");
+  assert.equal(challenge.results.length, 1);
+  assert.equal(challenge.results[0].earned, 0);
+  assert.equal(room.game.players[0].points, 40);
+  assert.equal(room.game.players[1].points, 60);
+  advance(5000);
+  assert.equal(room.game.turn, 1);
+});
+
+test("el reto individual premia acertar, sin bono por rapidez ni coste al dejarlo vencer", () => {
+  for (const correct of [true, false]) {
+    const session = setup();
+    const { host, room, advance } = session;
+    room.game.players[0].points = 40;
+    session.setDice(2);
+    host("roll-dice");
+    const challenge = room.game.challenge;
+    if (correct)
+      host("answer-challenge", {
+        challengeId: challenge.id,
+        answer: challenge.answer,
+      });
+    else advance(20_000);
+    assert.equal(
+      room.game.players[0].points,
+      correct ? 40 + challenge.points : 40,
+    );
+    assert.equal(challenge.results[0].speedBonus, 0);
+    assert.equal(challenge.results[0].penalty, 0);
+  }
+});
+
+test("equivocarse en un duelo o no contestar descuenta 10, limitados al saldo", () => {
+  for (const balance of [0, 7, 10, 50]) {
+    const session = setup();
+    const { host, guest, room, advance } = session;
+    for (const player of room.game.players) player.points = balance;
+    const challenge = beginDuel(session);
+    host("answer-challenge", {
+      challengeId: challenge.id,
+      answer: (challenge.answer + 1) % challenge.options.length,
+    });
+    advance(20_000); // El rival no responde: aplica la misma penalización.
+    for (const result of challenge.results) {
+      assert.equal(result.penalty, Math.min(10, balance));
+      assert.equal(result.earned, balance > 0 ? -Math.min(10, balance) : 0);
+    }
+    for (const player of room.game.players)
+      assert.equal(player.points, Math.max(0, balance - 10));
+    assert.equal(
+      guest("answer-challenge", {
+        challengeId: challenge.id,
+        answer: challenge.answer,
+      }).ok,
+      false,
+    );
+    for (const player of room.game.players)
+      assert.equal(player.points, Math.max(0, balance - 10));
+  }
+});
+
+test("un acierto en duelo suma premio y rapidez mientras el rival pierde solo 10", () => {
+  const session = setup();
+  const { host, guest, room } = session;
+  room.game.players[0].points = 30;
+  room.game.players[1].points = 40;
+  const challenge = beginDuel(session);
+  host("answer-challenge", {
+    challengeId: challenge.id,
+    answer: challenge.answer,
+  });
+  guest("answer-challenge", {
+    challengeId: challenge.id,
+    answer: (challenge.answer + 1) % challenge.options.length,
+  });
+  assert.equal(room.game.players[0].points, 30 + challenge.points + 10);
+  assert.equal(room.game.players[1].points, 30);
+  assert.equal(challenge.results[0].penalty, 0);
+  assert.equal(challenge.results[1].speedBonus, 0);
+});
+
+test("el mapa tiene 16 preguntas y todas las casillas activan la regla anunciada", () => {
+  const board = require("../shared/board.json");
+  const counts = board.reduce((result, space) => {
+    result[space.type] = (result[space.type] || 0) + 1;
+    return result;
+  }, {});
+  assert.deepEqual(counts, {
+    solo: 8,
+    duel: 8,
+    bonus: 4,
+    trap: 2,
+    normal: 1,
+    finish: 1,
+  });
+  assert.equal(
+    board.slice(0, 6).filter((space) => ["solo", "duel"].includes(space.type))
+      .length,
+    5,
+  );
+  for (const space of board) {
+    const session = setup();
+    const { host, room } = session;
+    const player = room.game.players[0];
+    player.totalSteps = space.number - 1;
+    player.points = 50;
+    session.setDice(1);
+    host("roll-dice");
+    assert.equal(player.position, space.number);
+    if (["solo", "duel"].includes(space.type)) {
+      assert.equal(room.game.challenge.mode, space.type);
+      assert.equal(
+        room.game.challenge.participantIds.length,
+        space.type === "solo" ? 1 : 2,
+      );
+      assert.equal(player.points, 50);
+    } else {
+      assert.equal(room.game.challenge, null);
+      assert.equal(
+        player.points,
+        space.type === "bonus" || space.type === "finish"
+          ? 70
+          : space.type === "trap"
+            ? 40
+            : 50,
+      );
+    }
+  }
 });

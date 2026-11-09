@@ -193,9 +193,13 @@
   background: #986b24;
   border-color: #ffe3a0;
 }
-.path-space.challenge {
+.path-space.solo {
   background: #315f91;
   border-color: #a4dfff;
+}
+.path-space.duel {
+  background: #773d63;
+  border-color: #f4a5d9;
 }
 .path-space.trap {
   background: #763958;
@@ -481,6 +485,9 @@
   background: #202b43;
   border-radius: 12px;
   font-family: system-ui, sans-serif;
+}
+.solo-results {
+  grid-template-columns: minmax(0, 1fr);
 }
 .my-result {
   border-color: var(--gold);

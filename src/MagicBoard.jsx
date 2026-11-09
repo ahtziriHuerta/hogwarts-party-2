@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket";
 import MagicCharacter from "./MagicCharacter";
 import LightningChallenge from "./LightningChallenge";
+import spaces from "../shared/board.json";
 import "./MagicBoard.css";
 
-const TOTAL = 24;
+const TOTAL = spaces.length;
 const STEP_DURATION = 420;
 
 const path = [
@@ -33,28 +34,6 @@ const path = [
   [78, 12],
   [65, 12],
 ];
-
-const spaces = Array.from({ length: TOTAL }, (_, i) => {
-  const number = i + 1;
-
-  if (number === TOTAL) {
-    return { number, type: "finish", icon: "🏰" };
-  }
-
-  if (number % 7 === 0) {
-    return { number, type: "trap", icon: "🕷️" };
-  }
-
-  if (number % 5 === 0) {
-    return { number, type: "bonus", icon: "⭐" };
-  }
-
-  if (number % 3 === 0) {
-    return { number, type: "challenge", icon: "⚡" };
-  }
-
-  return { number, type: "normal", icon: "✨" };
-});
 
 function getCoordinates(position) {
   if (position === 0) return [5, 82];
@@ -248,15 +227,23 @@ function BoardOptions({ isHost, busy, onRestart, onClose }) {
           Cerrar
         </button>
       </header>
-      <p>Consigue 2 trofeos para ganar. Cada trofeo cuesta 100 puntos.</p>
+      <p>Consigue 2 trofeos para ganar. Cada trofeo cuesta 100 monedas.</p>
       <ul>
-        <li>⭐ Magia: +20 puntos.</li>
-        <li>🕷️ Trampa: −10 puntos, sin bajar de cero.</li>
+        <li>🪙 Magia: +20 monedas.</li>
+        <li>🕷️ Trampa: −10 monedas, sin bajar de cero.</li>
         <li>
-          ⚡ Reto relámpago: ambos responden en 20 s. +10–30 al acertar y hasta
-          +10 por rapidez.
+          🪄 Individual: solo responde quien cayó. Acierto +10–30; fallo o
+          tiempo agotado no restan.
         </li>
-        <li>🏰 Completar una vuelta: +20 puntos.</li>
+        <li>
+          ⚡ Duelo: ambos responden. Acierto +10–30 y hasta +10 por rapidez;
+          fallo o tiempo agotado −10.
+        </li>
+        <li>
+          Hay 8 individuales y 8 duelos en 24 casillas. Tienen 20 segundos y el
+          saldo nunca baja de 0.
+        </li>
+        <li>🏰 Completar una vuelta: +20 monedas.</li>
       </ul>
       {isHost && (
         <button
@@ -418,7 +405,9 @@ export default function MagicBoard({
             {winningPlayer
               ? `🏆 Ganó ${winningPlayer.nickname}`
               : challenge
-                ? "⚡ ¡Ambos responden!"
+                ? challenge.mode === "solo"
+                  ? "🪄 Reto individual"
+                  : "⚡ Duelo contra rival"
                 : isMyTurn
                   ? "🎲 ¡Es tu turno!"
                   : `⏳ Turno de ${current.nickname}`}
@@ -465,8 +454,8 @@ export default function MagicBoard({
               </p>
               <div className="player-stats">
                 <strong>
-                  ⭐ {player.points ?? 0}
-                  <span className="stat-label"> puntos</span>
+                  🪙 {player.points ?? 0}
+                  <span className="stat-label"> monedas</span>
                 </strong>
                 <span>
                   🏆 {player.trophies ?? 0}/{trophiesToWin}
@@ -481,9 +470,10 @@ export default function MagicBoard({
       </div>
 
       <p className="board-legend" aria-label="Tipos de casilla">
-        <span>⭐ Magia +20</span>
+        <span>🪙 Magia +20</span>
         <span>🕷️ Trampa −10</span>
-        <span>⚡ Reto +10–40</span>
+        <span>🪄 Individual +10–30</span>
+        <span>⚡ Duelo +10–40 / −10</span>
         <span>🏰 Vuelta +20</span>
       </p>
       {/* CONTENEDOR DEL TABLERO Y LOS CONTROLES */}
@@ -533,6 +523,7 @@ export default function MagicBoard({
                 <div
                   key={space.number}
                   className={`path-space ${space.type}`}
+                  aria-label={`Casilla ${space.number}: ${{ solo: "reto individual", duel: "duelo contra rival", bonus: "bono de 20 monedas", trap: "trampa de 10 monedas", normal: "camino", finish: "vuelta completa" }[space.type]}`}
                   style={{
                     left: `${x}%`,
                     top: `${y}%`,
@@ -588,7 +579,7 @@ export default function MagicBoard({
 
           <div className="trophy-shop">
             <p className="trophy-price">
-              🏆 Meta: {trophiesToWin} trofeos · {trophyPrice} ⭐ c/u
+              🏆 Meta: {trophiesToWin} trofeos · {trophyPrice} 🪙 c/u
             </p>
 
             <button
@@ -604,7 +595,7 @@ export default function MagicBoard({
               !challenge &&
               (myPlayer?.points ?? 0) < trophyPrice && (
                 <p className="trophy-hint">
-                  Te faltan {trophyPrice - (myPlayer?.points ?? 0)} puntos para
+                  Te faltan {trophyPrice - (myPlayer?.points ?? 0)} monedas para
                   comprar un trofeo.
                 </p>
               )}

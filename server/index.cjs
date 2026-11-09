@@ -22,7 +22,8 @@ const io = new Server(server, {
 
 const rooms = new Map();
 
-const TOTAL = 24;
+const BOARD = require("../shared/board.json");
+const TOTAL = BOARD.length;
 const TROPHY_PRICE = 100;
 const TROPHIES_TO_WIN = 2;
 
@@ -87,24 +88,24 @@ function getPlayerRoom(socket) {
 // EFECTOS DE CASILLAS
 
 function getSpaceEffect(position, nickname) {
-  if (position === TOTAL) {
+  if (BOARD[position - 1]?.type === "finish") {
     return {
       points: 20,
-      message: `🏰 ${nickname} completó una vuelta por Hogwarts: +20 puntos.`,
+      message: `🏰 ${nickname} completó una vuelta por Hogwarts: +20 monedas.`,
     };
   }
 
-  if (position % 7 === 0) {
+  if (BOARD[position - 1]?.type === "trap") {
     return {
       points: -10,
-      message: `🕷️ ${nickname} cayó en una trampa: -10 puntos.`,
+      message: `🕷️ ${nickname} cayó en una trampa: -10 monedas.`,
     };
   }
 
-  if (position % 5 === 0) {
+  if (BOARD[position - 1]?.type === "bonus") {
     return {
       points: 20,
-      message: `⭐ ${nickname} encontró magia: +20 puntos.`,
+      message: `🪙 ${nickname} encontró magia: +20 monedas.`,
     };
   }
 
@@ -446,24 +447,15 @@ io.on("connection", (socket) => {
     game.dice = result;
     game.rollNumber += 1;
 
-    // PRIORIDAD:
-    // 24 = vuelta completada
-    // múltiplos de 7 = trampa
-    // múltiplos de 5 = bonus
-    // múltiplos de 3 = reto
-
-    const isChallenge =
-      destination !== TOTAL &&
-      destination % 3 === 0 &&
-      destination % 5 !== 0 &&
-      destination % 7 !== 0;
+    const space = BOARD[destination - 1];
+    const isChallenge = space.type === "solo" || space.type === "duel";
 
     // Acreditar la vuelta antes del reto, que mantiene el turno y retorna aquí.
     const lapBonus = completedLap && destination !== TOTAL ? 20 : 0;
     player.points += lapBonus;
 
     if (isChallenge) {
-      challenges.start(room, chooseQuestion(game));
+      challenges.start(room, chooseQuestion(game), space.type);
       return callback?.({ ok: true });
     }
 
@@ -474,7 +466,7 @@ io.on("connection", (socket) => {
     game.message = effect.message;
 
     if (lapBonus > 0) {
-      game.message += ` 🏰 ¡Vuelta completada! +20 puntos adicionales.`;
+      game.message += ` 🏰 ¡Vuelta completada! +20 monedas adicionales.`;
     }
 
     nextTurn(game);
@@ -536,7 +528,7 @@ io.on("connection", (socket) => {
     if (player.points < TROPHY_PRICE) {
       return callback?.({
         ok: false,
-        error: `Necesitas ${TROPHY_PRICE} puntos para comprar un trofeo.`,
+        error: `Necesitas ${TROPHY_PRICE} monedas para comprar un trofeo.`,
       });
     }
 
