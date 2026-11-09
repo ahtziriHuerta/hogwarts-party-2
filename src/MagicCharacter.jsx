@@ -1,4 +1,3 @@
-
 export default function MagicCharacter({
   size = 150,
   primary = "#9e303e",
@@ -8,76 +7,144 @@ export default function MagicCharacter({
   eyes = "#477e85",
   hairstyle = "short",
 }) {
-  const hairStyles = {
+  // La parte trasera se dibuja antes del rostro; el flequillo va encima.
+  // Así el pelo largo y las trenzas cambian la silueta sin tapar los ojos.
+  const backHair = {
+    wavy: (
+      <path
+        d="M34 38 Q15 56 29 77 Q14 92 30 105 Q17 118 43 125 L48 68 L84 68 L88 124 Q114 119 101 102 Q116 86 102 73 Q114 49 95 34 Z"
+        fill={hair}
+      />
+    ),
+    long: (
+      <path
+        d="M29 44 Q26 10 65 10 Q104 10 101 44 L107 129 Q85 137 65 126 Q44 137 23 129 Z"
+        fill={hair}
+      />
+    ),
+    braids: (
+      <g fill={hair} stroke="#000" strokeOpacity=".16" strokeWidth="1.5">
+        <path d="M32 42 Q20 82 30 127 L44 127 L44 44 Z M86 44 L86 127 L100 127 Q110 82 98 42 Z" />
+        {[73, 85, 97, 109, 121].map((y) => (
+          <g key={y}>
+            <ellipse
+              cx="34"
+              cy={y}
+              rx="10"
+              ry="9"
+              transform={`rotate(${y % 24 ? -20 : 20} 34 ${y})`}
+            />
+            <ellipse
+              cx="96"
+              cy={y}
+              rx="10"
+              ry="9"
+              transform={`rotate(${y % 24 ? 20 : -20} 96 ${y})`}
+            />
+          </g>
+        ))}
+        <path d="M28 128 L24 140 L40 140 L39 128 M91 128 L90 140 L106 140 L101 128" />
+        <path
+          d="M26 126 L42 126 M88 126 L104 126"
+          stroke={secondary}
+          strokeWidth="5"
+          strokeOpacity="1"
+        />
+      </g>
+    ),
+    ponytail: (
+      <g fill={hair}>
+        <path d="M84 26 Q114 14 119 42 Q126 73 107 107 Q113 77 96 60 L89 42 Z" />
+        <circle cx="94" cy="30" r="7" fill={secondary} />
+      </g>
+    ),
+    afro: (
+      <g fill={hair}>
+        <ellipse cx="65" cy="46" rx="47" ry="40" />
+        {[
+          [25, 39],
+          [31, 22],
+          [47, 13],
+          [65, 10],
+          [84, 14],
+          [100, 25],
+          [106, 43],
+          [103, 62],
+          [26, 62],
+        ].map(([cx, cy]) => (
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="12" />
+        ))}
+      </g>
+    ),
+  };
+  const frontHair = {
     short: (
       <path
-        d="M38 47 Q34 17 65 17 Q96 17 92 48
-           Q80 31 65 35 Q48 31 38 47"
+        d="M34 49 L34 28 L43 30 L45 13 L57 24 L68 10 L74 23 L91 18 L97 49 L84 38 L73 40 L61 33 L48 42 Z"
         fill={hair}
       />
     ),
-
     wavy: (
-      <>
-        <path
-          d="M35 48 Q27 17 65 15 Q103 17 95 48
-             Q84 28 65 32 Q46 28 35 48"
-          fill={hair}
-        />
-        <path
-          d="M37 40 Q23 57 34 80 Q25 94 39 102
-             L47 75 Z"
-          fill={hair}
-        />
-        <path
-          d="M93 40 Q107 57 96 80 Q105 94 91 102
-             L83 75 Z"
-          fill={hair}
-        />
-      </>
+      <path
+        d="M30 49 Q24 13 61 13 Q101 8 101 49 Q89 29 75 31 Q66 56 48 50 Q57 39 53 32 Q40 38 30 49"
+        fill={hair}
+      />
     ),
-
     side: (
       <path
-        d="M35 49 Q30 17 64 17 Q98 17 94 49
-           Q79 39 72 25 Q55 45 35 49"
+        d="M31 53 Q26 19 62 16 Q98 11 99 51 L86 42 L82 29 Q68 54 37 57 L50 42 Z"
         fill={hair}
       />
     ),
-
     long: (
-      <>
-        <path
-          d="M34 48 Q29 14 65 14 Q101 14 96 48
-             L101 105 L84 105 L84 46
-             Q65 30 46 46 L46 105 L29 105 Z"
-          fill={hair}
-        />
-      </>
+      <path
+        d="M29 54 Q25 10 65 10 Q104 10 101 54 L90 47 Q75 41 65 28 Q55 41 40 47 L36 77 L29 82 Z"
+        fill={hair}
+      />
     ),
-
     curly: (
-      <>
+      <g fill={hair}>
         {[
-          [39, 38],
-          [47, 25],
-          [60, 20],
-          [73, 20],
-          [86, 27],
-          [94, 40],
-          [34, 51],
-          [96, 51],
-        ].map(([cx, cy], index) => (
-          <circle
-            key={index}
-            cx={cx}
-            cy={cy}
-            r="12"
-            fill={hair}
-          />
+          [36, 37, 11],
+          [44, 24, 12],
+          [58, 19, 12],
+          [74, 21, 12],
+          [88, 29, 12],
+          [95, 43, 9],
+          [33, 50, 8],
+        ].map(([cx, cy, r]) => (
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} />
         ))}
-      </>
+      </g>
     ),
+    braids: (
+      <path
+        d="M29 53 Q24 14 65 12 Q105 14 101 53 L91 47 Q79 40 65 29 Q51 40 39 47 Z"
+        fill={hair}
+      />
+    ),
+    ponytail: (
+      <path
+        d="M31 51 Q24 15 62 14 Q98 12 99 51 L88 44 Q70 44 53 28 Q49 46 31 51 Z"
+        fill={hair}
+      />
+    ),
+    afro: (
+      <path
+        d="M29 52 Q25 24 65 24 Q105 24 101 52 L88 43 L77 47 L65 41 L53 47 L41 43 Z"
+        fill={hair}
+      />
+    ),
+  };
+  const hairLabels = {
+    short: "corto en puntas",
+    wavy: "ondulado",
+    side: "flequillo de lado",
+    long: "largo",
+    curly: "rizado",
+    braids: "trenzas",
+    ponytail: "coleta",
+    afro: "afro",
   };
 
   return (
@@ -87,7 +154,8 @@ export default function MagicCharacter({
       viewBox="0 0 130 160"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="Estudiante de magia"
+      aria-label={`Estudiante de magia con pelo ${hairLabels[hairstyle] ?? hairLabels.short}`}
+      data-hairstyle={hairstyle}
       style={{
         display: "block",
         flexShrink: 0,
@@ -95,14 +163,9 @@ export default function MagicCharacter({
       }}
     >
       {/* SOMBRA */}
-      <ellipse
-        cx="65"
-        cy="153"
-        rx="42"
-        ry="6"
-        fill="#000000"
-        opacity="0.2"
-      />
+      <ellipse cx="65" cy="153" rx="42" ry="6" fill="#000000" opacity="0.2" />
+
+      <g data-hair="back">{backHair[hairstyle]}</g>
 
       {/* TÚNICA */}
       <path
@@ -131,69 +194,26 @@ export default function MagicCharacter({
         fill={primary}
       />
 
-      <path
-        d="M61 112 L69 112"
-        stroke={secondary}
-        strokeWidth="3"
-      />
+      <path d="M61 112 L69 112" stroke={secondary} strokeWidth="3" />
 
-      <path
-        d="M59 123 L70 123"
-        stroke={secondary}
-        strokeWidth="3"
-      />
+      <path d="M59 123 L70 123" stroke={secondary} strokeWidth="3" />
 
       {/* BORDES DE LA TÚNICA */}
-      <path
-        d="M43 103 L58 150"
-        stroke={primary}
-        strokeWidth="5"
-      />
+      <path d="M43 103 L58 150" stroke={primary} strokeWidth="5" />
 
-      <path
-        d="M87 103 L72 150"
-        stroke={primary}
-        strokeWidth="5"
-      />
+      <path d="M87 103 L72 150" stroke={primary} strokeWidth="5" />
 
-      <path
-        d="M43 103 L58 150"
-        stroke={secondary}
-        strokeWidth="1.5"
-      />
+      <path d="M43 103 L58 150" stroke={secondary} strokeWidth="1.5" />
 
-      <path
-        d="M87 103 L72 150"
-        stroke={secondary}
-        strokeWidth="1.5"
-      />
+      <path d="M87 103 L72 150" stroke={secondary} strokeWidth="1.5" />
 
       {/* CUELLO */}
-      <rect
-        x="55"
-        y="88"
-        width="20"
-        height="20"
-        rx="8"
-        fill={skin}
-      />
+      <rect x="55" y="88" width="20" height="20" rx="8" fill={skin} />
 
       {/* OREJAS */}
-      <ellipse
-        cx="35"
-        cy="66"
-        rx="7"
-        ry="11"
-        fill={skin}
-      />
+      <ellipse cx="35" cy="66" rx="7" ry="11" fill={skin} />
 
-      <ellipse
-        cx="95"
-        cy="66"
-        rx="7"
-        ry="11"
-        fill={skin}
-      />
+      <ellipse cx="95" cy="66" rx="7" ry="11" fill={skin} />
 
       {/* ROSTRO */}
       <path
@@ -210,21 +230,9 @@ export default function MagicCharacter({
       />
 
       {/* OJOS */}
-      <ellipse
-        cx="52"
-        cy="65"
-        rx="4"
-        ry="5"
-        fill="#ffffff"
-      />
+      <ellipse cx="52" cy="65" rx="4" ry="5" fill="#ffffff" />
 
-      <ellipse
-        cx="78"
-        cy="65"
-        rx="4"
-        ry="5"
-        fill="#ffffff"
-      />
+      <ellipse cx="78" cy="65" rx="4" ry="5" fill="#ffffff" />
 
       <circle cx="52" cy="65" r="2.8" fill={eyes} />
       <circle cx="78" cy="65" r="2.8" fill={eyes} />
@@ -269,7 +277,7 @@ export default function MagicCharacter({
       />
 
       {/* CABELLO */}
-      {hairStyles[hairstyle] || hairStyles.short}
+      <g data-hair="front">{frontHair[hairstyle] || frontHair.short}</g>
 
       {/* ESCUDO DE LA CASA */}
       <path
@@ -282,13 +290,7 @@ export default function MagicCharacter({
         strokeWidth="2"
       />
 
-      <text
-        x="97.5"
-        y="129"
-        fontSize="10"
-        textAnchor="middle"
-        fill={secondary}
-      >
+      <text x="97.5" y="129" fontSize="10" textAnchor="middle" fill={secondary}>
         ✦
       </text>
 
@@ -303,12 +305,7 @@ export default function MagicCharacter({
         strokeLinecap="round"
       />
 
-      <circle
-        cx="120"
-        cy="94"
-        r="3"
-        fill="#ffdf83"
-      />
+      <circle cx="120" cy="94" r="3" fill="#ffdf83" />
 
       <path
         d="M120 85 L120 80

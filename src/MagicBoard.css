@@ -1,4 +1,4 @@
-/* El tablero conserva su proporción; en pantallas estrechas los controles pasan debajo. */
+/* En horizontal, la altura disponible reparte espacio entre barra, jugadores y partida. */
 
 .magic-board-screen {
   width: min(100%, 1400px);
@@ -8,25 +8,33 @@
   gap: 16px;
   text-align: center;
 }
-.magic-board-screen > h2 {
-  margin: 0;
+.board-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
 }
-.magic-board-screen > .back-button {
-  align-self: flex-start;
+.board-toolbar .back-button {
   margin: 0;
+  padding: 10px;
+}
+.board-heading {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.board-heading h2 {
+  margin: 0;
+  font-size: clamp(20px, 3vw, 32px);
+}
+.board-options-button {
+  flex-shrink: 0;
 }
 .board-turn-description {
   margin: 0;
   color: #c7e9d4;
   font:
     600 16px/1.5 system-ui,
-    sans-serif;
-}
-.trophy-goal {
-  margin: 0;
-  color: #c3c8da;
-  font:
-    14px/1.6 system-ui,
     sans-serif;
 }
 .board-players {
@@ -74,6 +82,15 @@
     sans-serif;
   color: #f4dfaa;
 }
+.player-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font:
+    13px/1.4 system-ui,
+    sans-serif;
+}
 .board-player-active {
   border-color: var(--gold);
   background: linear-gradient(135deg, #343047, #141b30);
@@ -93,6 +110,9 @@
   grid-template-columns: minmax(0, 1fr) 300px;
   gap: 20px;
   align-items: start;
+}
+.board-game-layout > .board-message {
+  grid-column: 1 / -1;
 }
 .board-landscape {
   position: relative;
@@ -126,6 +146,11 @@
   bottom: 1%;
   right: 3%;
   font-size: clamp(20px, 3vw, 40px);
+}
+.board-map {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
 }
 .board-path {
   position: absolute;
@@ -235,6 +260,10 @@
   background: var(--panel);
   min-width: 0;
 }
+.board-controls[data-finished="true"] > .primary,
+.board-controls[data-finished="true"] > .trophy-shop {
+  display: none;
+}
 .board-controls h3 {
   margin: 0;
   font-size: 19px;
@@ -253,7 +282,7 @@
   background: #0b1224;
 }
 .dice-number {
-  font-size: 30px;
+  font-size: 24px;
   color: var(--gold);
 }
 .dice-sparkle {
@@ -435,22 +464,293 @@
     font-size: 18px;
   }
 }
-@media (min-width: 700px) and (max-height: 500px) and (orientation: landscape) {
-  .board-game-layout {
-    grid-template-columns: minmax(0, 1fr) 260px;
-    gap: 12px;
+/* Opciones secundarias fuera del tablero: reinicio y explicación de las casillas. */
+.board-options {
+  width: min(92vw, 540px);
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding: 24px;
+  color: #f0eadc;
+  background: #151d33;
+  border: 1px solid var(--gold);
+  border-radius: 18px;
+}
+.board-options::backdrop {
+  background: #050a19cc;
+  backdrop-filter: blur(6px);
+}
+.board-options header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.board-options h2 {
+  margin: 0;
+  font-size: 24px;
+}
+.board-options li {
+  margin: 10px 0;
+}
+
+/* No fijamos el alto en vertical ni al ampliar el texto: esas vistas pueden desplazarse. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .game:has(> .magic-board-screen) {
+    height: 100dvh;
+    min-height: 0;
+    padding: max(6px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+    align-items: stretch;
+  }
+  .magic-board-screen {
+    height: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 44px 58px minmax(0, 1fr);
+    gap: 6px;
+  }
+  .board-toolbar {
+    height: 44px;
+    gap: 8px;
+  }
+  .board-toolbar button {
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .board-heading h2 {
+    font-size: 19px;
+    line-height: 1.2;
+  }
+  .board-turn-description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  .dice-display {
+    padding: 4px 10px;
+  }
+  .dice-number {
+    font-size: 22px;
+    white-space: nowrap;
+  }
+  .board-players {
+    height: 58px;
+    gap: 8px;
   }
   .board-player {
-    padding: 10px;
+    height: 58px;
+    padding: 4px 8px;
+    gap: 8px;
+    border-radius: 12px;
+    flex-direction: row;
+    text-align: left;
   }
   .board-player > svg {
-    width: 48px;
+    width: 40px;
     height: 48px;
+  }
+  .board-player > div {
+    flex: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 8px;
+    align-items: center;
+  }
+  .player-status {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 10px;
+    margin: 0;
+    white-space: nowrap;
+  }
+  .board-player h3 {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 13px;
+    line-height: 1.3;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .board-player .player-character {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    line-height: 1.3;
+    margin: 0;
+  }
+  .player-stats {
+    grid-column: 1 / -1;
+    gap: 8px;
+    flex-wrap: nowrap;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  .board-player strong {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+  .stat-label {
+    display: none;
+  }
+  .board-legend {
+    display: none;
+  }
+  .board-game-layout {
+    min-height: 0;
+    height: 100%;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 4px 8px;
+    align-items: stretch;
+  }
+  .board-landscape {
+    height: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+    border-radius: 14px;
+    container-type: size;
+  }
+  .path-space {
+    width: clamp(18px, 11cqh, 34px);
+  }
+  .path-space small {
+    top: -12px;
+    font-size: 10px;
+  }
+  .path-space > span {
+    font-size: clamp(11px, 7cqh, 18px);
+  }
+  .board-map {
+    inset: 12px 0 0;
+  }
+  .moving-player {
+    width: clamp(22px, 16cqh, 42px);
+    transform: translate(-50%, -60%);
+  }
+  .moving-player-label {
+    font-size: 9px;
+    padding: 1px 3px;
+  }
+  .board-moon {
+    font-size: 26px;
+  }
+  .board-castle {
+    font-size: 42px;
+  }
+  .board-trees {
+    font-size: 20px;
+  }
+  .board-controls {
+    min-height: 0;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    justify-content: center;
+  }
+  .board-controls button {
+    min-height: 44px;
+    padding: 8px 6px;
+    font-size: 13px;
+    line-height: 1.2;
+  }
+  .trophy-shop {
+    gap: 4px;
+    padding-top: 4px;
+  }
+  .trophy-shop .trophy-price {
+    font-size: 11px;
+    line-height: 1.3;
+  }
+  .trophy-hint {
+    display: none;
+  }
+  .board-message {
+    font-size: 12px;
+    line-height: 1.3;
+    text-align: left;
+  }
+  .board-victory {
+    padding: 8px;
+  }
+  .board-victory h3 {
+    font-size: 15px;
+  }
+  .board-victory p {
+    margin: 6px 0 0;
+    font-size: 13px;
+  }
+  .challenge-overlay {
+    padding: 8px;
   }
   .challenge-modal {
     width: min(100%, 740px);
+    max-height: calc(100dvh - 16px);
+    padding: 10px 16px;
+  }
+  .challenge-icon {
+    display: none;
+  }
+  .challenge-modal h2 {
+    font-size: 20px;
+    line-height: 1.2;
+    margin: 0 0 4px;
+  }
+  .challenge-meta {
+    font-size: 12px;
+  }
+  .challenge-question {
+    font-size: 17px;
+    line-height: 1.3;
+    margin: 10px 0;
   }
   .challenge-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .challenge-option {
+    min-height: 44px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  .challenge-letter {
+    width: 24px;
+    height: 24px;
+  }
+  .challenge-waiting {
+    margin: 6px 0;
+    font-size: 12px;
+  }
+  .challenge-submit {
+    min-height: 44px;
+    margin-top: 8px;
+    padding: 8px;
+  }
+}
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 700px) {
+  .board-options-button span {
+    display: none;
+  }
+  .board-game-layout {
+    grid-template-columns: minmax(0, 1fr) 160px;
+  }
+  .board-player .player-character {
+    display: none;
+  }
+  .player-status {
+    font-size: 9px;
+  }
+  .player-position {
+    font-size: 10px;
+  }
+  .board-player > div {
+    column-gap: 4px;
+  }
+  .board-player > svg {
+    width: 32px;
   }
 }

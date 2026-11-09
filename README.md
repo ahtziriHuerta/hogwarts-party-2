@@ -64,6 +64,31 @@ npm run build
 - `shared/characters.json`: catálogo único para navegador y servidor.
 - `server/index.cjs`: salas, turnos, puntuación y validación de acciones.
 
-Los estilos usan el ancho disponible y permiten desplazamiento vertical, incluso
-en horizontal. Los controles táctiles miden al menos 48 píxeles y se respeta la
+En celular horizontal, el tablero, ambos marcadores, el dado y la compra de
+trofeos comparten una sola pantalla. La altura se adapta al espacio útil del
+navegador con `100dvh` y respeta las zonas seguras de la pantalla. El botón
+**Opciones** abre las reglas y el reinicio. En vertical se permite desplazamiento.
+Los controles de la partida tienen al menos 44 píxeles de alto y se respeta la
 preferencia del sistema para reducir animaciones.
+
+Los ocho personajes tienen siluetas de cabello distintas: corto en puntas,
+ondulado, flequillo de lado, largo, rizado, trenzas, coleta y afro. La misma
+apariencia se usa en la selección, los marcadores y las fichas.
+
+## Pruebas de pantalla y personajes
+
+```sh
+npx playwright install chromium
+npm run test:ui
+```
+
+Estas pruebas arrancan el frontend en el puerto 5174 y el servidor en 3002;
+deben estar disponibles. Comprueban la partida, errores, victoria, opciones y
+preguntas sin desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430.
+También revisan que los ocho personajes y el botón de confirmación quepan en
+la selección, que los peinados tengan geometría distinta y que las trenzas y la
+coleta se conserven al iniciar una sala real de dos jugadores.
+
+Para usar un Chromium ya instalado, configura
+`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con la ruta del ejecutable. Las pruebas
+usan Chromium; queda pendiente comprobar Safari y dispositivos físicos.

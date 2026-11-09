@@ -266,12 +266,6 @@ function ChallengeModal({ challenge, mySocketId, onAnswer }) {
 
         <p className="challenge-question">{challenge.question}</p>
 
-        {!isMyChallenge && (
-          <p className="challenge-waiting">
-            ⏳ El otro jugador está respondiendo...
-          </p>
-        )}
-
         <div className="challenge-options">
           {challenge.options.map((option, index) => (
             <button
@@ -308,10 +302,62 @@ function ChallengeModal({ challenge, mySocketId, onAnswer }) {
             {busy ? "Comprobando..." : "✨ Responder"}
           </button>
         ) : (
-          <p className="challenge-waiting">Esperando la respuesta...</p>
+          <p className="challenge-waiting">
+            ⏳ El otro jugador está respondiendo...
+          </p>
         )}
       </div>
     </div>
+  );
+}
+
+// El diálogo nativo administra el foco, Escape y el regreso al botón de opciones.
+function BoardOptions({ isHost, busy, onRestart, onClose }) {
+  const dialog = useRef(null);
+
+  useEffect(() => {
+    const element = dialog.current;
+    if (!element.open) element.showModal();
+  }, []);
+
+  return (
+    <dialog
+      ref={dialog}
+      className="board-options"
+      onClose={onClose}
+      aria-labelledby="board-options-title"
+    >
+      <header>
+        <h2 id="board-options-title">Guía de la partida</h2>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => dialog.current.close()}
+        >
+          Cerrar
+        </button>
+      </header>
+      <p>Consigue 2 trofeos para ganar. Cada trofeo cuesta 100 puntos.</p>
+      <ul>
+        <li>⭐ Magia: +20 puntos.</li>
+        <li>🕷️ Trampa: −10 puntos, sin bajar de cero.</li>
+        <li>🪄 Reto: +10, +20 o +30 puntos al acertar.</li>
+        <li>🏰 Completar una vuelta: +20 puntos.</li>
+      </ul>
+      {isHost && (
+        <button
+          type="button"
+          className="secondary"
+          disabled={busy}
+          onClick={() => {
+            onRestart();
+            dialog.current.close();
+          }}
+        >
+          ↻ Reiniciar partida para ambos
+        </button>
+      )}
+    </dialog>
   );
 }
 
@@ -328,6 +374,7 @@ export default function MagicBoard({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [showOptions, setShowOptions] = useState(false);
 
   const previousRollRef = useRef(game?.rollNumber ?? 0);
 
@@ -442,28 +489,42 @@ export default function MagicBoard({
 
   return (
     <section className="magic-board-screen">
-      {/* ENCABEZADO */}
-
-      <button type="button" className="back-button" onClick={onBack}>
-        ← Salir de la partida
-      </button>
-
-      <h2>🏰 El tablero mágico</h2>
-
-      <p className="board-turn-description">
-        {winningPlayer
-          ? "🏆 ¡La aventura ha terminado!"
-          : challenge
-            ? "🪄 ¡Hay un reto mágico pendiente!"
-            : isMyTurn
-              ? "🎲 ¡Es tu turno!"
-              : `⏳ Esperando a ${current.nickname}`}
-      </p>
-
-      <p className="trophy-goal">
-        🏆 Consigue {trophiesToWin} trofeos para ganar. Cada uno cuesta{" "}
-        {trophyPrice} ⭐.
-      </p>
+      <header className="board-toolbar">
+        <button
+          type="button"
+          className="back-button"
+          onClick={onBack}
+          aria-label="Salir de la partida"
+        >
+          ← Salir
+        </button>
+        <div className="board-heading">
+          <h2>Hogwarts Party</h2>
+          <p className="board-turn-description" title={current.nickname}>
+            {winningPlayer
+              ? `🏆 Ganó ${winningPlayer.nickname}`
+              : challenge
+                ? "🪄 Reto mágico"
+                : isMyTurn
+                  ? "🎲 ¡Es tu turno!"
+                  : `⏳ Turno de ${current.nickname}`}
+          </p>
+        </div>
+        <div
+          className="dice-display"
+          aria-label={`Último dado: ${dice ?? "sin lanzar"}`}
+        >
+          <span className="dice-number">🎲 {dice ?? "–"}</span>
+        </div>
+        <button
+          type="button"
+          className="secondary board-options-button"
+          aria-label="Opciones de la partida"
+          onClick={() => setShowOptions(true)}
+        >
+          ☰ <span>Opciones</span>
+        </button>
+      </header>
 
       {/* TARJETAS DE LOS JUGADORES */}
 
@@ -484,23 +545,22 @@ export default function MagicBoard({
               </span>
               <h3>{player.nickname}</h3>
 
-              <p>
-                {player.character?.name ?? "Estudiante"}
-                {" · "}
+              <p className="player-character">
+                {player.character?.name ?? "Estudiante"} ·{" "}
                 {player.character?.house ?? "Hogwarts"}
               </p>
-
-              <strong>⭐ {player.points ?? 0} puntos</strong>
-
-              <p>
-                🏆 {player.trophies ?? 0}/{trophiesToWin} trofeos
-              </p>
-
-              <p>
-                Casilla: {player.position ?? 0}/{TOTAL}
-              </p>
-
-              <p>🔄 Vueltas: {player.laps ?? 0}</p>
+              <div className="player-stats">
+                <strong>
+                  ⭐ {player.points ?? 0}
+                  <span className="stat-label"> puntos</span>
+                </strong>
+                <span>
+                  🏆 {player.trophies ?? 0}/{trophiesToWin}
+                </span>
+                <span className="player-position">
+                  Casilla {player.position ?? 0}/{TOTAL}
+                </span>
+              </div>
             </div>
           </div>
         ))}
@@ -524,99 +584,73 @@ export default function MagicBoard({
           </div>
           <div className="board-trees">🌲 🌲 🌲</div>
 
-          <svg
-            className="board-path"
-            viewBox="0 0 1000 600"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <polyline
-              points={path.map(([x, y]) => `${x * 10},${y * 6}`).join(" ")}
-              fill="none"
-              stroke="#12132c"
-              strokeWidth="65"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <div className="board-map">
+            <svg
+              className="board-path"
+              viewBox="0 0 1000 600"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <polyline
+                points={path.map(([x, y]) => `${x * 10},${y * 6}`).join(" ")}
+                fill="none"
+                stroke="#12132c"
+                strokeWidth="65"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
 
-            <polyline
-              points={path.map(([x, y]) => `${x * 10},${y * 6}`).join(" ")}
-              fill="none"
-              stroke="#b9945d"
-              strokeWidth="48"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+              <polyline
+                points={path.map(([x, y]) => `${x * 10},${y * 6}`).join(" ")}
+                fill="none"
+                stroke="#b9945d"
+                strokeWidth="48"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
 
-          {/* LAS 24 CASILLAS */}
+            {/* LAS 24 CASILLAS */}
 
-          {spaces.map((space, index) => {
-            const [x, y] = path[index];
+            {spaces.map((space, index) => {
+              const [x, y] = path[index];
 
-            return (
-              <div
-                key={space.number}
-                className={`path-space ${space.type}`}
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                }}
-              >
-                <small>{space.number}</small>
-                <span>{space.icon}</span>
-              </div>
-            );
-          })}
+              return (
+                <div
+                  key={space.number}
+                  className={`path-space ${space.type}`}
+                  style={{
+                    left: `${x}%`,
+                    top: `${y}%`,
+                  }}
+                >
+                  <small>{space.number}</small>
+                  <span>{space.icon}</span>
+                </div>
+              );
+            })}
 
-          {/* FICHAS ANIMADAS */}
+            {/* FICHAS ANIMADAS */}
 
-          {players.map((player, index) => (
-            <AnimatedToken
-              key={player.id}
-              player={player}
-              index={index}
-              resetKey={resetKey}
-            />
-          ))}
+            {players.map((player, index) => (
+              <AnimatedToken
+                key={player.id}
+                player={player}
+                index={index}
+                resetKey={resetKey}
+              />
+            ))}
+          </div>
         </div>
 
         {/* CONTROLES */}
 
-        <div className="board-controls">
-          {winningPlayer ? (
+        <div className="board-controls" data-finished={Boolean(winningPlayer)}>
+          {winningPlayer && (
             <div className="board-victory">
-              <h2>🏆 ¡Tenemos un ganador!</h2>
-              <h3>{winningPlayer.nickname}</h3>
-
-              <p>
-                {winningPlayer.character?.name ?? "Estudiante"}
-                {" · "}
-                {winningPlayer.character?.house ?? "Hogwarts"}
-              </p>
-
-              <strong>🏆 {winningPlayer.trophies} trofeos</strong>
+              <h3>🏆 ¡Ganó {winningPlayer.nickname}!</h3>
+              <p>La Copa de Hogwarts es tuya.</p>
             </div>
-          ) : (
-            <h3>🎮 Turno de {current.nickname}</h3>
-          )}
-
-          <div key={game.rollNumber ?? 0} className="dice-display magical-dice">
-            <span className="dice-sparkle">✦</span>
-            <span className="dice-number">
-              {dice === null ? "🎲" : `🎲 ${dice}`}
-            </span>
-            <span className="dice-sparkle">✧</span>
-          </div>
-
-          <p className="board-message" role="status">
-            {game.message}
-          </p>
-
-          {error && (
-            <p className="room-error" role="alert">
-              ⚠️ {error}
-            </p>
           )}
 
           <button
@@ -639,12 +673,8 @@ export default function MagicBoard({
           {/* TIENDA DE TROFEOS */}
 
           <div className="trophy-shop">
-            <h3>🏆 Tienda de trofeos</h3>
-
-            <p>Tus puntos: ⭐ {myPlayer?.points ?? 0}</p>
-
-            <p>
-              Tus trofeos: 🏆 {myPlayer?.trophies ?? 0}/{trophiesToWin}
+            <p className="trophy-price">
+              🏆 Meta: {trophiesToWin} trofeos · {trophyPrice} ⭐ c/u
             </p>
 
             <button
@@ -653,7 +683,7 @@ export default function MagicBoard({
               disabled={!canBuyTrophy}
               onClick={buyTrophy}
             >
-              🏆 Comprar trofeo — {trophyPrice} ⭐
+              🏆 Comprar trofeo
             </button>
 
             {!winningPlayer &&
@@ -665,21 +695,21 @@ export default function MagicBoard({
                 </p>
               )}
           </div>
-
-          {isHost && (
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy}
-              onClick={() => performAction(onRestart)}
-            >
-              ↻ Reiniciar partida para ambos
-            </button>
-          )}
         </div>
+        <p className="board-message" role="status">
+          {error || game.message}
+        </p>
       </div>
       {/* FIN DE board-game-layout */}
 
+      {showOptions && (
+        <BoardOptions
+          isHost={isHost}
+          busy={busy}
+          onRestart={() => performAction(onRestart)}
+          onClose={() => setShowOptions(false)}
+        />
+      )}
       {/* PREGUNTA ALEATORIA */}
 
       {challenge && (

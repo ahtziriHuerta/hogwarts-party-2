@@ -360,6 +360,81 @@ summary:focus-visible {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+/* La selección utiliza dos filas y reserva una fila propia para confirmar. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .game:has(> .character-selection) {
+    height: 100dvh;
+    min-height: 0;
+    padding: max(6px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+  .character-selection {
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: 44px minmax(0, 1fr) 44px;
+    gap: 6px 12px;
+    align-items: center;
+  }
+  .character-selection > .back-button {
+    margin: 0;
+    min-height: 44px;
+    padding: 6px;
+  }
+  .character-selection h2 {
+    font-size: 22px;
+    margin: 0;
+  }
+  .character-selection > p {
+    font-size: 13px;
+    margin: 0;
+  }
+  .character-grid {
+    grid-column: 1 / -1;
+    height: 100%;
+    min-height: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0;
+  }
+  .character-card {
+    position: relative;
+    height: 100%;
+    min-height: 0;
+    padding: 4px;
+    gap: 2px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+  .character-card svg {
+    height: clamp(30px, calc((100dvh - 220px) / 2), 84px);
+    width: auto;
+  }
+  .character-house {
+    font-size: 10px;
+  }
+  .taken-label {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 10px;
+    background: #151d33;
+    border-radius: 4px;
+    padding: 2px;
+  }
+  .character-selection > .primary {
+    grid-column: 1 / -1;
+    justify-self: center;
+    position: static;
+    width: min(100%, 340px);
+    min-height: 44px;
+    padding: 8px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
