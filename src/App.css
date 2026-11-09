@@ -143,24 +143,45 @@ summary:focus-visible {
     12px/1.5 system-ui,
     sans-serif;
 }
-.rules {
+.home-intro,
+.home-actions {
+  min-width: 0;
+}
+.rules-button {
   width: 100%;
+}
+.welcome-guide {
+  width: min(92vw, 640px);
+  max-height: calc(100dvh - 16px);
+  overflow: auto;
+  padding: 24px;
+  color: #f0eadc;
+  background: #151d33;
+  border: 1px solid var(--gold);
+  border-radius: 18px;
   text-align: left;
-  border-top: 1px solid var(--line);
-  margin-top: 24px;
-  padding-top: 16px;
 }
-.rules summary {
-  cursor: pointer;
-  min-height: 44px;
-  padding: 10px 0;
-  color: var(--gold);
+.welcome-guide::backdrop {
+  background: #050a19cc;
+  backdrop-filter: blur(6px);
 }
-.rules ol {
-  padding-left: 24px;
-  color: #d0d2df;
-  line-height: 1.7;
-  font-size: 15px;
+.welcome-guide header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.welcome-guide h2 {
+  margin: 0;
+  font-size: 26px;
+}
+.welcome-guide ol {
+  padding-left: 22px;
+  line-height: 1.6;
+}
+.welcome-guide li {
+  padding-left: 4px;
+  margin-top: 12px;
 }
 .back-button {
   background: transparent;
@@ -179,6 +200,11 @@ summary:focus-visible {
   flex-direction: column;
   gap: 12px;
   text-align: left;
+}
+.form-field {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
 }
 .room-form label {
   color: #ddd0b5;
@@ -258,9 +284,34 @@ summary:focus-visible {
   font-size: 14px;
   margin: 8px 0 0;
 }
-.room-lobby > button {
-  margin-top: 12px;
-  width: 100%;
+.lobby-header .back-button {
+  margin: 0;
+}
+.lobby-header h2 {
+  margin: 12px 0;
+}
+.lobby-layout,
+.lobby-players {
+  min-width: 0;
+}
+.room-player strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.empty-slot {
+  border-style: dashed;
+  background: #10182a;
+}
+.lobby-status {
+  margin: 12px 0;
+  color: #d0d2df;
+  font:
+    14px/1.5 system-ui,
+    sans-serif;
+}
+.lobby-buttons {
+  display: grid;
+  gap: 10px;
 }
 .copy-feedback {
   display: block;
@@ -343,21 +394,288 @@ summary:focus-visible {
     box-shadow: 0 4px 25px #0009;
   }
 }
-@media (max-height: 500px) and (orientation: landscape) {
-  .game {
-    align-items: flex-start;
-  }
-  .hero-crest {
-    width: 80px;
-    height: 80px;
-    font-size: 48px;
-    margin-bottom: 16px;
+/* Cada pantalla previa reparte la altura útil; el teclado puede reducirla temporalmente. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .game:has(> .welcome) {
+    height: 100dvh;
+    min-height: 0;
+    padding: max(6px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
   }
   .welcome {
-    padding: 24px;
+    height: 100%;
+    width: min(100%, 960px);
+    max-width: 960px;
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 18px;
   }
-  .character-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .welcome button {
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  .home-screen {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 20px;
+    align-items: center;
+  }
+  .home-intro {
+    text-align: left;
+  }
+  .home-screen .hero-crest {
+    display: none;
+  }
+  .home-screen .subtitle {
+    margin: 0;
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+  .home-screen h1 {
+    margin: 8px 0;
+    font-size: clamp(32px, 5.5vw, 48px);
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+  .home-screen .description {
+    margin: 8px 0;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .game-facts {
+    justify-content: flex-start;
+    gap: 6px;
+    margin: 12px 0 0;
+  }
+  .game-facts span {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .game-facts span:last-child {
+    display: none;
+  }
+  .home-actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+  }
+  .home-actions .buttons {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin: 0;
+  }
+  .home-actions .footer {
+    font-size: 12px;
+    line-height: 1.3;
+    margin: 0;
+  }
+  .home-actions .room-error {
+    font-size: 13px;
+    line-height: 1.3;
+    padding: 8px;
+    margin: 0;
+  }
+  .welcome-guide {
+    padding: 12px 18px;
+  }
+  .welcome-guide h2 {
+    font-size: 24px;
+  }
+  .welcome-guide button {
+    min-height: 44px;
+    padding: 8px 16px;
+  }
+  .welcome-guide ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+    row-gap: 10px;
+    margin: 12px 0 0;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .welcome-guide li {
+    margin: 0;
+  }
+
+  .room-form {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    grid-template-rows: 44px minmax(0, 1fr);
+    column-gap: 24px;
+    row-gap: 4px;
+    align-items: center;
+  }
+  .room-form > .back-button {
+    grid-column: 1;
+    grid-row: 1;
+    padding-left: 0;
+    margin: 0;
+    justify-self: start;
+  }
+  .room-form-intro {
+    grid-column: 1;
+    grid-row: 2;
+    min-height: 0;
+    text-align: left;
+  }
+  .room-form .castle {
+    font-size: 40px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .room-form h2 {
+    margin: 6px 0;
+    font-size: clamp(24px, 3.5vw, 32px);
+    line-height: 1.15;
+  }
+  .room-form .description {
+    margin: 8px 0 0;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .room-form form {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    align-items: start;
+  }
+  .form-field {
+    gap: 6px;
+  }
+  .form-field:only-of-type {
+    grid-column: 1 / -1;
+  }
+  .room-form label {
+    min-height: 2.8em;
+    display: flex;
+    align-items: end;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .room-form input {
+    min-height: 44px;
+    padding: 10px;
+  }
+  #room-code {
+    letter-spacing: 3px;
+  }
+  .room-form .continue-button,
+  .room-form .room-error {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  .room-form .room-error {
+    padding: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .room-lobby {
+    display: grid;
+    grid-template-rows: 44px minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+  .lobby-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .lobby-header h2 {
+    margin: 0;
+    font-size: 24px;
+  }
+  .lobby-layout {
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(170px, 0.8fr) minmax(0, 1.2fr);
+    gap: 12px;
+    align-items: center;
+  }
+  .room-code-display {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    margin: 0;
+    padding: 2px;
+    border-radius: 12px;
+  }
+  .room-code-display > span {
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 1px;
+  }
+  .room-code-display h1 {
+    font-size: 28px;
+    line-height: 1.1;
+    letter-spacing: 5px;
+    margin: 0;
+  }
+  .room-code-display .copy-feedback {
+    min-height: 14px;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.2;
+    letter-spacing: 0;
+  }
+  .lobby-players h3 {
+    margin: 0 0 6px;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+  .room-player-list {
+    gap: 6px;
+    margin: 0;
+  }
+  .room-player {
+    padding: 6px 8px;
+    border-radius: 10px;
+    font:
+      13px/1.3 system-ui,
+      sans-serif;
+  }
+  .room-player strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .room-player p {
+    margin: 2px 0 0;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  .lobby-actions {
+    display: grid;
+    gap: 4px;
+  }
+  .lobby-status {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.3;
+  }
+  .lobby-actions .room-error {
+    margin: 0;
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  .lobby-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .lobby-buttons button:only-child {
+    grid-column: 1 / -1;
   }
 }
 /* La selección utiliza dos filas y reserva una fila propia para confirmar. */
@@ -425,6 +743,11 @@ summary:focus-visible {
     background: #151d33;
     border-radius: 4px;
     padding: 2px;
+  }
+  .character-selection > .room-error {
+    padding: 4px 8px;
+    font-size: 12px;
+    line-height: 1.3;
   }
   .character-selection > .primary {
     grid-column: 1 / -1;

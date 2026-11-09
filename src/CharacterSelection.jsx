@@ -5,6 +5,7 @@ import characters from "../shared/characters.json";
 
 export default function CharacterSelection({
   nickname,
+  error,
   playerNumber = 1,
   takenCharacterIds = [],
   onBack,
@@ -42,7 +43,12 @@ export default function CharacterSelection({
 
       <h2>🪄 Jugador {playerNumber}</h2>
 
-      <p>¡Hola, {nickname}! Elige tu estudiante de magia.</p>
+      <p
+        className={error ? "room-error" : undefined}
+        role={error ? "alert" : undefined}
+      >
+        {error || `¡Hola, ${nickname}! Elige tu estudiante de magia.`}
+      </p>
 
       <div className="character-grid">
         {characters.map((character) => {

@@ -64,8 +64,12 @@ npm run build
 - `shared/characters.json`: catálogo único para navegador y servidor.
 - `server/index.cjs`: salas, turnos, puntuación y validación de acciones.
 
-En celular horizontal, el tablero, ambos marcadores, el dado y la compra de
-trofeos comparten una sola pantalla. La altura se adapta al espacio útil del
+En celular horizontal, el inicio, crear/unirse a sala, la espera y la selección
+de personajes caben cada uno en una sola pantalla. Inicio y formularios usan
+dos columnas; la sala coloca el código junto a los jugadores y reserva una fila
+para elegir personaje e iniciar. **Cómo jugar** abre una guía sin alargar el inicio.
+El tablero, ambos marcadores, el dado y la compra de trofeos también comparten
+una sola pantalla. La altura se adapta al espacio útil del
 navegador con `100dvh` y respeta las zonas seguras de la pantalla. El botón
 **Opciones** abre las reglas y el reinicio. En vertical se permite desplazamiento.
 Los controles de la partida tienen al menos 44 píxeles de alto y se respeta la
@@ -83,8 +87,10 @@ npm run test:ui
 ```
 
 Estas pruebas arrancan el frontend en el puerto 5174 y el servidor en 3002;
-deben estar disponibles. Comprueban la partida, errores, victoria, opciones y
-preguntas sin desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430.
+deben estar disponibles. Las 11 pruebas comprueban inicio, guía, formularios,
+sala de espera/lista, partida, errores, victoria, opciones y preguntas sin
+desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430. Incluyen nombres
+de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.
 También revisan que los ocho personajes y el botón de confirmación quepan en
 la selección, que los peinados tengan geometría distinta y que las trenzas y la
 coleta se conserven al iniciar una sala real de dos jugadores.

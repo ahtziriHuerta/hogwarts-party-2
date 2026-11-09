@@ -14,6 +14,7 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   const pendingConnection = useRef(null);
+  const guideDialog = useRef(null);
 
   // CONEXIÓN CON EL SERVIDOR
   useEffect(() => {
@@ -207,73 +208,97 @@ function App() {
     <main className="game">
       {/* PANTALLA DE INICIO */}
       {screen === "home" && (
-        <section className="welcome">
-          <div className="hero-crest" aria-hidden="true">
-            🏰
-          </div>
+        <section className="welcome home-screen">
+          <div className="home-intro">
+            <div className="hero-crest" aria-hidden="true">
+              🏰
+            </div>
 
-          <p className="subtitle">EL MUNDO MÁGICO TE ESPERA</p>
+            <p className="subtitle">EL MUNDO MÁGICO TE ESPERA</p>
 
-          <h1>Hogwarts Party</h1>
+            <h1>Hogwarts Party</h1>
 
-          <p className="description">
-            Lanza los dados, supera desafíos mágicos y compite por la Copa de
-            Hogwarts.
-          </p>
-
-          <div className="game-facts">
-            <span>2 jugadores</span>
-            <span>24 casillas</span>
-            <span>Una copa en juego</span>
-          </div>
-          {error && (
-            <p className="room-error" role="alert">
-              {error}
+            <p className="description">
+              Lanza los dados, supera desafíos mágicos y compite por la Copa de
+              Hogwarts.
             </p>
-          )}
-          <div className="buttons">
-            <button
-              type="button"
-              className="primary"
-              onClick={() => {
-                setNickname("");
-                setRoomCode("");
-                setError("");
-                setScreen("create");
-              }}
-            >
-              ✨ Crear partida
-            </button>
 
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => {
-                setNickname("");
-                setRoomCode("");
-                setError("");
-                setScreen("join");
-              }}
-            >
-              🪄 Unirse a partida
-            </button>
+            <div className="game-facts">
+              <span>2 jugadores</span>
+              <span>24 casillas</span>
+              <span>Una copa en juego</span>
+            </div>
           </div>
+          <div className="home-actions">
+            {error && (
+              <p className="room-error" role="alert">
+                {error}
+              </p>
+            )}
+            <div className="buttons">
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  setNickname("");
+                  setRoomCode("");
+                  setError("");
+                  setScreen("create");
+                }}
+              >
+                ✨ Crear partida
+              </button>
 
-          <details className="rules">
-            <summary>Cómo jugar</summary>
-            <ol>
-              <li>Crea una sala y comparte el código con tu compañero.</li>
-              <li>Elijan sus personajes. El creador inicia la aventura.</li>
-              <li>
-                Lancen el dado por turnos: respondan retos y reúnan puntos.
-              </li>
-              <li>
-                Compra un trofeo con 100 puntos. ¡El primero en conseguir dos
-                gana!
-              </li>
-            </ol>
-          </details>
-          <p className="footer">Una aventura mágica multijugador</p>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => {
+                  setNickname("");
+                  setRoomCode("");
+                  setError("");
+                  setScreen("join");
+                }}
+              >
+                🪄 Unirse a partida
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className="secondary rules-button"
+              onClick={() => guideDialog.current.showModal()}
+            >
+              Cómo jugar
+            </button>
+            <dialog
+              ref={guideDialog}
+              className="welcome-guide"
+              aria-labelledby="welcome-guide-title"
+            >
+              <header>
+                <h2 id="welcome-guide-title">Cómo jugar</h2>
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => guideDialog.current.close()}
+                >
+                  Cerrar
+                </button>
+              </header>
+              <ol>
+                <li>Crea una sala y comparte el código con tu compañero.</li>
+                <li>Elijan sus personajes. El creador inicia la aventura.</li>
+                <li>
+                  Lancen el dado por turnos: respondan retos y reúnan puntos.
+                </li>
+                <li>
+                  Compra un trofeo con 100 puntos. ¡El primero en conseguir dos
+                  gana!
+                </li>
+              </ol>
+            </dialog>
+            <p className="footer">Una aventura mágica multijugador</p>
+          </div>
         </section>
       )}
 
@@ -292,31 +317,37 @@ function App() {
             ← Volver
           </button>
 
-          <div className="castle">🧙‍♂️</div>
+          <header className="room-form-intro">
+            <div className="castle" aria-hidden="true">
+              🧙‍♂️
+            </div>
 
-          <h2>{screen === "create" ? "Crear sala mágica" : "Unirse a sala"}</h2>
+            <h2>
+              {screen === "create" ? "Crear sala mágica" : "Unirse a sala"}
+            </h2>
 
-          <p className="description">
-            {screen === "create"
-              ? "Escribe tu nombre para crear una sala y compartir el código."
-              : "Escribe tu nombre y el código de la sala."}
-          </p>
-
+            <p className="description">
+              {screen === "create"
+                ? "Escribe tu nombre para crear una sala y compartir el código."
+                : "Escribe tu nombre y el código de la sala."}
+            </p>
+          </header>
           <form onSubmit={submitRoom}>
-            <label htmlFor="nickname">Tu nombre de jugador</label>
+            <div className="form-field">
+              <label htmlFor="nickname">Tu nombre de jugador</label>
 
-            <input
-              id="nickname"
-              type="text"
-              placeholder="Ej. Ahtziri"
-              maxLength={20}
-              value={nickname}
-              onChange={(event) => setNickname(event.target.value)}
-              required
-            />
-
+              <input
+                id="nickname"
+                type="text"
+                placeholder="Ej. Ahtziri"
+                maxLength={20}
+                value={nickname}
+                onChange={(event) => setNickname(event.target.value)}
+                required
+              />
+            </div>
             {screen === "join" && (
-              <>
+              <div className="form-field">
                 <label htmlFor="room-code">Código de sala</label>
 
                 <input
@@ -330,7 +361,7 @@ function App() {
                   }
                   required
                 />
-              </>
+              </div>
             )}
 
             {error && (
@@ -374,29 +405,22 @@ function App() {
 
       {/* SELECCIÓN DE PERSONAJES */}
       {screen === "characters" && room && (
-        <>
-          {error && (
-            <p className="room-error" role="alert">
-              ⚠️ {error}
-            </p>
-          )}
-
-          <CharacterSelection
-            nickname={nickname}
-            playerNumber={
-              room.players.findIndex((player) => player.id === socket.id) + 1
-            }
-            takenCharacterIds={room.players
-              .filter((player) => player.id !== socket.id)
-              .map((player) => player.character?.id)
-              .filter(Boolean)}
-            onBack={() => {
-              setError("");
-              setScreen("lobby");
-            }}
-            onNext={selectCharacter}
-          />
-        </>
+        <CharacterSelection
+          error={error}
+          nickname={nickname}
+          playerNumber={
+            room.players.findIndex((player) => player.id === socket.id) + 1
+          }
+          takenCharacterIds={room.players
+            .filter((player) => player.id !== socket.id)
+            .map((player) => player.character?.id)
+            .filter(Boolean)}
+          onBack={() => {
+            setError("");
+            setScreen("lobby");
+          }}
+          onNext={selectCharacter}
+        />
       )}
 
       {/* TABLERO MULTIJUGADOR */}

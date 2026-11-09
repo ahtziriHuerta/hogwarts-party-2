@@ -13,9 +13,9 @@ export default function RoomLobby({
   async function copyCode() {
     try {
       await navigator.clipboard.writeText(room.code);
-      setCopyMessage("¡Código copiado! Compártelo con tu compañero.");
+      setCopyMessage("¡Código copiado!");
     } catch {
-      setCopyMessage("Selecciona el código y cópialo manualmente.");
+      setCopyMessage("Selecciona el código para copiarlo.");
     }
   }
 
@@ -23,89 +23,93 @@ export default function RoomLobby({
 
   const isHost = room.players[0]?.id === socket.id;
   const isFull = room.players.length === 2;
-  const allSelected = isFull && room.players.every((p) => p.character);
-
-  const myPlayer = room.players.find((p) => p.id === socket.id);
+  const allSelected =
+    isFull && room.players.every((player) => player.character);
+  const myPlayer = room.players.find((player) => player.id === socket.id);
+  const status = !isFull
+    ? "⏳ Esperando al segundo jugador…"
+    : !allSelected
+      ? "Ambos deben elegir personaje para comenzar."
+      : isHost
+        ? "✨ ¡Todo listo para comenzar!"
+        : "⏳ Esperando que el creador inicie la aventura…";
 
   return (
     <section className="welcome room-lobby">
-      <button type="button" className="back-button" onClick={onBack}>
-        ← Salir de la sala
-      </button>
-
-      <div className="castle">🏰</div>
-      <h2>¡Sala mágica creada!</h2>
-
-      <p className="description">
-        Comparte este código con el segundo jugador.
-      </p>
-
-      <div className="room-code-display">
-        <span>CÓDIGO DE SALA</span>
-        <h1>{room.code}</h1>
-
-        <button type="button" className="secondary" onClick={copyCode}>
-          📋 Copiar código
+      <header className="lobby-header">
+        <button type="button" className="back-button" onClick={onBack}>
+          ← Salir de la sala
         </button>
-        <span className="copy-feedback" role="status">
-          {copyMessage}
-        </span>
-      </div>
+        <h2>🏰 Sala de espera</h2>
+      </header>
 
-      <h3>Jugadores conectados ({room.players.length}/2)</h3>
-
-      <div className="room-player-list">
-        {room.players.map((player, index) => (
-          <div key={player.id} className="room-player">
-            🧙 Jugador {index + 1}: {player.nickname}
-            <p>
-              {player.character
-                ? `✨ ${player.character.name} · ${player.character.house}`
-                : "⏳ Sin personaje"}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {error && (
-        <p className="room-error" role="alert">
-          ⚠️ {error}
-        </p>
-      )}
-
-      {!isFull ? (
-        <p className="description">⏳ Esperando al segundo jugador...</p>
-      ) : (
-        <>
-          <p className="description">✨ ¡Los dos jugadores están conectados!</p>
-
-          <button
-            type="button"
-            className="secondary"
-            onClick={onChooseCharacter}
-          >
-            {myPlayer?.character
-              ? "🪄 Cambiar mi personaje"
-              : "🪄 Elegir personaje"}
+      {/* Código y jugadores comparten una fila en horizontal; las acciones tienen su propia fila. */}
+      <div className="lobby-layout">
+        <div className="room-code-display">
+          <span>COMPARTE EL CÓDIGO</span>
+          <h1>{room.code}</h1>
+          <button type="button" className="secondary" onClick={copyCode}>
+            📋 Copiar código
           </button>
+          <span className="copy-feedback" role="status">
+            {copyMessage}
+          </span>
+        </div>
 
-          {allSelected ? (
-            isHost ? (
+        <section
+          className="lobby-players"
+          aria-labelledby="lobby-players-title"
+        >
+          <h3 id="lobby-players-title">Jugadores ({room.players.length}/2)</h3>
+          <div className="room-player-list">
+            {room.players.map((player, index) => (
+              <div key={player.id} className="room-player">
+                <strong title={player.nickname}>
+                  🧙 J{index + 1} · {player.nickname}
+                </strong>
+                <p>
+                  {player.character
+                    ? `✨ ${player.character.name} · ${player.character.house}`
+                    : "⏳ Sin personaje"}
+                </p>
+              </div>
+            ))}
+            {!isFull && (
+              <div className="room-player empty-slot">
+                <strong>🪄 Jugador 2 · Libre</strong>
+                <p>Invita a tu compañero con el código.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <footer className="lobby-actions">
+        <p
+          className={error ? "room-error" : "lobby-status"}
+          role={error ? "alert" : "status"}
+        >
+          {error || status}
+        </p>
+        {isFull && (
+          <div className="lobby-buttons">
+            <button
+              type="button"
+              className="secondary"
+              onClick={onChooseCharacter}
+            >
+              {myPlayer?.character
+                ? "🪄 Cambiar mi personaje"
+                : "🪄 Elegir personaje"}
+            </button>
+            {allSelected && isHost && (
               <button type="button" className="primary" onClick={onStartGame}>
                 🏰 Comenzar aventura
               </button>
-            ) : (
-              <p className="description">
-                ⏳ Esperando que el creador inicie la aventura...
-              </p>
-            )
-          ) : (
-            <p className="description">
-              Ambos deben elegir personaje para comenzar.
-            </p>
-          )}
-        </>
-      )}
+            )}
+          </div>
+        )}
+      </footer>
     </section>
   );
 }
