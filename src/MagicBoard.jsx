@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { socket } from "./socket";
 import MagicCharacter from "./MagicCharacter";
 import LightningChallenge from "./LightningChallenge";
+import BoardScenery from "./BoardScenery";
+import BoardIcon from "./BoardIcon";
 import spaces from "../shared/board.json";
 import { createBoardPath } from "../shared/board-layout";
 import "./MagicBoard.css";
@@ -10,6 +12,16 @@ const TOTAL = spaces.length;
 const STEP_DURATION = 420;
 
 const path = createBoardPath(TOTAL);
+// Curvas entre las mismas coordenadas que usan las casillas y las fichas.
+const route = path
+  .map(([x, y], index) => {
+    if (index === 0) return `M${x * 10},${y * 6}`;
+    const before = path[Math.max(0, index - 2)];
+    const previous = path[index - 1];
+    const after = path[Math.min(path.length - 1, index + 1)];
+    return `C${(previous[0] + (x - before[0]) / 6) * 10},${(previous[1] + (y - before[1]) / 6) * 6} ${(x - (after[0] - previous[0]) / 6) * 10},${(y - (after[1] - previous[1]) / 6) * 6} ${x * 10},${y * 6}`;
+  })
+  .join(" ");
 
 function getCoordinates(position) {
   if (position === 0) return [path[0][0] - 5.5, path[0][1]];
@@ -372,9 +384,13 @@ export default function MagicBoard({
             {winningPlayer
               ? `🏆 Ganó ${winningPlayer.nickname}`
               : challenge
-                ? challenge.mode === "solo"
-                  ? "🪄 Reto individual"
-                  : "⚡ Duelo contra rival"
+                ? challenge.kind === "surprise"
+                  ? "🎁 Carta sorpresa"
+                  : challenge.kind === "memory"
+                    ? "🧠 Reto de memoria"
+                    : challenge.mode === "solo"
+                      ? "🪄 Reto individual"
+                      : "⚡ Duelo contra rival"
                 : isMyTurn
                   ? "🎲 ¡Es tu turno!"
                   : `⏳ Turno de ${current.nickname}`}
@@ -384,7 +400,8 @@ export default function MagicBoard({
           className="dice-display"
           aria-label={`Último dado: ${dice ?? "sin lanzar"}`}
         >
-          <span className="dice-number">🎲 {dice ?? "–"}</span>
+          <BoardIcon type="dice" />
+          <span className="dice-number">{dice ?? "–"}</span>
         </div>
         <button
           type="button"
@@ -405,6 +422,9 @@ export default function MagicBoard({
             className={`board-player ${
               turn === index && winner === null ? "board-player-active" : ""
             }`}
+            style={{
+              "--player-accent": player.character?.primary ?? "#edce87",
+            }}
           >
             <CharacterAvatar character={player.character} size={85} />
 
@@ -437,13 +457,27 @@ export default function MagicBoard({
       </div>
 
       <p className="board-legend" aria-label="Tipos de casilla">
-        <span>🪙 Magia +20</span>
-        <span>🕷️ Trampa −10</span>
-        <span>🪄 Individual +10–30</span>
-        <span>⚡ Duelo +10–40 / −10</span>
-        <span>🧠 Memoria +25</span>
-        <span>🎁 Sorpresa</span>
-        <span>🏰 Vuelta +20</span>
+        <span>
+          <BoardIcon type="bonus" /> Bono +20
+        </span>
+        <span>
+          <BoardIcon type="trap" /> Trampa −10
+        </span>
+        <span>
+          <BoardIcon type="solo" /> Individual +10–30
+        </span>
+        <span>
+          <BoardIcon type="duel" /> Duelo +10–40 / −10
+        </span>
+        <span>
+          <BoardIcon type="memory" /> Memoria +25
+        </span>
+        <span>
+          <BoardIcon type="surprise" /> Sorpresa
+        </span>
+        <span>
+          <BoardIcon type="finish" /> Vuelta +20
+        </span>
       </p>
       {/* CONTENEDOR DEL TABLERO Y LOS CONTROLES */}
 
@@ -451,35 +485,42 @@ export default function MagicBoard({
         {/* TABLERO */}
 
         <div className="board-landscape">
-          <div className="board-moon">☾</div>
-          <div className="board-castle" aria-hidden="true">
-            🏰
-          </div>
-          <div className="board-trees">🌲 🌲 🌲</div>
-
           <div className="board-map">
+            <BoardScenery />
+            <div className="map-place map-place-forest" aria-hidden="true">
+              Bosque Prohibido
+            </div>
+            <div className="map-place map-place-lake" aria-hidden="true">
+              Lago Negro
+            </div>
+            <div className="map-place map-place-castle" aria-hidden="true">
+              Hogwarts
+            </div>
             <svg
               className="board-path"
               viewBox="0 0 1000 600"
               preserveAspectRatio="none"
               aria-hidden="true"
             >
-              <polyline
-                points={path.map(([x, y]) => `${x * 10},${y * 6}`).join(" ")}
-                fill="none"
-                stroke="#12132c"
-                strokeWidth="65"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              <path
+                className="route-shadow"
+                d={route}
+                vectorEffect="non-scaling-stroke"
               />
-
-              <polyline
-                points={path.map(([x, y]) => `${x * 10},${y * 6}`).join(" ")}
-                fill="none"
-                stroke="#b9945d"
-                strokeWidth="48"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              <path
+                className="route-edge"
+                d={route}
+                vectorEffect="non-scaling-stroke"
+              />
+              <path
+                className="route-surface"
+                d={route}
+                vectorEffect="non-scaling-stroke"
+              />
+              <path
+                className="route-dashes"
+                d={route}
+                vectorEffect="non-scaling-stroke"
               />
             </svg>
 
@@ -491,7 +532,7 @@ export default function MagicBoard({
               return (
                 <div
                   key={space.number}
-                  className={`path-space ${space.type}`}
+                  className={`path-space ${space.type} ${current.position === space.number ? "space-current" : ""}`}
                   aria-label={`Casilla ${space.number}: ${
                     {
                       solo: "reto individual",
@@ -510,7 +551,7 @@ export default function MagicBoard({
                   }}
                 >
                   <small>{space.number}</small>
-                  <span>{space.icon}</span>
+                  <BoardIcon type={space.type} />
                 </div>
               );
             })}
@@ -531,6 +572,14 @@ export default function MagicBoard({
         {/* CONTROLES */}
 
         <div className="board-controls" data-finished={Boolean(winningPlayer)}>
+          <div className="board-adventure" aria-hidden="true">
+            <span className="adventure-caption">LA COPA TE ESPERA</span>
+            <div className="adventure-crest">
+              <BoardIcon type="trophy" />
+            </div>
+            <h3>Que comience la magia</h3>
+            <p>Cada casilla, una nueva aventura.</p>
+          </div>
           {winningPlayer && (
             <div className="board-victory">
               <h3>🏆 ¡Ganó {winningPlayer.nickname}!</h3>
@@ -540,19 +589,22 @@ export default function MagicBoard({
 
           <button
             type="button"
-            className="primary"
+            className="primary board-roll-button"
             disabled={!isMyTurn || busy}
             onClick={() => performAction(onRollDice)}
           >
-            {busy
-              ? "Procesando..."
-              : winningPlayer
-                ? "🏆 Partida terminada"
-                : challenge
-                  ? "⚡ Reto en curso"
-                  : isMyTurn
-                    ? "🎲 Lanzar dado"
-                    : "⏳ Esperando tu turno"}
+            <BoardIcon type="dice" />
+            <span>
+              {busy
+                ? "Procesando..."
+                : winningPlayer
+                  ? "🏆 Partida terminada"
+                  : challenge
+                    ? "Actividad en curso"
+                    : isMyTurn
+                      ? "Lanzar dado"
+                      : "⏳ Esperando tu turno"}
+            </span>
           </button>
 
           {/* TIENDA DE TROFEOS */}
@@ -561,6 +613,13 @@ export default function MagicBoard({
             <p className="trophy-price">
               🏆 Meta: {trophiesToWin} trofeos · {trophyPrice} 🪙 c/u
             </p>
+            <div className="trophy-progress" aria-hidden="true">
+              <span
+                style={{
+                  width: `${Math.min(100, ((myPlayer?.points ?? 0) / trophyPrice) * 100)}%`,
+                }}
+              />
+            </div>
 
             <button
               type="button"
@@ -568,7 +627,7 @@ export default function MagicBoard({
               disabled={!canBuyTrophy}
               onClick={buyTrophy}
             >
-              🏆 Comprar trofeo
+              <BoardIcon type="trophy" /> Comprar trofeo
             </button>
 
             {!winningPlayer &&

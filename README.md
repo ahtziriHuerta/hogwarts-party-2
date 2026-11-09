@@ -88,6 +88,8 @@ npm run build
 - `src/RoomLobby.jsx`: jugadores y código compartido.
 - `src/CharacterSelection.jsx`: selección del catálogo compartido.
 - `src/MagicBoard.jsx`: tablero, fichas animadas y acciones.
+- `src/BoardScenery.jsx`: mapa ilustrado con castillo, bosque, lago y puente, en SVG local.
+- `src/BoardIcon.jsx`: símbolos vectoriales de casillas y controles.
 - `src/LightningChallenge.jsx`: reloj, respuestas simultáneas y resultados.
 - `src/App.css`: diseño general y pantallas de entrada.
 - `src/MagicBoard.css`: tablero y adaptación a pantallas pequeñas.
@@ -110,6 +112,16 @@ navegador con `100dvh` y respeta las zonas seguras de la pantalla. El botón
 **Opciones** abre las reglas y el reinicio. En vertical se permite desplazamiento.
 Los controles de la partida tienen al menos 44 píxeles de alto y se respeta la
 preferencia del sistema para reducir animaciones.
+
+El tablero tiene un estilo de atlas nocturno: marco dorado, curvas de nivel,
+Hogwarts con ventanas encendidas, bosque, lago y un sendero ondulado. Las casillas
+son medallones con un símbolo distinto por actividad y la casilla del jugador
+en turno se resalta. Las ilustraciones son decorativas y se dibujan con SVG local,
+sin descargas ni bibliotecas adicionales. Los detalles se ajustan al espacio;
+en pantallas muy bajas se ocultan los nombres de los lugares para mantener
+legibles los números. En computadora horizontal, el tablero también ocupa una
+sola pantalla. Los marcadores usan el color del personaje y la tienda muestra el
+avance hacia las monedas necesarias para el siguiente trofeo.
 
 Los ocho personajes tienen siluetas de cabello distintas: corto en puntas,
 ondulado, flequillo de lado, largo, rizado, trenzas, coleta y afro. La misma

@@ -9,9 +9,14 @@ export function createBoardPath(total) {
     const row = Math.floor(index / columns);
     const column = index % columns;
     const direction = row % 2 === 0 ? column : columns - 1 - column;
+    // Una ondulación suave deja espacio para los paisajes entre tramos.
+    const wave =
+      columns === 1
+        ? 0
+        : Math.sin((direction / (columns - 1)) * Math.PI * 2) * 3;
     return [
       columns === 1 ? 50 : 12 + (direction * 80) / (columns - 1),
-      rows === 1 ? 50 : 84 - (row * 70) / (rows - 1),
+      rows === 1 ? 50 : 81 - (row * 64) / (rows - 1) + wave,
     ];
   });
 }
