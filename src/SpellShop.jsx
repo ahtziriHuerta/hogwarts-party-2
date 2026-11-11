@@ -23,7 +23,7 @@ export default function SpellShop({
     onClose();
   }
 
-  function buy(id, name) {
+  function buy(id) {
     if (busy) return;
     setBusy(true);
     setFeedback("");
@@ -31,7 +31,11 @@ export default function SpellShop({
       setBusy(false);
       setFeedback(
         result?.ok
-          ? `Compra realizada: ${name}.`
+          ? id === "shield"
+            ? "Escudo guardado: pulsa «Usar escudo» en un duelo, antes de responder."
+            : id === "hint"
+              ? "Pista guardada: pulsa «Usar pista» en una pregunta de cuatro opciones."
+              : "Trofeo sumado. Cuenta automáticamente para ganar."
           : result?.error || "Intenta de nuevo.",
       );
     });
@@ -61,13 +65,13 @@ export default function SpellShop({
       <p className="spell-wallet">
         🪙 {player.points} monedas · 🏆 {player.trophies}/{trophiesToWin}
       </p>
-      <div className="spell-inventory" aria-label="Tu inventario">
+      <div className="spell-inventory" role="list" aria-label="Tu inventario">
         {Array.from({ length: catalog.inventoryLimit }, (_, index) => {
           const item = catalog.items.find(
             (entry) => entry.id === inventory[index],
           );
           return (
-            <span key={index}>
+            <span key={index} role="listitem">
               {item ? (
                 <>
                   <BoardIcon type={item.id} /> {item.name}
@@ -95,7 +99,7 @@ export default function SpellShop({
                 inventory.length >= catalog.inventoryLimit ||
                 player.points < item.cost
               }
-              onClick={() => buy(item.id, item.name)}
+              onClick={() => buy(item.id)}
               aria-label={`Comprar ${item.name} por ${item.cost} monedas`}
             >
               Comprar · {item.cost} 🪙
@@ -119,7 +123,7 @@ export default function SpellShop({
               player.points < trophyPrice ||
               player.trophies >= trophiesToWin
             }
-            onClick={() => buy("trophy", "Trofeo")}
+            onClick={() => buy("trophy")}
             aria-label={`Comprar trofeo por ${trophyPrice} monedas`}
           >
             Comprar · {trophyPrice} 🪙
@@ -130,7 +134,9 @@ export default function SpellShop({
         {busy
           ? "Comprando…"
           : feedback ||
-            "Compra entre retos · Usa un hechizo por reto, antes de responder."}
+            (inventory.length
+              ? "Tus hechizos se activan durante las preguntas, antes de responder."
+              : "Compra entre retos · Usa un hechizo por reto, antes de responder.")}
       </p>
     </dialog>
   );

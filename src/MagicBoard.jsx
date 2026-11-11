@@ -332,6 +332,14 @@ export default function MagicBoard({
   const current = players[turn] || players[0];
 
   const myPlayer = players.find((player) => player.id === mySocketId);
+  const inventory = myPlayer?.inventory ?? [];
+  const inventoryNames = game.spellShop?.items
+    ?.filter((item) => inventory.includes(item.id))
+    .map((item) => {
+      const count = inventory.filter((id) => id === item.id).length;
+      return `${item.name}${count > 1 ? ` ×${count}` : ""}`;
+    })
+    .join(" · ");
 
   const winningPlayer = winner === null ? null : players[winner] || null;
 
@@ -699,8 +707,17 @@ export default function MagicBoard({
           {/* TIENDA DE TROFEOS */}
 
           <div className="trophy-shop">
-            <p className="trophy-price">
-              🏆 Meta: {trophiesToWin} trofeos · {trophyPrice} 🪙 c/u
+            <p
+              className={`trophy-price ${inventoryNames ? "board-inventory" : ""}`}
+              title={
+                inventoryNames
+                  ? `Hechizos guardados: ${inventoryNames}. Se usan durante las preguntas.`
+                  : undefined
+              }
+            >
+              {inventoryNames
+                ? `🎒 ${inventoryNames}`
+                : `🏆 Meta: ${trophiesToWin} trofeos · ${trophyPrice} 🪙 c/u`}
             </p>
             <div className="trophy-progress" aria-hidden="true">
               <span
@@ -734,8 +751,9 @@ export default function MagicBoard({
               !challenge &&
               (myPlayer?.points ?? 0) < trophyPrice && (
                 <p className="trophy-hint">
-                  Te faltan {trophyPrice - (myPlayer?.points ?? 0)} monedas para
-                  comprar un trofeo.
+                  {inventoryNames
+                    ? "Activa tus hechizos durante las preguntas, antes de responder."
+                    : `Te faltan ${trophyPrice - (myPlayer?.points ?? 0)} monedas para comprar un trofeo.`}
                 </p>
               )}
           </div>

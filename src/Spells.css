@@ -104,6 +104,25 @@
   flex-direction: column;
   gap: 4px;
 }
+.challenge-modal .challenge-spells {
+  margin: 0 0 6px;
+}
+.spell-guidance strong {
+  color: #f4d582;
+}
+.challenge-visual-layout.with-spells > .challenge-spells {
+  grid-row: 1;
+  margin: 0;
+}
+.challenge-visual-layout.with-spells > .challenge-options {
+  grid-row: 2;
+}
+.board-inventory {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #f5d58b;
+}
 .challenge-spell-buttons {
   display: flex;
   justify-content: center;
@@ -131,6 +150,15 @@
   text-decoration: line-through;
 }
 @media (max-width: 600px) and (orientation: portrait) {
+  .challenge-visual-layout.with-spells > .challenge-media {
+    grid-row: 1;
+  }
+  .challenge-visual-layout.with-spells > .challenge-spells {
+    grid-row: 2;
+  }
+  .challenge-visual-layout.with-spells > .challenge-options {
+    grid-row: 3;
+  }
   .spell-shop-modal {
     padding: 12px;
   }
@@ -200,7 +228,7 @@
     font-size: 11px;
   }
   .challenge-modal .challenge-spells {
-    margin-top: 4px;
+    margin: 0 0 4px;
     font-size: 10px;
     flex-direction: row;
     align-items: center;

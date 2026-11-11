@@ -9,6 +9,9 @@ export default function ChallengeSpells({
   onHint,
   hintApplied,
   onBusy,
+  disabled = false,
+  blockedMessage = "",
+  answerError = "",
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -21,7 +24,7 @@ export default function ChallengeSpells({
   const items = used ? (recoverHint ? ["hint"] : []) : [...new Set(inventory)];
 
   function use(spellId) {
-    if (busy) return;
+    if (busy || disabled) return;
     setBusy(true);
     onBusy(true);
     setError("");
@@ -36,7 +39,27 @@ export default function ChallengeSpells({
   }
 
   return (
-    <div className="challenge-footer challenge-spells">
+    <section
+      className="challenge-footer challenge-spells"
+      aria-label="Tus hechizos"
+    >
+      <span
+        className="spell-guidance"
+        role={error || answerError ? "alert" : "status"}
+      >
+        <strong>{used ? "Hechizo usado" : "Tus hechizos"}</strong>
+        {" · "}
+        {error ||
+          answerError ||
+          (busy
+            ? "Activando…"
+            : blockedMessage ||
+              (used === "shield"
+                ? "Escudo activo · este duelo no te resta monedas."
+                : used === "hint" && hintApplied
+                  ? "Pista aplicada · dos opciones descartadas."
+                  : "Usa uno antes de responder."))}
+      </span>
       {items.length > 0 && (
         <div className="challenge-spell-buttons">
           {items.map((id) => {
@@ -48,8 +71,8 @@ export default function ChallengeSpells({
               <button
                 key={id}
                 type="button"
-                className="secondary"
-                disabled={busy || !allowed}
+                className="primary"
+                disabled={busy || disabled || !allowed}
                 onClick={() => use(id)}
               >
                 <BoardIcon type={id} />
@@ -59,9 +82,13 @@ export default function ChallengeSpells({
                     : id === "shield"
                       ? "Usar escudo"
                       : "Usar pista"}
-                  {!allowed && (
+                  {(!allowed || disabled) && (
                     <small>
-                      {id === "shield" ? "Solo duelos" : "4 opciones"}
+                      {disabled
+                        ? "Espera"
+                        : id === "shield"
+                          ? "Solo duelos"
+                          : "4 opciones"}
                     </small>
                   )}
                 </span>
@@ -70,16 +97,6 @@ export default function ChallengeSpells({
           })}
         </div>
       )}
-      <span role={error ? "alert" : "status"}>
-        {error ||
-          (busy
-            ? "Activando…"
-            : used === "shield"
-              ? "Escudo activo · este duelo no te resta monedas."
-              : used === "hint" && hintApplied
-                ? "Pista aplicada · dos opciones descartadas."
-                : "Un hechizo por reto · antes de responder.")}
-      </span>
-    </div>
+    </section>
   );
 }

@@ -67,6 +67,19 @@ for (const size of [
           .evaluate((el) => el.scrollHeight <= el.clientHeight + 1),
         scene,
       ).toBe(true);
+      await expect(
+        page.getByRole("region", { name: "Tus hechizos" }),
+      ).toBeVisible();
+      const spellBounds = await page.locator(".challenge-spells").boundingBox();
+      const answerBounds = await page
+        .locator(".challenge-options")
+        .boundingBox();
+      expect(spellBounds.y + spellBounds.height).toBeLessThanOrEqual(
+        answerBounds.y + 1,
+      );
+      await page.screenshot({
+        path: testInfo.outputPath(`spells-${scene}.png`),
+      });
       for (const button of await page
         .locator(".challenge-spell-buttons button")
         .all())
@@ -96,6 +109,23 @@ for (const size of [
         .locator(".challenge-modal")
         .evaluate((el) => el.scrollHeight <= el.clientHeight + 1),
     ).toBe(true);
+    const help = page.locator(".challenge-spells");
+    expect((await help.boundingBox()).y).toBeLessThan(
+      (await page.locator(".challenge-options").boundingBox()).y,
+    );
+    await page.locator(".challenge-option").first().click();
+    await expect(help).toContainText("Respuesta enviada");
+    await expect(
+      page.getByRole("button", { name: /Usar pista/ }),
+    ).toBeDisabled();
+    await expect(
+      page.getByRole("button", { name: /Usar escudo/ }),
+    ).toBeDisabled();
+    await expectOnScreen(page, [
+      ".challenge-modal",
+      ".challenge-spells",
+      ".challenge-spell-buttons button",
+    ]);
   });
 }
 
@@ -162,13 +192,13 @@ test("dos jugadores compran y usan hechizos: pista privada, escudo y saldo compa
       .getByRole("button", { name: "Comprar Escudo por 5 monedas" })
       .click();
     await expect(page.locator(".spell-shop-feedback")).toHaveText(
-      "Compra realizada: Escudo.",
+      "Escudo guardado: pulsa «Usar escudo» en un duelo, antes de responder.",
     );
     await page
       .getByRole("button", { name: "Comprar Pista por 10 monedas" })
       .click();
     await expect(page.locator(".spell-shop-feedback")).toHaveText(
-      "Compra realizada: Pista.",
+      "Pista guardada: pulsa «Usar pista» en una pregunta de cuatro opciones.",
     );
     await expect(
       page.getByRole("button", { name: "Comprar Escudo por 5 monedas" }),
@@ -221,4 +251,36 @@ test("dos jugadores compran y usan hechizos: pista privada, escudo y saldo compa
     host.getByRole("button", { name: "Tienda · 1/2" }),
   ).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test("inventario visible en el tablero y explicación al observar o memorizar", async ({
+  page,
+}) => {
+  for (const size of [
+    portraitSizes[0],
+    portraitSizes[3],
+    sizes[0],
+    sizes[2],
+    sizes[4],
+  ]) {
+    await page.setViewportSize(size);
+    await page.goto("/tests/fixtures/board.html?scene=edge&spells");
+    await expect(page.locator(".board-inventory")).toContainText(
+      "Escudo · Pista",
+    );
+    await expectOnScreen(page, [".board-controls", ".board-inventory"]);
+    await expect(
+      page.getByRole("button", { name: "Tienda · 2/2" }),
+    ).toBeVisible();
+    for (const scene of ["memory-preview", "memory-watch", "solo-watch"]) {
+      await page.goto(`/tests/fixtures/board.html?scene=${scene}&spells`);
+      await expect(page.locator(".challenge-footer")).toContainText(
+        "guardados",
+      );
+      await expect(
+        page.getByRole("button", { name: /Usar escudo|Usar pista/ }),
+      ).toHaveCount(0);
+      await expectOnScreen(page, [".challenge-modal", ".challenge-footer"]);
+    }
+  }
 });

@@ -149,7 +149,7 @@ test("rival real: responde sin otro navegador, tira el dado, permite tienda y re
     .getByRole("button", { name: "Comprar Pista por 10 monedas" })
     .click();
   await expect(page.locator(".spell-shop-feedback")).toContainText(
-    "Compra realizada",
+    "Pista guardada",
   );
   await page.getByRole("button", { name: "Cerrar tienda" }).click();
   await page.getByRole("button", { name: "Lanzar dado" }).click(); // Individual visual.

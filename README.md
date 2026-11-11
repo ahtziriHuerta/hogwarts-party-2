@@ -135,6 +135,14 @@ La pista viaja solo en el acuse privado de quien la usa. Reintentar la misma
 activación recupera su efecto sin consumir otro objeto. El escudo y la pista no
 alteran el reloj ni los premios normales por acertar. Reiniciar vacía el inventario.
 
+Los botones dorados **Usar escudo** y **Usar pista** aparecen **encima de las
+respuestas**, en **Tus hechizos**. Si ya respondiste, siguen visibles pero
+desactivados. El escudo indica «Solo duelos» en individuales y la pista indica
+«4 opciones» en verdadero/falso. Al observar al rival o preparar memoria y medios,
+se aclara que los objetos siguen guardados. El tablero muestra los nombres del
+inventario y la tienda explica cómo activarlos tras la compra. Los trofeos cuentan
+automáticamente y no tienen botón de activación.
+
 La tienda comparte el espacio del botón de compra anterior y se cierra si el
 rival inicia una actividad. Los trofeos se compran dentro de ella y no ocupan
 inventario. No hay archivos multimedia, servicios ni dependencias adicionales.
@@ -251,7 +259,7 @@ npm run test:ui
 ```
 
 Estas pruebas arrancan el frontend en el puerto 5174 y el servidor en 3002;
-deben estar disponibles. Las 37 pruebas comprueban inicio, guía, formularios,
+deben estar disponibles. Las 38 pruebas comprueban inicio, guía, formularios,
 sala de espera/lista, partida, errores, victoria, opciones y preguntas sin
 desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430. Incluyen nombres
 de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.

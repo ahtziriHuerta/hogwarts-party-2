@@ -64,9 +64,6 @@ export default function LightningChallenge({
   const hasSpellAction =
     onUseSpell &&
     canParticipate &&
-    !answered &&
-    !busy &&
-    remaining > 0 &&
     (inventory.length > 0 ||
       challenge.spellUses?.some((entry) => entry.playerId === mySocketId));
 
@@ -171,8 +168,12 @@ export default function LightningChallenge({
           </ol>
           <p className="challenge-footer" role="status">
             {canParticipate
-              ? "Observa: después responderás sobre una posición."
-              : `${challenge.playerName} está memorizando. Tu saldo no cambia.`}
+              ? inventory.length
+                ? "Tus hechizos están guardados. Podrás usarlos al aparecer la pregunta."
+                : "Observa: después responderás sobre una posición."
+              : inventory.length
+                ? "Observas al rival. Tus hechizos siguen guardados."
+                : `${challenge.playerName} está memorizando. Tu saldo no cambia.`}
           </p>
         </>
       ) : isSurprise ? (
@@ -184,7 +185,13 @@ export default function LightningChallenge({
         <p className="challenge-question">{challenge.question}</p>
       )}
 
-      <div className={challenge.media ? "challenge-visual-layout" : undefined}>
+      <div
+        className={
+          challenge.media
+            ? `challenge-visual-layout ${hasSpellAction && challenge.phase === "answering" ? "with-spells" : ""}`
+            : undefined
+        }
+      >
         {challenge.media && (
           <ChallengeMedia
             key={challenge.id}
@@ -196,7 +203,9 @@ export default function LightningChallenge({
         {isPreparing ? (
           <p className="challenge-footer media-status" role="status">
             {!canParticipate
-              ? `Solo responde ${challenge.playerName}. Tu saldo no cambia.`
+              ? inventory.length
+                ? "Observas al rival. Tus hechizos siguen guardados."
+                : `Solo responde ${challenge.playerName}. Tu saldo no cambia.`
               : challenge.phase === "loading"
                 ? "El reloj espera a que el contenido esté listo."
                 : challenge.viewedPlayerIds?.includes(mySocketId)
@@ -249,6 +258,28 @@ export default function LightningChallenge({
         ) : (
           !isMemorizing && (
             <>
+              {hasSpellAction && (
+                <ChallengeSpells
+                  challenge={challenge}
+                  mySocketId={mySocketId}
+                  inventory={inventory}
+                  onUse={onUseSpell}
+                  onHint={setHiddenOptions}
+                  hintApplied={hiddenOptions.length === 2}
+                  onBusy={setSpellBusy}
+                  disabled={locked}
+                  blockedMessage={
+                    answered
+                      ? `Respuesta enviada · ${count}/${challenge.participantCount}. Próximo reto.`
+                      : remaining <= 0
+                        ? "Tiempo agotado. Siguen guardados."
+                        : busy
+                          ? "Enviando respuesta…"
+                          : ""
+                  }
+                  answerError={error}
+                />
+              )}
               <div className="challenge-options">
                 {challenge.options.map((option, index) => (
                   <button
@@ -267,17 +298,7 @@ export default function LightningChallenge({
                   </button>
                 ))}
               </div>
-              {hasSpellAction && !error ? (
-                <ChallengeSpells
-                  challenge={challenge}
-                  mySocketId={mySocketId}
-                  inventory={inventory}
-                  onUse={onUseSpell}
-                  onHint={setHiddenOptions}
-                  hintApplied={hiddenOptions.length === 2}
-                  onBusy={setSpellBusy}
-                />
-              ) : (
+              {!hasSpellAction && (
                 <p
                   className={`challenge-footer ${error ? "challenge-error" : ""}`}
                   role={error ? "alert" : "status"}
@@ -289,7 +310,9 @@ export default function LightningChallenge({
                   )}
                   {error ||
                     (!canParticipate
-                      ? `Solo responde ${challenge.playerName}. Tu saldo no cambia.`
+                      ? inventory.length
+                        ? "Observas al rival. Tus hechizos siguen guardados."
+                        : `Solo responde ${challenge.playerName}. Tu saldo no cambia.`
                       : busy
                         ? "Enviando…"
                         : answered
