@@ -3,6 +3,16 @@
 Juego por turnos para una persona contra un rival automático o para dos personas,
 con React, Vite y Socket.IO.
 
+## Entrega académica: Fase 3
+
+La documentación de la conexión en red está en [docs/fase-3](docs/fase-3/README.md).
+Incluye el [informe final sin portada](docs/fase-3/INFORME_FINAL.md),
+el [protocolo y guía del código](docs/fase-3/PROTOCOLO.md),
+el [guion para la exposición](docs/fase-3/GUION_PRESENTACION.md),
+los [resultados comprobados](docs/fase-3/evidencias/resultados.json) y las versiones
+exportadas para entregar. La demostración de red debe utilizar dos clientes humanos;
+el modo individual es adicional.
+
 ## Ejecutar en local
 
 Requiere Node.js 22.12 o posterior (recomendado Node.js 24).
@@ -197,6 +207,7 @@ npm run build
 ## Organización
 
 - `src/App.jsx`: navegación, conexión y acciones de sala.
+- `src/socket.js`, `src/roomConnection.js`: transportes, espera y cancelación al entrar a una sala.
 - `src/RoomLobby.jsx`: jugadores y código compartido.
 - `src/CharacterSelection.jsx`: selección del catálogo compartido.
 - `src/MagicBoard.jsx`: tablero, fichas animadas y acciones.
@@ -204,14 +215,17 @@ npm run build
 - `src/BoardIcon.jsx`: símbolos vectoriales de casillas y controles.
 - `src/LightningChallenge.jsx`: reloj, respuestas simultáneas y resultados.
 - `src/ChallengeMedia.jsx`: carga de un solo recurso, reproducción manual y avisos al servidor.
+- `src/SpellShop.jsx`, `src/ChallengeSpells.jsx`: compra, inventario y activación de hechizos.
 - `src/App.css`: diseño general y pantallas de entrada.
 - `src/MagicBoard.css`: tablero y adaptación a pantallas pequeñas.
 - `shared/characters.json`: catálogo único para navegador y servidor.
 - `shared/board.json`: mapa único de las casillas y tipos para navegador y servidor.
 - `shared/board-layout.js`: recorrido serpenteante generado a partir del número de casillas.
+- `shared/spells.json`, `shared/bot-levels.json`: catálogo de hechizos y dificultades.
 - `server/index.cjs`: salas, turnos, puntuación y validación de acciones.
 - `server/origins.cjs`: dominios de Netlify y direcciones locales permitidos para la conexión.
 - `server/challenges.cjs`: plazos, respuestas privadas y puntuación de los retos.
+- `server/bot.cjs`, `server/spells.cjs`: acciones automáticas del rival y compras verificadas.
 - `server/questions.json`: banco de preguntas y soluciones, usado por el servidor.
 - `server/media-questions.json`: preguntas visuales y rutas de los archivos, con soluciones privadas.
 - `server/memory.cjs`: secuencias y preguntas de memoria aleatorias.

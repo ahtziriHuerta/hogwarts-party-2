@@ -1,0 +1,3 @@
+
+> hogwarts-party-2@0.0.0 lint
+> oxlint

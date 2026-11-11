@@ -1,0 +1,55 @@
+
+> hogwarts-party-2@0.0.0 test:ui
+> playwright test --reporter=list,json
+
+[WebServer] (node:25372) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:25386) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 38 tests using 1 worker
+
+(node:25404) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] (node:25363) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 tests/browser/connection.spec.js:41:3 › arranque de 55 segundos: espera visible y una sola sala en 320 × 568 (1.6s)
+  ✓   2 tests/browser/connection.spec.js:41:3 › arranque de 55 segundos: espera visible y una sola sala en 740 × 280 (1.3s)
+  ✓   3 tests/browser/connection.spec.js:76:1 › cancelar mientras despierta el servidor no crea una sala al conectar más tarde (1.3s)
+  ✓   4 tests/browser/duel.spec.js:42:1 › dos jugadores: una respuesta, resultado compartido y vencimiento automático (1.5m)
+  ✓   5 tests/browser/landscape.spec.js:6:3 › partida y retos completos en 568 × 320 (7.9s)
+  ✓   6 tests/browser/landscape.spec.js:6:3 › partida y retos completos en 667 × 375 (8.8s)
+  ✓   7 tests/browser/landscape.spec.js:6:3 › partida y retos completos en 740 × 280 (8.0s)
+  ✓   8 tests/browser/landscape.spec.js:6:3 › partida y retos completos en 844 × 390 (8.8s)
+  ✓   9 tests/browser/landscape.spec.js:6:3 › partida y retos completos en 932 × 430 (8.3s)
+  ✓  10 tests/browser/landscape.spec.js:174:1 › ocho peinados distintos, selección y respuesta conservadas al girar una sala real (6.6s)
+  ✓  11 tests/browser/media.spec.js:6:1 › solo descarga el archivo activo y el reloj espera a una imagen lenta (2.3s)
+  ✓  12 tests/browser/media.spec.js:51:1 › las diez ilustraciones y sus textos caben en horizontal y vertical (15.3s)
+  ✓  13 tests/browser/media.spec.js:77:3 › clip real video: reproducción manual y pregunta después de terminar (8.1s)
+  ✓  14 tests/browser/media.spec.js:77:3 › clip real video2: reproducción manual y pregunta después de terminar (8.1s)
+  ✓  15 tests/browser/media.spec.js:118:1 › archivo bloqueado: trivia de respaldo legible y sin esperar una descarga infinita (3.2s)
+  ✓  16 tests/browser/portrait.spec.js:5:3 › tablero vertical completo y texto legible en 320 × 568 (8.7s)
+  ✓  17 tests/browser/portrait.spec.js:5:3 › tablero vertical completo y texto legible en 360 × 640 (8.6s)
+  ✓  18 tests/browser/portrait.spec.js:5:3 › tablero vertical completo y texto legible en 390 × 700 (8.3s)
+  ✓  19 tests/browser/portrait.spec.js:5:3 › tablero vertical completo y texto legible en 412 × 823 (8.2s)
+  ✓  20 tests/browser/portrait.spec.js:5:3 › tablero vertical completo y texto legible en 430 × 932 (8.9s)
+  ✓  21 tests/browser/pregame.spec.js:5:3 › inicio, formularios y sala completos en 568 × 320 (4.2s)
+  ✓  22 tests/browser/pregame.spec.js:5:3 › inicio, formularios y sala completos en 667 × 375 (4.5s)
+  ✓  23 tests/browser/pregame.spec.js:5:3 › inicio, formularios y sala completos en 740 × 280 (4.1s)
+  ✓  24 tests/browser/pregame.spec.js:5:3 › inicio, formularios y sala completos en 844 × 390 (4.3s)
+  ✓  25 tests/browser/pregame.spec.js:5:3 › inicio, formularios y sala completos en 932 × 430 (4.3s)
+  ✓  26 tests/browser/solo.spec.js:51:3 › jugar solo: inicio, dificultad, personaje y tablero en 320 × 568 (2.2s)
+  ✓  27 tests/browser/solo.spec.js:51:3 › jugar solo: inicio, dificultad, personaje y tablero en 412 × 823 (2.2s)
+  ✓  28 tests/browser/solo.spec.js:51:3 › jugar solo: inicio, dificultad, personaje y tablero en 568 × 320 (2.2s)
+  ✓  29 tests/browser/solo.spec.js:51:3 › jugar solo: inicio, dificultad, personaje y tablero en 740 × 280 (2.3s)
+  ✓  30 tests/browser/solo.spec.js:51:3 › jugar solo: inicio, dificultad, personaje y tablero en 932 × 430 (2.4s)
+  ✓  31 tests/browser/solo.spec.js:118:1 › rival real: responde sin otro navegador, tira el dado, permite tienda y respeta el reinicio (29.6s)
+  ✓  32 tests/browser/spells.spec.js:18:3 › tienda e inventario sin desplazamiento en 320 × 568 (5.8s)
+  ✓  33 tests/browser/spells.spec.js:18:3 › tienda e inventario sin desplazamiento en 412 × 823 (5.9s)
+  ✓  34 tests/browser/spells.spec.js:18:3 › tienda e inventario sin desplazamiento en 568 × 320 (5.3s)
+  ✓  35 tests/browser/spells.spec.js:18:3 › tienda e inventario sin desplazamiento en 740 × 280 (5.4s)
+  ✓  36 tests/browser/spells.spec.js:18:3 › tienda e inventario sin desplazamiento en 932 × 430 (6.1s)
+  ✓  37 tests/browser/spells.spec.js:148:1 › dos jugadores compran y usan hechizos: pista privada, escudo y saldo compartido (16.5s)
+  ✓  38 tests/browser/spells.spec.js:256:1 › inventario visible en el tablero y explicación al observar o memorizar (9.4s)
+
+  38 passed (5.7m)

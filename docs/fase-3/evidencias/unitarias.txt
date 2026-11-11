@@ -1,0 +1,68 @@
+
+> hogwarts-party-2@0.0.0 test
+> node --test tests/*.test.cjs
+
+✔ recorrido automático con posiciones únicas y márgenes para distintos tamaños de tablero (5.802283ms)
+✔ conexión: errores iniciales y 65 segundos de arranque no cancelan ni duplican la sala (3.116384ms)
+✔ conexión: aviso tras ocho segundos y límite de 90 sin crear salas tardías (0.573628ms)
+✔ conexión: cancelar elimina escuchas y permite un nuevo intento independiente (1.871775ms)
+✔ conexión: cancelar después de enviar ignora un acuse tardío (0.370206ms)
+✔ conexión: errores del servidor y de acuse terminan el intento una sola vez (0.583843ms)
+✔ conexión: crear, unirse e individual esperan conexión y mantienen su propio payload (0.764119ms)
+✔ 12 retos visuales con archivos locales y un presupuesto total menor a 50 KB (4.084404ms)
+✔ CORS acepta los sitios propios y sus enlaces de Netlify, incluido el que fallaba (1.022891ms)
+✔ CORS rechaza otros proyectos, dominios parecidos y orígenes que no son HTTPS (0.194076ms)
+✔ el catálogo del servidor reemplaza campos manipulados del cliente (106.611271ms)
+✔ la vuelta se abona antes de descontar el fallo de un duelo (3.057367ms)
+✔ caer en el castillo o cruzarlo hacia un reto individual da un único bono (3.27614ms)
+✔ el otro jugador no puede lanzar fuera de turno (1.985303ms)
+✔ ambos responden y el secreto no se revela hasta cerrar el reto (3.063596ms)
+✔ una respuesta por jugador: reintentar no cambia el resultado ni suma dos veces (2.105211ms)
+✔ al vencer 20 segundos el reto y los resultados avanzan aunque nadie responda (2.245558ms)
+✔ el plazo también se valida si llega una respuesta antes de ejecutar el temporizador (2.290715ms)
+✔ responder mal no da bono y una respuesta ausente se marca como vencida (2.05739ms)
+✔ reiniciar cancela el reloj anterior y rechaza respuestas de una partida vieja (2.367839ms)
+✔ desconectar cancela el reto y no deja un temporizador sobre la sala de espera (2.265527ms)
+✔ dados y compras permanecen bloqueados hasta terminar los resultados (2.400467ms)
+✔ 60 preguntas válidas, dos formatos y ninguna repetida antes de agotar el banco (6.641583ms)
+✔ solo responde quien cayó en la casilla individual y el rival conserva su saldo (1.575879ms)
+✔ el reto individual premia acertar, sin bono por rapidez ni coste al dejarlo vencer (4.000952ms)
+✔ equivocarse en un duelo o no contestar descuenta 10, limitados al saldo (11.419282ms)
+✔ un acierto en duelo suma premio y rapidez mientras el rival pierde solo 10 (2.380727ms)
+✔ el mapa tiene 16 preguntas y todas las casillas activan la regla anunciada (58.594535ms)
+✔ memoria: cinco símbolos, pregunta oculta y bloqueo hasta terminar la observación (1.208386ms)
+✔ memoria: fallar o dejar vencer el tiempo no resta monedas (1.992614ms)
+✔ reiniciar durante la memoria cancela también la transición a la pregunta (0.936073ms)
+✔ cartas sorpresa: premios, pérdida limitada al saldo, robo conservado y regalo a ambos (0.329988ms)
+✔ la sorpresa se aplica una vez y bloquea el dado hasta volver al tablero (0.919178ms)
+✔ la respuesta de memoria corresponde a la posición preguntada (0.598544ms)
+✔ visual: nadie responde hasta que ambos carguen y después tienen 20 segundos completos (1.175036ms)
+✔ clip: pregunta oculta hasta que ambos terminen, con duración mínima y una sola respuesta (1.171751ms)
+✔ fallo de archivo o espera agotada sustituyen el reto sin descontar ni perder el turno (4.610883ms)
+✔ visual individual: el observador no bloquea, no puede omitirlo y no recibe descuentos (0.929524ms)
+✔ reiniciar o desconectar cancela las esperas de archivos y clips (1.927398ms)
+✔ un visual cada tres preguntas y doce recursos sin repetir antes de agotar su banco (2.15178ms)
+✔ tienda: precio del servidor, dueño real, saldo y dos espacios como máximo (1.121256ms)
+✔ tienda: bloqueada durante preguntas, resultados y después de ganar (0.984996ms)
+✔ pista privada: descarta dos errores, conserva el acierto y reintentar no consume otra (2.331525ms)
+✔ escudo: protege fallo o vencimiento, cada rival puede activar el suyo (3.625807ms)
+✔ no se consumen hechizos sin inventario, con reto ajeno, tras responder o fuera de plazo (1.662556ms)
+✔ reglas de uso: escudo solo en duelo, pista solo con cuatro opciones y después de observar (1.572593ms)
+✔ individual: sala privada con rival automático, dificultad válida y personaje diferente (1.460288ms)
+✔ individual: puedes elegir cualquier personaje y el bot se adapta sin ocupar el tuyo (1.447979ms)
+✔ individual: tres dificultades con tiempos distintos y posibilidad de acertar o fallar (9.52258ms)
+✔ individual: el bot no reinicia su espera con eventos del usuario y lanza solo en su turno (1.630539ms)
+✔ individual: el bot observa la memoria, usa su pista y no revela opciones descartadas (1.876352ms)
+✔ individual: carga y clip del bot no bloquean al humano ni adelantan sus veinte segundos (2.413766ms)
+✔ individual: el rival compra trofeos y hechizos con su saldo, y el escudo respeta la penalización (3.145698ms)
+✔ individual: reiniciar, ganar o salir cancela todas las acciones pendientes del rival (5.207895ms)
+✔ individual: una partida completa puede terminar con victoria del bot sin ciclos pendientes (6.043309ms)
+✔ lanzar y comprar siguen funcionando cuando el cliente no solicita un acuse (2.214382ms)
+ℹ tests 56
+ℹ suites 0
+ℹ pass 56
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 689.069323

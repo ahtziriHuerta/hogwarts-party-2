@@ -1,0 +1,6 @@
+flowchart TB
+  N["Netlify: interfaz y medios"] --> A["Cliente A: navegador"]
+  N --> B["Cliente B: navegador"]
+  A <-->|"Socket.IO: HTTPS / WSS"| S["Render: servidor autoritativo"]
+  B <-->|"Socket.IO: HTTPS / WSS"| S
+  S --> M["Salas, turnos, monedas y retos en memoria"]
