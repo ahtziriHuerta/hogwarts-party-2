@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { socket } from "./socket";
 import MagicCharacter from "./MagicCharacter";
 import LightningChallenge from "./LightningChallenge";
@@ -11,19 +11,37 @@ import "./MagicBoard.css";
 const TOTAL = spaces.length;
 const STEP_DURATION = 420;
 
-const path = createBoardPath(TOTAL);
-// Curvas entre las mismas coordenadas que usan las casillas y las fichas.
-const route = path
-  .map(([x, y], index) => {
-    if (index === 0) return `M${x * 10},${y * 6}`;
-    const before = path[Math.max(0, index - 2)];
-    const previous = path[index - 1];
-    const after = path[Math.min(path.length - 1, index + 1)];
-    return `C${(previous[0] + (x - before[0]) / 6) * 10},${(previous[1] + (y - before[1]) / 6) * 6} ${(x - (after[0] - previous[0]) / 6) * 10},${(y - (after[1] - previous[1]) / 6) * 6} ${x * 10},${y * 6}`;
-  })
-  .join(" ");
+const landscapePath = createBoardPath(TOTAL);
+const portraitPath = createBoardPath(TOTAL, 9);
+const portraitQuery = "(orientation: portrait) and (max-width: 600px)";
 
-function getCoordinates(position) {
+function subscribeOrientation(onChange) {
+  const query = window.matchMedia(portraitQuery);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function isPortrait() {
+  return window.matchMedia(portraitQuery).matches;
+}
+
+// Curvas entre las mismas coordenadas que usan las casillas y las fichas.
+function createRoute(path) {
+  return path
+    .map(([x, y], index) => {
+      if (index === 0) return `M${x * 10},${y * 6}`;
+      const before = path[Math.max(0, index - 2)];
+      const previous = path[index - 1];
+      const after = path[Math.min(path.length - 1, index + 1)];
+      return `C${(previous[0] + (x - before[0]) / 6) * 10},${(previous[1] + (y - before[1]) / 6) * 6} ${(x - (after[0] - previous[0]) / 6) * 10},${(y - (after[1] - previous[1]) / 6) * 6} ${x * 10},${y * 6}`;
+    })
+    .join(" ");
+}
+
+const landscapeRoute = createRoute(landscapePath);
+const portraitRoute = createRoute(portraitPath);
+
+function getCoordinates(position, path) {
   if (position === 0) return [path[0][0] - 5.5, path[0][1]];
 
   const safe = Math.max(1, Math.min(TOTAL, Number(position) || 1));
@@ -47,7 +65,7 @@ function CharacterAvatar({ character, size = 70 }) {
 
 // MOVIMIENTO ANIMADO DE LOS JUGADORES
 
-function AnimatedToken({ player, index, resetKey }) {
+function AnimatedToken({ player, index, resetKey, path }) {
   const targetSteps = Number(player.totalSteps) || 0;
 
   const [visualSteps, setVisualSteps] = useState(targetSteps);
@@ -115,10 +133,13 @@ function AnimatedToken({ player, index, resetKey }) {
       const previousPosition =
         previous === 0 ? 0 : ((previous - 1) % TOTAL) + 1;
 
-      const [x, y] = getCoordinates(previousPosition);
       const id = ++trailIdRef.current;
 
-      setTrail((items) => [...items.slice(-8), { id, x, y }]);
+      // Guardar la casilla permite recolocar también el rastro al girar el celular.
+      setTrail((items) => [
+        ...items.slice(-8),
+        { id, position: previousPosition },
+      ]);
 
       const trailTimer = setTimeout(() => {
         setTrail((items) => items.filter((star) => star.id !== id));
@@ -153,22 +174,25 @@ function AnimatedToken({ player, index, resetKey }) {
   const visualPosition =
     visualSteps === 0 ? 0 : ((visualSteps - 1) % TOTAL) + 1;
 
-  const [x, y] = getCoordinates(visualPosition);
+  const [x, y] = getCoordinates(visualPosition, path);
 
   return (
     <>
-      {trail.map((star) => (
-        <div
-          key={star.id}
-          className={`magic-trail magic-trail-${index + 1}`}
-          style={{
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-          }}
-        >
-          ✦
-        </div>
-      ))}
+      {trail.map((star) => {
+        const [starX, starY] = getCoordinates(star.position, path);
+        return (
+          <div
+            key={star.id}
+            className={`magic-trail magic-trail-${index + 1}`}
+            style={{
+              left: `${starX}%`,
+              top: `${starY}%`,
+            }}
+          >
+            ✦
+          </div>
+        );
+      })}
 
       <div
         className={`moving-player player-${index + 1} ${
@@ -255,6 +279,13 @@ export default function MagicBoard({
   const [busy, setBusy] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [showOptions, setShowOptions] = useState(false);
+  const portrait = useSyncExternalStore(
+    subscribeOrientation,
+    isPortrait,
+    () => false,
+  );
+  const path = portrait ? portraitPath : landscapePath;
+  const route = portrait ? portraitRoute : landscapeRoute;
 
   const previousRollRef = useRef(game?.rollNumber ?? 0);
 
@@ -446,10 +477,10 @@ export default function MagicBoard({
 
             <div>
               <span className="player-status">
-                {player.id === mySocketId ? "TÚ" : "COMPAÑERO"}
+                {player.id === mySocketId ? "TÚ" : "RIVAL"}
                 {turn === index && winner === null ? " · EN TURNO" : ""}
               </span>
-              <h3>{player.nickname}</h3>
+              <h3 title={player.nickname}>{player.nickname}</h3>
 
               <p className="player-character">
                 {player.character?.name ?? "Estudiante"} ·{" "}
@@ -580,6 +611,7 @@ export default function MagicBoard({
                 player={player}
                 index={index}
                 resetKey={resetKey}
+                path={path}
               />
             ))}
           </div>

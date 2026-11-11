@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { sizes, expectOnScreen } from "./helpers";
+import { sizes, portraitSizes, expectOnScreen } from "./helpers";
+
+const mediaSizes = [...sizes, portraitSizes[0], portraitSizes[2]];
 
 test("solo descarga el archivo activo y el reloj espera a una imagen lenta", async ({
   page,
@@ -28,7 +30,7 @@ test("solo descarga el archivo activo y el reloj espera a una imagen lenta", asy
   ).toBeGreaterThan(0);
   expect(requested).toHaveLength(1);
   expect(await page.evaluate(() => window.mediaEvents)).toEqual(["ready"]);
-  for (const size of sizes) {
+  for (const size of mediaSizes) {
     await page.setViewportSize(size);
     await expectOnScreen(page, [
       ".challenge-modal",
@@ -46,14 +48,14 @@ test("solo descarga el archivo activo y el reloj espera a una imagen lenta", asy
   await expect(page.locator(".challenge-option").first()).toBeDisabled();
 });
 
-test("las diez ilustraciones y sus textos caben en los cinco tamaños horizontales", async ({
+test("las diez ilustraciones y sus textos caben en horizontal y vertical", async ({
   page,
 }) => {
   for (let index = 0; index < 10; index++) {
     await page.goto(`/tests/fixtures/media.html?index=${index}`);
     await page.getByRole("button", { name: "Probar reto visual" }).click();
     await expect(page.locator(".challenge-option").first()).toBeEnabled();
-    for (const size of sizes) {
+    for (const size of mediaSizes) {
       await page.setViewportSize(size);
       await expectOnScreen(page, [
         ".challenge-modal",
@@ -85,7 +87,7 @@ for (const scene of ["video", "video2"]) {
         .evaluate((v) => v.paused && v.currentTime === 0),
     ).toBe(true);
     await expect(page.locator(".challenge-option")).toHaveCount(0);
-    for (const size of sizes) {
+    for (const size of mediaSizes) {
       await page.setViewportSize(size);
       await expectOnScreen(page, [
         ".challenge-modal",
@@ -126,7 +128,7 @@ test("archivo bloqueado: trivia de respaldo legible y sin esperar una descarga i
     await expect(page.locator(".challenge-option").first()).toBeEnabled();
     await expect(page.locator(".challenge-media")).toHaveCount(0);
     expect(await page.evaluate(() => window.mediaEvents)).toEqual(["failed"]);
-    for (const size of sizes) {
+    for (const size of mediaSizes) {
       await page.setViewportSize(size);
       await expectOnScreen(page, [
         ".challenge-modal",

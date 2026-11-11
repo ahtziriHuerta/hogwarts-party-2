@@ -8,6 +8,14 @@ export const sizes = [
   { width: 932, height: 430 },
 ];
 
+export const portraitSizes = [
+  { width: 320, height: 568 },
+  { width: 360, height: 640 },
+  { width: 390, height: 700 },
+  { width: 412, height: 823 },
+  { width: 430, height: 932 },
+];
+
 export async function expectOnScreen(page, selectors) {
   expect(
     await page.evaluate(() => ({

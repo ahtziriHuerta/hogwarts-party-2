@@ -1,9 +1,17 @@
 // Reparte cualquier cantidad de casillas en un recorrido serpenteante.
 // Los márgenes reservan sitio para los números y las fichas en celulares bajos.
-export function createBoardPath(total) {
+export function createBoardPath(total, preferredColumns) {
   if (!Number.isInteger(total) || total < 1)
     throw new RangeError("Cantidad de casillas no válida.");
-  const columns = Math.min(total, Math.ceil(Math.sqrt(total * 4)));
+  if (
+    preferredColumns !== undefined &&
+    (!Number.isInteger(preferredColumns) || preferredColumns < 1)
+  )
+    throw new RangeError("Cantidad de columnas no válida.");
+  const columns = Math.min(
+    total,
+    preferredColumns ?? Math.ceil(Math.sqrt(total * 4)),
+  );
   const rows = Math.ceil(total / columns);
   return Array.from({ length: total }, (_, index) => {
     const row = Math.floor(index / columns);

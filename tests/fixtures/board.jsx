@@ -8,14 +8,15 @@ import "../../src/App.css";
 
 // Escenarios de diseño deterministas: no dependen de la suerte del dado ni de la red.
 const scene = new URLSearchParams(location.search).get("scene");
+const starting = ["start", "waiting"].includes(scene);
 const players = characters.slice(5, 7).map((character, index) => ({
   id: `player-${index}`,
   nickname: index === 0 ? "A".repeat(20) : "M".repeat(20),
   character,
-  points: 100,
+  points: starting ? 0 : 100,
   trophies: scene === "winner" && index === 0 ? 2 : 0,
-  position: scene === "edge" ? board.length - 1 + index : 12,
-  totalSteps: scene === "edge" ? board.length - 1 + index : 12,
+  position: starting ? 0 : scene === "edge" ? board.length - 1 + index : 12,
+  totalSteps: starting ? 0 : scene === "edge" ? board.length - 1 + index : 12,
   laps: 0,
 }));
 const now = Date.now();
@@ -157,7 +158,7 @@ if (scene === "surprise")
 const game = {
   players,
   turn: 0,
-  dice: 6,
+  dice: starting ? null : 6,
   winner: scene === "winner" ? 0 : null,
   message: `❌ ${players[0].nickname} falló el reto. La respuesta era: Antioch Peverell.`,
   rollNumber: 1,
@@ -170,7 +171,9 @@ createRoot(document.getElementById("root")).render(
     <MagicBoard
       game={game}
       mySocketId={
-        scene === "solo-watch" || scene === "memory-watch"
+        scene === "solo-watch" ||
+        scene === "memory-watch" ||
+        scene === "waiting"
           ? "player-1"
           : "player-0"
       }

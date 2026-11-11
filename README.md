@@ -153,9 +153,18 @@ para elegir personaje e iniciar. **Cómo jugar** abre una guía sin alargar el i
 El tablero, ambos marcadores, el dado y la compra de trofeos también comparten
 una sola pantalla. La altura se adapta al espacio útil del
 navegador con `100dvh` y respeta las zonas seguras de la pantalla. El botón
-**Opciones** abre las reglas y el reinicio. En vertical se permite desplazamiento.
+**Opciones** abre las reglas y el reinicio.
 Los controles de la partida tienen al menos 44 píxeles de alto y se respeta la
 preferencia del sistema para reducir animaciones.
+
+En celular vertical, la barra coloca el título y el turno junto al dado y los
+botones de salir y opciones, sin partir el nombre del juego. Los jugadores usan
+tarjetas compactas y el mapa se reorganiza en **9 columnas y 4 filas**, con
+casillas más grandes. El dado y la tienda comparten una fila bajo el mapa;
+las reglas se consultan en Opciones. Girar el celular conserva la casilla, el
+movimiento y la respuesta que ya se envió. Las vistas habituales caben en una
+pantalla desde 320×568; con poco espacio adicional o texto ampliado se permite
+desplazamiento vertical. Los retos y resultados también se ajustan a ese ancho.
 
 El tablero tiene un estilo de atlas nocturno: marco dorado, curvas de nivel,
 Hogwarts con ventanas encendidas, bosque, lago y un sendero ondulado. Las casillas
@@ -179,7 +188,7 @@ npm run test:ui
 ```
 
 Estas pruebas arrancan el frontend en el puerto 5174 y el servidor en 3002;
-deben estar disponibles. Las 17 pruebas comprueban inicio, guía, formularios,
+deben estar disponibles. Las 22 pruebas comprueban inicio, guía, formularios,
 sala de espera/lista, partida, errores, victoria, opciones y preguntas sin
 desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430. Incluyen nombres
 de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.
@@ -205,6 +214,13 @@ Las pruebas visuales también reproducen los dos MP4 reales, comprueban que no
 arranquen solos ni descarguen todo el catálogo, simulan una imagen lenta y un
 archivo bloqueado y revisan la imagen, el video y la trivia de respaldo en los
 cinco tamaños horizontales.
+
+Cinco pruebas adicionales comprueban la partida vertical en 320×568, 360×640,
+390×700, 412×823 y 430×932: título en una línea, nombres largos, turno propio o
+del rival, salida, guía, fichas al inicio y final, victoria, trivias, memoria y
+sorpresas. Las imágenes y los clips también se revisan en vertical. Una sala
+real de dos jugadores comprueba que girar durante el movimiento y después de
+responder conserve la posición y la respuesta enviada.
 
 `npm test` ejecuta 34 pruebas: 30 del servidor, dos de los dominios permitidos,
 una del recorrido automático y una del presupuesto de los archivos visuales.

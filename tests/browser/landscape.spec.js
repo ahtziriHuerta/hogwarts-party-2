@@ -171,7 +171,7 @@ for (const size of sizes) {
   });
 }
 
-test("ocho peinados distintos y selección persistente al iniciar una sala real", async ({
+test("ocho peinados distintos, selección y respuesta conservadas al girar una sala real", async ({
   context,
 }, testInfo) => {
   const host = await context.newPage();
@@ -242,5 +242,50 @@ test("ocho peinados distintos y selección persistente al iniciar una sala real"
   await expect(guest.locator(".dice-number")).toHaveText(
     await host.locator(".dice-number").innerText(),
   );
+  // Girar durante el movimiento reorganiza el mapa sin perder la casilla ni la respuesta.
+  await host.setViewportSize({ width: 390, height: 700 });
+  await expect
+    .poll(() =>
+      host
+        .locator(".path-space")
+        .evaluateAll(
+          (tiles) => new Set(tiles.map((tile) => tile.style.left)).size,
+        ),
+    )
+    .toBe(9);
+  await expect
+    .poll(() =>
+      host.locator(".board-map").evaluate((map) => {
+        const token = map.querySelector(".moving-player.player-1");
+        const tile = map.querySelectorAll(".path-space")[2];
+        return (
+          token.style.left === tile.style.left &&
+          token.style.top === tile.style.top
+        );
+      }),
+    )
+    .toBe(true);
+  await host.locator(".challenge-option").first().click();
+  await expect(host.locator(".challenge-footer")).toContainText(
+    "Respuesta enviada",
+  );
+  await host.setViewportSize({ width: 844, height: 390 });
+  await expect
+    .poll(() =>
+      host
+        .locator(".path-space")
+        .evaluateAll(
+          (tiles) => new Set(tiles.map((tile) => tile.style.left)).size,
+        ),
+    )
+    .toBe(12);
+  await expect(host.locator(".challenge-option").first()).toBeDisabled();
+  await expect(host.locator(".challenge-footer")).toContainText(
+    "Respuesta enviada",
+  );
+  await guest.locator(".challenge-option").first().click();
+  await expect(
+    host.getByRole("dialog", { name: "Resultados del reto" }),
+  ).toBeVisible();
   expect(errors).toEqual([]);
 });
