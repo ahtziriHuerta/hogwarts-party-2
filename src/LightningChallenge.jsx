@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ChallengeMedia from "./ChallengeMedia";
+import ChallengeSpells from "./ChallengeSpells";
+import "./Spells.css";
 
 // Este reloj solo dibuja la cuenta atrás. El servidor decide si una respuesta llegó a tiempo.
 // Usar el tiempo restante enviado evita depender de la hora configurada en el celular.
@@ -32,12 +34,16 @@ export default function LightningChallenge({
   mySocketId,
   onAnswer,
   onMediaStatus,
+  inventory = [],
+  onUseSpell,
 }) {
   const dialog = useRef(null);
   const [selected, setSelected] = useState(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [hiddenOptions, setHiddenOptions] = useState([]);
+  const [spellBusy, setSpellBusy] = useState(false);
   const remaining = useCountdown(challenge);
   const isResults = challenge.phase === "results";
   const isMemorizing = challenge.phase === "memorizing";
@@ -52,15 +58,24 @@ export default function LightningChallenge({
     challenge.phase !== "answering" ||
     answered ||
     busy ||
+    spellBusy ||
     remaining <= 0;
   const count = challenge.answeredPlayerIds.length;
+  const hasSpellAction =
+    onUseSpell &&
+    canParticipate &&
+    !answered &&
+    !busy &&
+    remaining > 0 &&
+    (inventory.length > 0 ||
+      challenge.spellUses?.some((entry) => entry.playerId === mySocketId));
 
   useEffect(() => {
     if (!dialog.current.open) dialog.current.showModal();
   }, []);
 
   function answer(index) {
-    if (locked) return;
+    if (locked || hiddenOptions.includes(index)) return;
     setSelected(index);
     setBusy(true);
     setError("");
@@ -77,7 +92,7 @@ export default function LightningChallenge({
   return (
     <dialog
       ref={dialog}
-      className={`challenge-modal ${challenge.media ? "has-visual" : ""}`}
+      className={`challenge-modal ${challenge.media ? "has-visual" : ""} ${hasSpellAction && challenge.phase === "answering" ? "has-spells" : ""}`}
       aria-labelledby="lightning-title"
       onCancel={(event) => event.preventDefault()}
     >
@@ -222,7 +237,7 @@ export default function LightningChallenge({
                           : "Sin cambio de saldo"
                       : result.correct
                         ? `${result.basePoints} por acertar${result.speedBonus > 0 ? ` + ${result.speedBonus} de rapidez` : ""}`
-                        : `${result.timedOut ? "Tiempo agotado" : "Respuesta incorrecta"} · ${result.penalty > 0 ? `−${result.penalty}` : challenge.wrongPenalty > 0 ? "saldo en 0" : "sin pérdida"}`}
+                        : `${result.timedOut ? "Tiempo agotado" : "Respuesta incorrecta"} · ${result.protectedByShield ? "Escudo · sin pérdida" : result.penalty > 0 ? `−${result.penalty}` : challenge.wrongPenalty > 0 ? "saldo en 0" : "sin pérdida"}`}
                   </small>
                 </article>
               ))}
@@ -239,10 +254,10 @@ export default function LightningChallenge({
                   <button
                     key={index}
                     type="button"
-                    aria-label={`${String.fromCharCode(65 + index)} ${option}`}
+                    aria-label={`${String.fromCharCode(65 + index)} ${option}${hiddenOptions.includes(index) ? " · Descartada por la pista" : ""}`}
                     aria-pressed={selected === index}
-                    className={`challenge-option option-${index} ${selected === index ? "selected" : ""}`}
-                    disabled={locked}
+                    className={`challenge-option option-${index} ${selected === index ? "selected" : ""} ${hiddenOptions.includes(index) ? "eliminated" : ""}`}
+                    disabled={locked || hiddenOptions.includes(index)}
                     onClick={() => answer(index)}
                   >
                     <span className="challenge-letter" aria-hidden="true">
@@ -252,24 +267,38 @@ export default function LightningChallenge({
                   </button>
                 ))}
               </div>
-              <p
-                className={`challenge-footer ${error ? "challenge-error" : ""}`}
-                role={error ? "alert" : "status"}
-              >
-                {challenge.notice && (
-                  <span className="challenge-notice">{challenge.notice} </span>
-                )}
-                {error ||
-                  (!canParticipate
-                    ? `Solo responde ${challenge.playerName}. Tu saldo no cambia.`
-                    : busy
-                      ? "Enviando…"
-                      : answered
-                        ? `✓ Respuesta enviada · ${count}/${challenge.participantCount} respondieron`
-                        : remaining <= 0
-                          ? "¡Tiempo! Esperando resultados…"
-                          : `Toca una opción para responder · ${count}/${challenge.participantCount} respondieron`)}
-              </p>
+              {hasSpellAction && !error ? (
+                <ChallengeSpells
+                  challenge={challenge}
+                  mySocketId={mySocketId}
+                  inventory={inventory}
+                  onUse={onUseSpell}
+                  onHint={setHiddenOptions}
+                  hintApplied={hiddenOptions.length === 2}
+                  onBusy={setSpellBusy}
+                />
+              ) : (
+                <p
+                  className={`challenge-footer ${error ? "challenge-error" : ""}`}
+                  role={error ? "alert" : "status"}
+                >
+                  {challenge.notice && (
+                    <span className="challenge-notice">
+                      {challenge.notice}{" "}
+                    </span>
+                  )}
+                  {error ||
+                    (!canParticipate
+                      ? `Solo responde ${challenge.playerName}. Tu saldo no cambia.`
+                      : busy
+                        ? "Enviando…"
+                        : answered
+                          ? `✓ Respuesta enviada · ${count}/${challenge.participantCount} respondieron`
+                          : remaining <= 0
+                            ? "¡Tiempo! Esperando resultados…"
+                            : `Toca una opción para responder · ${count}/${challenge.participantCount} respondieron`)}
+                </p>
+              )}
             </>
           )
         )}

@@ -78,6 +78,30 @@ Completar una vuelta otorga +20, también al caer en una actividad. Estos bonos 
 los retos individuales permiten recuperar saldo tras un duelo. Cada trofeo
 cuesta 100 monedas; gana quien compre dos.
 
+### Tienda e inventario
+
+Abre **Tienda** entre actividades para comprar trofeos o preparar hasta dos
+hechizos. Cualquier jugador puede comprar entre retos, aunque no le toque lanzar.
+Cada hechizo ocupa un espacio; se permiten dos iguales.
+
+| Hechizo | Precio     | Efecto                                                                                                                                                     |
+| ------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Escudo  | 5 monedas  | Actívalo antes de responder un duelo: evita la penalización de ese reto si fallas o vence el tiempo. No protege trampas ni sorpresas.                      |
+| Pista   | 10 monedas | Descarta dos opciones incorrectas solo para ti; requiere una pregunta de cuatro opciones. Sirve en trivias, imágenes, clips y memoria después de observar. |
+
+Cada participante puede activar **un hechizo por reto**, antes de responder y
+dentro del plazo. Se consume al activarlo, incluso si aciertas. El servidor
+comprueba inventario, precio, saldo y permisos; el cliente no decide descuentos.
+La pista viaja solo en el acuse privado de quien la usa. Reintentar la misma
+activación recupera su efecto sin consumir otro objeto. El escudo y la pista no
+alteran el reloj ni los premios normales por acertar. Reiniciar vacía el inventario.
+
+La tienda comparte el espacio del botón de compra anterior y se cierra si el
+rival inicia una actividad. Los trofeos se compran dentro de ella y no ocupan
+inventario. No hay archivos multimedia, servicios ni dependencias adicionales.
+El cliente muestra esta tienda cuando el servidor anuncia `game.spellShop`;
+si Render aún ejecuta una versión anterior, conserva la compra directa de trofeos.
+
 El banco mantiene 60 preguntas: 50 de cuatro opciones y 10 de verdadero/falso,
 por categorías, sin repetición hasta agotarse. Las opciones se barajan.
 
@@ -188,7 +212,7 @@ npm run test:ui
 ```
 
 Estas pruebas arrancan el frontend en el puerto 5174 y el servidor en 3002;
-deben estar disponibles. Las 22 pruebas comprueban inicio, guía, formularios,
+deben estar disponibles. Las 28 pruebas comprueban inicio, guía, formularios,
 sala de espera/lista, partida, errores, victoria, opciones y preguntas sin
 desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430. Incluyen nombres
 de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.
@@ -222,7 +246,12 @@ sorpresas. Las imágenes y los clips también se revisan en vertical. Una sala
 real de dos jugadores comprueba que girar durante el movimiento y después de
 responder conserve la posición y la respuesta enviada.
 
-`npm test` ejecuta 34 pruebas: 30 del servidor, dos de los dominios permitidos,
+La tienda y sus dos espacios se comprueban en vertical y horizontal, también
+con poco saldo o inventario lleno. Una sala real verifica compras, pista privada,
+escudo, giro del dispositivo, saldos sincronizados y cierre de la tienda al lanzar
+el rival. Los botones conservan al menos 44 píxeles de altura.
+
+`npm test` ejecuta 40 pruebas: 36 del servidor, dos de los dominios permitidos,
 una del recorrido automático y una del presupuesto de los archivos visuales.
 Incluyen las 36 casillas, todos los tipos de actividad, privacidad de las
 respuestas, memoria en dos fases, las seis cartas, penalizaciones limitadas al
@@ -231,6 +260,9 @@ plazos se comprueban con reloj simulado; el recorrido se verifica con 1, 24, 36,
 48 y 60 casillas. Los retos visuales añaden comprobaciones de carga compartida,
 pregunta oculta durante los clips, duración mínima, vencimientos, sustitución sin
 descuento, observadores y selección de un visual cada tres preguntas.
+Las reglas de tienda cubren precios y dueño autoritativos, límite de objetos,
+privacidad, activaciones repetidas, protección por fallo o vencimiento, respuestas
+descartadas, permisos por tipo de pregunta, plazos y reinicio del inventario.
 
 Para usar un Chromium ya instalado, configura
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con la ruta del ejecutable. Las pruebas

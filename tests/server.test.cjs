@@ -907,3 +907,226 @@ test("un visual cada tres preguntas y doce recursos sin repetir antes de agotar 
   }
   assert.equal(seen.size, 12);
 });
+
+test("tienda: precio del servidor, dueño real, saldo y dos espacios como máximo", () => {
+  const { host, guest, room, view } = setup();
+  const [player, rival] = room.game.players;
+  player.points = 30;
+  rival.points = 10;
+  assert.equal(view().game.spellShop.inventoryLimit, 2);
+  assert.equal(host("buy-spell", { spellId: "unknown" }).ok, false);
+  assert.equal(
+    host("buy-spell", { spellId: "shield", price: 0, playerId: "guest" }).ok,
+    true,
+  );
+  assert.equal(player.points, 25);
+  assert.equal(rival.points, 10);
+  assert.equal(host("buy-spell", { spellId: "hint" }).ok, true);
+  assert.equal(player.points, 15);
+  assert.equal(host("buy-spell", { spellId: "shield" }).ok, false);
+  assert.deepEqual(Array.from(player.inventory), ["shield", "hint"]);
+  assert.equal(guest("buy-spell", { spellId: "hint" }).ok, true);
+  assert.equal(rival.points, 0);
+  assert.equal(guest("buy-spell", { spellId: "shield" }).ok, false);
+  assert.equal(rival.inventory.length, 1);
+});
+
+test("tienda: bloqueada durante preguntas, resultados y después de ganar", () => {
+  const session = setup();
+  session.room.game.players[0].points = 100;
+  beginDuel(session);
+  assert.equal(session.host("buy-spell", { spellId: "hint" }).ok, false);
+  session.advance(20_000);
+  assert.equal(session.host("buy-spell", { spellId: "shield" }).ok, false);
+  session.advance(5000);
+  assert.equal(session.host("buy-spell", { spellId: "shield" }).ok, true);
+  session.room.status = "finished";
+  session.room.game.winner = 0;
+  assert.equal(session.host("buy-spell", { spellId: "hint" }).ok, false);
+});
+
+test("pista privada: descarta dos errores, conserva el acierto y reintentar no consume otra", () => {
+  const session = setup();
+  const [player, rival] = session.room.game.players;
+  player.points = rival.points = 50;
+  session.host("buy-spell", { spellId: "hint" });
+  session.host("buy-spell", { spellId: "shield" });
+  const challenge = beginDuel(session);
+  const data = { challengeId: challenge.id, spellId: "hint" };
+  const effect = session.host("use-spell", data);
+  assert.equal(effect.ok, true);
+  assert.equal(effect.hiddenOptions.length, 2);
+  assert.equal(new Set(effect.hiddenOptions).size, 2);
+  assert.equal(effect.hiddenOptions.includes(challenge.answer), false);
+  assert.deepEqual(session.host("use-spell", data), effect);
+  assert.deepEqual(Array.from(player.inventory), ["shield"]);
+  assert.equal(
+    session.host("use-spell", { ...data, spellId: "shield" }).ok,
+    false,
+  );
+  const publicData = session.view().game.challenge;
+  assert.equal("hiddenOptions" in publicData, false);
+  assert.equal("spellEffects" in publicData, false);
+  assert.deepEqual(publicData.spellUses, [
+    { playerId: "host", spellId: "hint" },
+  ]);
+  assert.equal("answer" in publicData, false);
+  assert.equal("correctAnswer" in publicData, false);
+  assert.equal(publicData.options.length, 4);
+  assert.equal(
+    session.host("answer-challenge", {
+      challengeId: challenge.id,
+      answer: effect.hiddenOptions[0],
+    }).ok,
+    false,
+  );
+  assert.equal(challenge.responses.has("host"), false);
+  assert.equal(
+    session.guest("answer-challenge", {
+      challengeId: challenge.id,
+      answer: effect.hiddenOptions[0],
+    }).ok,
+    true,
+  );
+  assert.equal(
+    session.host("answer-challenge", {
+      challengeId: challenge.id,
+      answer: challenge.answer,
+    }).ok,
+    true,
+  );
+  assert.equal(
+    challenge.results.find((result) => result.playerId === "host").correct,
+    true,
+  );
+});
+
+test("escudo: protege fallo o vencimiento, cada rival puede activar el suyo", () => {
+  for (const timeout of [false, true]) {
+    const session = setup();
+    const [player, rival] = session.room.game.players;
+    player.points = rival.points = 30;
+    session.host("buy-spell", { spellId: "shield" });
+    session.guest("buy-spell", { spellId: "hint" });
+    const challenge = beginDuel(session);
+    assert.equal(
+      session.host("use-spell", {
+        challengeId: challenge.id,
+        spellId: "shield",
+      }).ok,
+      true,
+    );
+    assert.equal(
+      session.guest("use-spell", { challengeId: challenge.id, spellId: "hint" })
+        .ok,
+      true,
+    );
+    if (timeout) session.advance(20_000);
+    else {
+      const wrong = (challenge.answer + 1) % challenge.options.length;
+      session.host("answer-challenge", {
+        challengeId: challenge.id,
+        answer: wrong,
+      });
+      const guestWrong = challenge.options
+        .map((_, index) => index)
+        .find(
+          (index) =>
+            index !== challenge.answer &&
+            !challenge.spellEffects.get("guest").hiddenOptions.includes(index),
+        );
+      session.guest("answer-challenge", {
+        challengeId: challenge.id,
+        answer: guestWrong,
+      });
+    }
+    assert.equal(player.points, 25);
+    assert.equal(rival.points, 10);
+    assert.equal(player.inventory.length, 0);
+    assert.equal(challenge.results[0].protectedByShield, true);
+    assert.equal(challenge.results[0].earned, 0);
+    assert.equal(challenge.results[1].penalty, 10);
+  }
+});
+
+test("no se consumen hechizos sin inventario, con reto ajeno, tras responder o fuera de plazo", () => {
+  const session = setup();
+  const player = session.room.game.players[0];
+  player.inventory = ["hint", "shield"];
+  const challenge = beginDuel(session);
+  assert.equal(
+    session.host("use-spell", { challengeId: "old", spellId: "hint" }).ok,
+    false,
+  );
+  assert.equal(
+    session.guest("use-spell", { challengeId: challenge.id, spellId: "shield" })
+      .ok,
+    false,
+  );
+  session.host("answer-challenge", {
+    challengeId: challenge.id,
+    answer: challenge.answer,
+  });
+  assert.equal(
+    session.host("use-spell", { challengeId: challenge.id, spellId: "hint" })
+      .ok,
+    false,
+  );
+  assert.deepEqual(player.inventory, ["hint", "shield"]);
+  session.host("restart-game");
+  assert.equal(player.inventory.length, 0);
+  player.inventory.push("hint");
+  const fresh = beginDuel(session);
+  session.jump(20_000);
+  assert.equal(
+    session.host("use-spell", { challengeId: fresh.id, spellId: "hint" }).ok,
+    false,
+  );
+  assert.equal(fresh.phase, "results");
+  assert.equal(player.inventory.length, 1);
+});
+
+test("reglas de uso: escudo solo en duelo, pista solo con cuatro opciones y después de observar", () => {
+  const session = setup();
+  const player = session.room.game.players[0];
+  const rival = session.room.game.players[1];
+  player.inventory = ["shield", "hint"];
+  rival.inventory = ["hint"];
+  session.setDice(1); // Individual.
+  session.host("roll-dice");
+  let challenge = session.room.game.challenge;
+  assert.equal(
+    session.host("use-spell", { challengeId: challenge.id, spellId: "shield" })
+      .ok,
+    false,
+  );
+  assert.equal(
+    session.guest("use-spell", { challengeId: challenge.id, spellId: "hint" })
+      .ok,
+    false,
+  );
+  challenge.options = ["Sí", "No"];
+  assert.equal(
+    session.host("use-spell", { challengeId: challenge.id, spellId: "hint" })
+      .ok,
+    false,
+  );
+  assert.equal(player.inventory.length, 2);
+  session.host("restart-game");
+  player.inventory.push("hint");
+  player.position = player.totalSteps = 8;
+  session.host("roll-dice"); // Memoria 9.
+  challenge = session.room.game.challenge;
+  assert.equal(challenge.phase, "memorizing");
+  assert.equal(
+    session.host("use-spell", { challengeId: challenge.id, spellId: "hint" })
+      .ok,
+    false,
+  );
+  session.advance(5000);
+  assert.equal(
+    session.host("use-spell", { challengeId: challenge.id, spellId: "hint" })
+      .ok,
+    true,
+  );
+});

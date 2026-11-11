@@ -295,7 +295,7 @@ function App() {
                   monedas.
                 </li>
                 <li>
-                  Compra un trofeo con 100 monedas. ¡El primero en conseguir dos
+                  En Tienda, compra trofeos por 100 monedas. ¡Consigue dos y
                   gana!
                 </li>
               </ol>

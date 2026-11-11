@@ -16,4 +16,6 @@ crypto.randomInt = (min, max, ...rest) =>
       ? 0
       : min === 0 && max === 11
         ? 9
-        : randomInt(min, max, ...rest);
+        : min === 0 && max > 12
+          ? 0 // Las primeras trivias tienen cuatro opciones para probar la pista.
+          : randomInt(min, max, ...rest);

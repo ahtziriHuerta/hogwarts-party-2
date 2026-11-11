@@ -81,9 +81,12 @@ function createChallengeController({
             )
           : 0;
         // Solo el duelo arriesga monedas; el descuento real nunca supera el saldo.
-        const penalty = correct
-          ? 0
-          : Math.min(challenge.wrongPenalty, player.points);
+        const protectedByShield =
+          challenge.spellEffects.get(player.id)?.spellId === "shield";
+        const penalty =
+          correct || protectedByShield
+            ? 0
+            : Math.min(challenge.wrongPenalty, player.points);
         const earned = correct
           ? challenge.points + speedBonus
           : penalty > 0
@@ -99,6 +102,7 @@ function createChallengeController({
           basePoints: correct ? challenge.points : 0,
           speedBonus,
           penalty,
+          protectedByShield,
           earned,
         };
       });
@@ -214,6 +218,7 @@ function createChallengeController({
       wrongPenalty: mode === "duel" ? DUEL_PENALTY : 0,
       maxSpeedBonus: mode === "duel" ? MAX_SPEED_BONUS : 0,
       responses: new Map(),
+      spellEffects: new Map(),
       startedAt,
       deadlineAt: question.media ? undefined : startedAt + ANSWER_MS,
       durationMs: ANSWER_MS,
@@ -300,6 +305,10 @@ function createChallengeController({
     ) {
       return { ok: false, error: "Selecciona una respuesta válida." };
     }
+    if (
+      challenge.spellEffects.get(playerId)?.hiddenOptions?.includes(data.answer)
+    )
+      return { ok: false, error: "Esa respuesta fue descartada por la pista." };
     challenge.responses.set(playerId, {
       answer: data.answer,
       answeredAt: receivedAt,
@@ -309,6 +318,50 @@ function createChallengeController({
     else updateRoom(room);
     // No revelar acierto ni puntuación mientras el otro jugador todavía puede responder.
     return { ok: true };
+  }
+
+  function useSpell(room, playerId, data) {
+    const challenge = room.game?.challenge;
+    if (
+      !challenge ||
+      data?.challengeId !== challenge.id ||
+      !challenge.participantIds.includes(playerId)
+    )
+      return { ok: false, error: "No participas en este reto." };
+    const previous = challenge.spellEffects?.get(playerId);
+    // Reintentar tras perder un acuse no consume otro objeto ni cambia la pista.
+    if (previous)
+      return previous.spellId === data.spellId
+        ? { ok: true, ...previous }
+        : { ok: false, error: "Solo puedes usar un hechizo por reto." };
+    if (challenge.phase !== "answering" || challenge.responses.has(playerId))
+      return { ok: false, error: "Activa el hechizo antes de responder." };
+    if (clock.now() >= challenge.deadlineAt) {
+      reveal(room);
+      return { ok: false, error: "Se acabó el tiempo." };
+    }
+    const player = room.game.players.find((entry) => entry.id === playerId);
+    const slot = player?.inventory.indexOf(data.spellId) ?? -1;
+    if (slot < 0) return { ok: false, error: "No tienes ese hechizo." };
+    if (data.spellId === "shield" && challenge.mode !== "duel")
+      return { ok: false, error: "El escudo solo se usa en duelos." };
+    if (data.spellId === "hint" && challenge.options.length !== 4)
+      return { ok: false, error: "La pista necesita cuatro opciones." };
+    if (!["shield", "hint"].includes(data.spellId))
+      return { ok: false, error: "Hechizo no válido." };
+    const effect = { spellId: data.spellId };
+    if (data.spellId === "hint") {
+      const wrong = challenge.options
+        .map((_, index) => index)
+        .filter((index) => index !== challenge.answer);
+      // Muestreo sin reemplazo: nunca se descarta la respuesta correcta.
+      wrong.splice(crypto.randomInt(wrong.length), 1);
+      effect.hiddenOptions = wrong;
+    }
+    player.inventory.splice(slot, 1);
+    challenge.spellEffects.set(playerId, effect);
+    updateRoom(room);
+    return { ok: true, ...effect };
   }
 
   function publicChallenge(challenge) {
@@ -330,6 +383,12 @@ function createChallengeController({
       serverNow: clock.now(),
       participantCount: challenge.participantIds.length,
       answeredPlayerIds: [...challenge.responses.keys()],
+      spellUses: [...(challenge.spellEffects ?? new Map())].map(
+        ([playerId, effect]) => ({
+          playerId,
+          spellId: effect.spellId,
+        }),
+      ),
     };
     if (challenge.notice) visible.notice = challenge.notice;
     if (challenge.media) {
@@ -367,7 +426,15 @@ function createChallengeController({
     return visible;
   }
 
-  return { start, startSurprise, answer, mediaStatus, cancel, publicChallenge };
+  return {
+    start,
+    startSurprise,
+    answer,
+    useSpell,
+    mediaStatus,
+    cancel,
+    publicChallenge,
+  };
 }
 
 module.exports = { createChallengeController };

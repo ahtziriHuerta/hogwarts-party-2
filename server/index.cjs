@@ -27,6 +27,7 @@ const MEDIA_QUESTIONS = require("./media-questions.json");
 const { createChallengeController } = require("./challenges.cjs");
 const { createMemoryQuestion } = require("./memory.cjs");
 const { SURPRISES, applySurprise } = require("./surprises.cjs");
+const { catalog: spellShop, buySpell } = require("./spells.cjs");
 
 // FUNCIONES DE SALAS
 
@@ -62,6 +63,7 @@ function publicRoom(room) {
           challenge: challenges.publicChallenge(room.game.challenge),
           trophyPrice: TROPHY_PRICE,
           trophiesToWin: TROPHIES_TO_WIN,
+          spellShop,
         }
       : null,
   };
@@ -389,6 +391,7 @@ io.on("connection", (socket) => {
         trophies: 0,
         laps: 0,
         totalSteps: 0,
+        inventory: [],
       })),
 
       turn: 0,
@@ -526,6 +529,23 @@ io.on("connection", (socket) => {
     callback?.(challenges.mediaStatus(room, socket.id, data));
   });
 
+  socket.on("buy-spell", (data, callback) => {
+    const room = getPlayerRoom(socket);
+    if (!room || room.status !== "playing" || !room.game)
+      return callback?.({ ok: false, error: "No hay una partida activa." });
+    const result = buySpell(room.game, socket.id, data?.spellId);
+    if (result.ok) updateRoom(room);
+    callback?.(result);
+  });
+
+  socket.on("use-spell", (data, callback) => {
+    const room = getPlayerRoom(socket);
+    if (!room || room.status !== "playing" || !room.game)
+      return callback?.({ ok: false, error: "No hay una partida activa." });
+    // El efecto privado de la pista solo vuelve al socket que la activó.
+    callback?.(challenges.useSpell(room, socket.id, data));
+  });
+
   // ========================================
   // COMPRAR TROFEO
   // ========================================
@@ -623,6 +643,7 @@ io.on("connection", (socket) => {
       p.trophies = 0;
       p.laps = 0;
       p.totalSteps = 0;
+      p.inventory = [];
     });
 
     room.game.turn = 0;

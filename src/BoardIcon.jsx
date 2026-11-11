@@ -1,6 +1,24 @@
 // Símbolos vectoriales del tablero: se mantienen nítidos incluso en un celular.
 export default function BoardIcon({ type, className = "" }) {
   const symbols = {
+    shield: (
+      <>
+        <path d="M17 3 29 8v9c0 7-12 14-12 14S5 24 5 17V8Z" />
+        <path d="m11 17 4 4 8-9" />
+      </>
+    ),
+    hint: (
+      <>
+        <path d="M11 22c0-4-5-5-5-11a11 11 0 0 1 22 0c0 6-5 7-5 11ZM12 26h10m-9 4h8" />
+        <path d="m13 12 4-5 4 5-4 7Z" />
+      </>
+    ),
+    bag: (
+      <>
+        <path d="M8 11h18l4 19H4ZM12 11V7a5 5 0 0 1 10 0v4" />
+        <path d="m17 15 2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1Z" />
+      </>
+    ),
     solo: (
       <>
         <path d="m7 25 17-17 4 4-17 17Z" />

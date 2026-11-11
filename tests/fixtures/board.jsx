@@ -3,11 +3,13 @@ import { createRoot } from "react-dom/client";
 import MagicBoard from "../../src/MagicBoard";
 import characters from "../../shared/characters.json";
 import board from "../../shared/board.json";
+import spellShop from "../../shared/spells.json";
 import "../../src/index.css";
 import "../../src/App.css";
 
 // Escenarios de diseño deterministas: no dependen de la suerte del dado ni de la red.
 const scene = new URLSearchParams(location.search).get("scene");
+const withSpells = new URLSearchParams(location.search).has("spells");
 const starting = ["start", "waiting"].includes(scene);
 const players = characters.slice(5, 7).map((character, index) => ({
   id: `player-${index}`,
@@ -18,6 +20,7 @@ const players = characters.slice(5, 7).map((character, index) => ({
   position: starting ? 0 : scene === "edge" ? board.length - 1 + index : 12,
   totalSteps: starting ? 0 : scene === "edge" ? board.length - 1 + index : 12,
   laps: 0,
+  inventory: withSpells ? ["shield", "hint"] : [],
 }));
 const now = Date.now();
 const isDuel = [
@@ -164,6 +167,7 @@ const game = {
   rollNumber: 1,
   trophyPrice: 100,
   trophiesToWin: 2,
+  spellShop,
   challenge,
 };
 createRoot(document.getElementById("root")).render(

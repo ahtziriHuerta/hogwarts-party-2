@@ -7,6 +7,7 @@ import "../../src/App.css";
 import "../../src/MagicBoard.css";
 
 const scene = new URLSearchParams(location.search).get("scene");
+const withSpells = new URLSearchParams(location.search).has("spells");
 const source =
   questions[
     scene === "video"
@@ -93,6 +94,13 @@ export default function Fixture() {
           key={challenge.id}
           challenge={challenge}
           mySocketId="host"
+          inventory={withSpells ? ["shield", "hint"] : []}
+          onUseSpell={
+            withSpells
+              ? (_id, _spell, done) =>
+                  done({ ok: false, error: "Solo prueba de diseño." })
+              : undefined
+          }
           onMediaStatus={status}
           onAnswer={(_id, _answer, done) => {
             setChallenge((c) => ({ ...c, answeredPlayerIds: ["host"] }));

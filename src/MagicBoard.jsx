@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { socket } from "./socket";
 import MagicCharacter from "./MagicCharacter";
 import LightningChallenge from "./LightningChallenge";
+import SpellShop from "./SpellShop";
 import BoardScenery from "./BoardScenery";
 import BoardIcon from "./BoardIcon";
 import spaces from "../shared/board.json";
@@ -279,6 +280,8 @@ export default function MagicBoard({
   const [busy, setBusy] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [showOptions, setShowOptions] = useState(false);
+  // Una tirada del rival cierra la tienda y no la reabre al terminar el reto.
+  const [shopRoll, setShopRoll] = useState(null);
   const portrait = useSyncExternalStore(
     subscribeOrientation,
     isPortrait,
@@ -396,6 +399,40 @@ export default function MagicBoard({
         done(result);
       });
     });
+  }
+
+  function buyItem(id, done) {
+    socket
+      .timeout(5000)
+      .emit(
+        id === "trophy" ? "buy-trophy" : "buy-spell",
+        id === "trophy" ? {} : { spellId: id },
+        (timeoutError, result) =>
+          done(
+            timeoutError
+              ? {
+                  ok: false,
+                  error:
+                    "No hubo respuesta. Revisa tu saldo antes de reintentar.",
+                }
+              : result,
+          ),
+      );
+  }
+
+  function useSpell(challengeId, spellId, done) {
+    socket
+      .timeout(5000)
+      .emit("use-spell", { challengeId, spellId }, (timeoutError, result) =>
+        done(
+          timeoutError
+            ? {
+                ok: false,
+                error: "Sin respuesta. Puedes reintentar el mismo hechizo.",
+              }
+            : result,
+        ),
+      );
   }
 
   function mediaStatus(challengeId, status, done) {
@@ -672,10 +709,21 @@ export default function MagicBoard({
             <button
               type="button"
               className="primary trophy-buy-button"
-              disabled={!canBuyTrophy}
-              onClick={buyTrophy}
+              disabled={
+                game.spellShop
+                  ? Boolean(winningPlayer || challenge || busy)
+                  : !canBuyTrophy
+              }
+              onClick={
+                game.spellShop
+                  ? () => setShopRoll(game.rollNumber ?? 0)
+                  : buyTrophy
+              }
             >
-              <BoardIcon type="trophy" /> Comprar trofeo
+              <BoardIcon type={game.spellShop ? "bag" : "trophy"} />
+              {game.spellShop
+                ? `Tienda · ${myPlayer?.inventory?.length ?? 0}/${game.spellShop.inventoryLimit}`
+                : "Comprar trofeo"}
             </button>
 
             {!winningPlayer &&
@@ -704,6 +752,22 @@ export default function MagicBoard({
       )}
       {/* PREGUNTA ALEATORIA */}
 
+      {shopRoll !== null &&
+        shopRoll === (game.rollNumber ?? 0) &&
+        !challenge &&
+        !winningPlayer &&
+        myPlayer &&
+        game.spellShop && (
+          <SpellShop
+            player={myPlayer}
+            catalog={game.spellShop}
+            trophyPrice={trophyPrice}
+            trophiesToWin={trophiesToWin}
+            onBuy={buyItem}
+            onClose={() => setShopRoll(null)}
+          />
+        )}
+
       {challenge && (
         <LightningChallenge
           key={challenge.id}
@@ -711,6 +775,8 @@ export default function MagicBoard({
           mySocketId={mySocketId}
           onAnswer={answerChallenge}
           onMediaStatus={mediaStatus}
+          inventory={myPlayer?.inventory ?? []}
+          onUseSpell={game.spellShop ? useSpell : undefined}
         />
       )}
     </section>
