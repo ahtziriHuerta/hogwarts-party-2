@@ -42,6 +42,14 @@ nombre del proyecto, actualiza esta lista y vuelve a publicar el servidor en Ren
 Un frontend que carga y muestra «No se pudo conectar» puede estar usando un
 dominio que todavía no figura en los permisos del servidor.
 
+En Render gratuito, el primer acceso puede tardar más de un minuto mientras
+despierta la instancia. Crear, unirse y jugar solo esperan hasta **90 segundos**
+para conectar, mantienen los reintentos de Socket.IO y muestran un aviso de espera
+tras ocho segundos o un fallo inicial de transporte. Después de conectar se envía
+una sola solicitud, con 15 segundos para su acuse. **Cancelar** vuelve al inicio
+y evita que un intento anterior cree una sala o cambie la pantalla más tarde.
+El cliente permite también probar el otro transporte si falla el primero.
+
 Las salas viven en memoria de un solo proceso. Al desconectar, una sala compartida
 vuelve a esperar jugadores y una individual se elimina junto con sus temporizadores.
 Reiniciar el servidor elimina las partidas; no hay guardado ni recuperación de sesión.
@@ -243,7 +251,7 @@ npm run test:ui
 ```
 
 Estas pruebas arrancan el frontend en el puerto 5174 y el servidor en 3002;
-deben estar disponibles. Las 34 pruebas comprueban inicio, guía, formularios,
+deben estar disponibles. Las 37 pruebas comprueban inicio, guía, formularios,
 sala de espera/lista, partida, errores, victoria, opciones y preguntas sin
 desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430. Incluyen nombres
 de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.
@@ -287,7 +295,11 @@ personajes y tablero, en vertical y horizontal, desde 320×568 y 740×280. Una
 partida real de un solo navegador comprueba respuestas y lanzamientos automáticos,
 tienda, pistas en imágenes, giro del dispositivo, reinicio y salida.
 
-`npm test` ejecuta 50 pruebas: 46 del servidor, dos de los dominios permitidos,
+Tres pruebas de conexión bloquean el servidor durante 55 segundos y verifican
+que la espera siga visible sin error en vertical y horizontal, que solo se cree
+una sala al conectar y que cancelar impida solicitudes tardías.
+
+`npm test` ejecuta 56 pruebas: 46 del servidor, seis de conexión, dos de los dominios permitidos,
 una del recorrido automático y una del presupuesto de los archivos visuales.
 Incluyen las 36 casillas, todos los tipos de actividad, privacidad de las
 respuestas, memoria en dos fases, las seis cartas, penalizaciones limitadas al

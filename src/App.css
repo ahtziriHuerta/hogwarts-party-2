@@ -234,6 +234,14 @@ summary:focus-visible {
     12px/1.35 system-ui,
     sans-serif;
 }
+.connection-status {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #d3e7f5;
+  font:
+    12px/1.4 system-ui,
+    sans-serif;
+}
 .solo-rival-description {
   color: #d0d2df;
   font:

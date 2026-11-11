@@ -6,6 +6,7 @@ import RoomLobby from "./RoomLobby";
 import board from "../shared/board.json";
 import botLevels from "../shared/bot-levels.json";
 import { socket } from "./socket";
+import { requestRoom } from "./roomConnection";
 
 function App() {
   const [screen, setScreen] = useState("home");
@@ -14,6 +15,7 @@ function App() {
   const [room, setRoom] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [connectionMessage, setConnectionMessage] = useState("");
   const [difficulty, setDifficulty] = useState("wizard");
 
   const pendingConnection = useRef(null);
@@ -35,8 +37,14 @@ function App() {
     };
 
     const handleDisconnect = () => {
+      pendingConnection.current?.();
+      pendingConnection.current = null;
+      setLoading(false);
+      setConnectionMessage("");
       setRoom(null);
-      setScreen("home");
+      setScreen((previous) =>
+        ["board", "lobby", "characters"].includes(previous) ? "home" : previous,
+      );
       setError("Se perdió la conexión con el servidor.");
     };
 
@@ -48,6 +56,7 @@ function App() {
     return () => {
       // Cada intento elimina sus listeners: una reconexión no debe repetir solicitudes.
       pendingConnection.current?.();
+      pendingConnection.current = null;
       socket.off("room-updated", handleRoomUpdated);
       socket.off("disconnect", handleDisconnect);
     };
@@ -55,6 +64,8 @@ function App() {
 
   // SALIR DE LA SALA
   function leaveRoom() {
+    pendingConnection.current?.();
+    pendingConnection.current = null;
     socket.disconnect();
     socket.connect();
 
@@ -63,6 +74,7 @@ function App() {
     setNickname("");
     setError("");
     setLoading(false);
+    setConnectionMessage("");
     setScreen("home");
   }
 
@@ -72,7 +84,7 @@ function App() {
 
     const name = nickname.trim();
 
-    if (!name || loading) return;
+    if (!name || loading || pendingConnection.current) return;
 
     const solo = screen === "solo";
     const creating = screen === "create" || solo;
@@ -84,6 +96,7 @@ function App() {
 
     setError("");
     setLoading(true);
+    setConnectionMessage("");
 
     const eventName = solo
       ? "create-solo-room"
@@ -98,58 +111,20 @@ function App() {
           code: roomCode.trim().toUpperCase(),
         };
 
-    const sendRoomRequest = () => {
-      socket
-        .timeout(15000)
-        .emit(eventName, payload, (timeoutError, response) => {
-          setLoading(false);
-
-          if (timeoutError) {
-            console.error("Error al crear/unirse a sala:", timeoutError);
-            setError("El servidor no respondió a la solicitud.");
-            return;
-          }
-
-          if (!response?.ok) {
-            setError(response?.error || "No se pudo entrar a la sala.");
-            return;
-          }
-
-          setRoom(response.room);
-          setRoomCode(response.room.code);
-          setScreen("lobby");
-        });
-    };
-
-    if (socket.connected) {
-      sendRoomRequest();
-    } else {
-      // Cada intento elimina sus listeners: una reconexión no debe repetir solicitudes.
-      pendingConnection.current?.();
-      let timer;
-      const cleanup = () => {
-        clearTimeout(timer);
-        socket.off("connect", onConnect);
-        socket.off("connect_error", onError);
+    pendingConnection.current = requestRoom(socket, eventName, payload, {
+      onWaiting: setConnectionMessage,
+      onResult: (response) => {
         pendingConnection.current = null;
-      };
-      const onConnect = () => {
-        cleanup();
-        sendRoomRequest();
-      };
-      const onError = () => {
-        cleanup();
         setLoading(false);
-        setError(
-          "No se pudo conectar. Comprueba tu conexión y vuelve a intentar.",
-        );
-      };
-      pendingConnection.current = cleanup;
-      socket.once("connect", onConnect);
-      socket.once("connect_error", onError);
-      timer = setTimeout(onError, 20000);
-      socket.connect();
-    }
+        if (!response?.ok) {
+          setError(response?.error || "No se pudo entrar a la sala.");
+          return;
+        }
+        setRoom(response.room);
+        setRoomCode(response.room.code);
+        setScreen("lobby");
+      },
+    });
   }
 
   // SELECCIONAR PERSONAJE
@@ -336,13 +311,16 @@ function App() {
           <button
             type="button"
             className="back-button"
-            disabled={loading}
             onClick={() => {
-              setError("");
-              setScreen("home");
+              if (loading) leaveRoom();
+              else {
+                setError("");
+                setConnectionMessage("");
+                setScreen("home");
+              }
             }}
           >
-            ← Volver
+            {loading ? "← Cancelar" : "← Volver"}
           </button>
 
           <header className="room-form-intro">
@@ -418,6 +396,12 @@ function App() {
                   required
                 />
               </div>
+            )}
+
+            {connectionMessage && (
+              <p className="connection-status" role="status">
+                {connectionMessage}
+              </p>
             )}
 
             {error && (
