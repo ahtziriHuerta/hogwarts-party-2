@@ -3,6 +3,8 @@ const crypto = require("node:crypto");
 const ANSWER_MS = 20_000;
 const RESULTS_MS = 5_000;
 const MEMORY_PREVIEW_MS = 5_000;
+const MEDIA_LOAD_MS = 10_000;
+const MEDIA_WATCH_MS = 20_000;
 const MAX_SPEED_BONUS = 10;
 const DUEL_PENALTY = 10;
 
@@ -115,6 +117,78 @@ function createChallengeController({
     reveal(room);
   }
 
+  function beginAnswering(room, challenge) {
+    challenge.phase = "answering";
+    challenge.startedAt = clock.now();
+    challenge.deadlineAt = clock.now() + ANSWER_MS;
+    challenge.preparationUntil = undefined;
+    schedule(room, challenge, ANSWER_MS, () => expire(room, challenge));
+    updateRoom(room);
+  }
+
+  function mediaFallback(room, challenge) {
+    // Un fallo de red o un reproductor incompatible nunca descuenta monedas.
+    const fallback = challenge.fallbackQuestion();
+    start(
+      room,
+      {
+        ...fallback,
+        notice: "Recurso no disponible: seguimos con una trivia.",
+      },
+      challenge.mode,
+    );
+  }
+
+  function mediaStatus(room, playerId, data) {
+    const challenge = room.game?.challenge;
+    if (!challenge?.media || data?.challengeId !== challenge.id)
+      return { ok: false, error: "El reto ya cambió." };
+    if (!challenge.participantIds.includes(playerId))
+      return { ok: false, error: "Solo participa quien responde el reto." };
+    if (!["loading", "watching"].includes(challenge.phase))
+      return { ok: false, error: "La preparación ya terminó." };
+    if (clock.now() >= challenge.preparationUntil) {
+      mediaFallback(room, challenge);
+      return { ok: false, error: "Seguimos con una pregunta de texto." };
+    }
+    if (data.status === "failed") {
+      mediaFallback(room, challenge);
+      return { ok: true };
+    }
+    if (data.status === "ready" && challenge.phase === "loading") {
+      challenge.readyPlayerIds.add(playerId);
+      if (challenge.readyPlayerIds.size === challenge.participantIds.length) {
+        if (challenge.media.type === "image") beginAnswering(room, challenge);
+        else {
+          challenge.phase = "watching";
+          challenge.watchStartedAt = clock.now();
+          challenge.preparationUntil = clock.now() + MEDIA_WATCH_MS;
+          schedule(room, challenge, MEDIA_WATCH_MS, () =>
+            mediaFallback(room, challenge),
+          );
+          updateRoom(room);
+        }
+      } else updateRoom(room);
+      return { ok: true };
+    }
+    if (data.status === "viewed" && challenge.phase === "watching") {
+      if (
+        clock.now() <
+        challenge.watchStartedAt + challenge.media.durationSeconds * 1000
+      )
+        return {
+          ok: false,
+          error: "Termina de ver el clip antes de continuar.",
+        };
+      challenge.viewedPlayerIds.add(playerId);
+      if (challenge.viewedPlayerIds.size === challenge.participantIds.length)
+        beginAnswering(room, challenge);
+      else updateRoom(room);
+      return { ok: true };
+    }
+    return { ok: false, error: "Estado del recurso no válido." };
+  }
+
   function start(room, question, mode = "duel") {
     cancel(room);
     const startedAt = clock.now();
@@ -122,7 +196,11 @@ function createChallengeController({
       ...question,
       options: [...question.options],
       id: crypto.randomUUID(),
-      phase: question.kind === "memory" ? "memorizing" : "answering",
+      phase: question.media
+        ? "loading"
+        : question.kind === "memory"
+          ? "memorizing"
+          : "answering",
       previewUntil:
         question.kind === "memory" ? startedAt + MEMORY_PREVIEW_MS : undefined,
       previewDurationMs:
@@ -137,10 +215,22 @@ function createChallengeController({
       maxSpeedBonus: mode === "duel" ? MAX_SPEED_BONUS : 0,
       responses: new Map(),
       startedAt,
-      deadlineAt: startedAt + ANSWER_MS,
+      deadlineAt: question.media ? undefined : startedAt + ANSWER_MS,
       durationMs: ANSWER_MS,
     };
     room.game.challenge = challenge;
+    if (question.media) {
+      challenge.readyPlayerIds = new Set();
+      challenge.viewedPlayerIds = new Set();
+      challenge.preparationUntil = startedAt + MEDIA_LOAD_MS;
+      schedule(room, challenge, MEDIA_LOAD_MS, () =>
+        mediaFallback(room, challenge),
+      );
+      room.game.message =
+        "🖼️ Preparando un reto visual. El tiempo de respuesta aún no empieza.";
+      updateRoom(room);
+      return;
+    }
     room.game.message =
       mode === "solo"
         ? `🪄 Reto individual de ${challenge.playerName}: acertar suma, fallar no resta.`
@@ -148,11 +238,7 @@ function createChallengeController({
     if (question.kind === "memory") {
       room.game.message = `🧠 ${challenge.playerName} debe memorizar el orden de cinco símbolos.`;
       schedule(room, challenge, MEMORY_PREVIEW_MS, () => {
-        challenge.phase = "answering";
-        challenge.startedAt = clock.now();
-        challenge.deadlineAt = clock.now() + ANSWER_MS;
-        schedule(room, challenge, ANSWER_MS, () => expire(room, challenge));
-        updateRoom(room);
+        beginAnswering(room, challenge);
       });
     } else schedule(room, challenge, ANSWER_MS, () => expire(room, challenge));
     updateRoom(room);
@@ -194,7 +280,9 @@ function createChallengeController({
         error:
           challenge.phase === "memorizing"
             ? "Primero memoriza la secuencia."
-            : "El reto ya terminó.",
+            : ["loading", "watching"].includes(challenge.phase)
+              ? "Primero espera a que termine el contenido visual."
+              : "El reto ya terminó.",
       };
     const receivedAt = clock.now();
     if (receivedAt >= challenge.deadlineAt) {
@@ -243,6 +331,20 @@ function createChallengeController({
       participantCount: challenge.participantIds.length,
       answeredPlayerIds: [...challenge.responses.keys()],
     };
+    if (challenge.notice) visible.notice = challenge.notice;
+    if (challenge.media) {
+      visible.mediaType = challenge.media.type;
+      if (["loading", "watching"].includes(challenge.phase)) {
+        visible.preparationUntil = challenge.preparationUntil;
+        visible.readyPlayerIds = [...challenge.readyPlayerIds];
+        visible.viewedPlayerIds = [...challenge.viewedPlayerIds];
+      }
+      if (
+        challenge.phase !== "results" &&
+        (challenge.media.type === "image" || challenge.phase !== "answering")
+      )
+        visible.media = { ...challenge.media };
+    }
     if (challenge.kind === "surprise") {
       visible.eventTitle = challenge.eventTitle;
       visible.eventDescription = challenge.eventDescription;
@@ -252,7 +354,7 @@ function createChallengeController({
       }));
       visible.previewUntil = challenge.previewUntil;
       visible.previewDurationMs = challenge.previewDurationMs;
-    } else {
+    } else if (!["loading", "watching"].includes(challenge.phase)) {
       visible.question = challenge.question;
       visible.options = [...challenge.options];
     }
@@ -265,7 +367,7 @@ function createChallengeController({
     return visible;
   }
 
-  return { start, startSurprise, answer, cancel, publicChallenge };
+  return { start, startSurprise, answer, mediaStatus, cancel, publicChallenge };
 }
 
 module.exports = { createChallengeController };

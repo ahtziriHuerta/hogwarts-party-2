@@ -28,6 +28,7 @@ const TROPHY_PRICE = 100;
 const TROPHIES_TO_WIN = 2;
 
 const QUESTIONS = require("./questions.json");
+const MEDIA_QUESTIONS = require("./media-questions.json");
 const { createChallengeController } = require("./challenges.cjs");
 const { createMemoryQuestion } = require("./memory.cjs");
 const { SURPRISES, applySurprise } = require("./surprises.cjs");
@@ -119,19 +120,21 @@ function getSpaceEffect(position, nickname) {
 
 // PREGUNTAS ALEATORIAS
 
-function chooseQuestion(game) {
-  if (game.usedQuestions.length >= QUESTIONS.length) {
-    game.usedQuestions = [];
+function drawQuestion(game, bank, usedKey) {
+  if (!Array.isArray(game[usedKey]) || game[usedKey].length >= bank.length) {
+    game[usedKey] = [];
   }
 
-  const available = QUESTIONS.map((question, index) => ({
-    question,
-    index,
-  })).filter(({ index }) => !game.usedQuestions.includes(index));
+  const available = bank
+    .map((question, index) => ({
+      question,
+      index,
+    }))
+    .filter(({ index }) => !game[usedKey].includes(index));
 
   const selected = available[crypto.randomInt(0, available.length)];
 
-  game.usedQuestions.push(selected.index);
+  game[usedKey].push(selected.index);
 
   // Barajar las opciones evita memorizar una letra en lugar de la respuesta.
   const options = selected.question.options.map((text, index) => ({
@@ -147,6 +150,19 @@ function chooseQuestion(game) {
     options: options.map((option) => option.text),
     answer: options.findIndex((option) => option.correct),
   };
+}
+
+function chooseQuestion(game) {
+  game.questionNumber = (game.questionNumber ?? 0) + 1;
+  // Un visual cada tres preguntas limita descargas y conserva la variedad del tablero.
+  if (game.questionNumber % 3 === 0) {
+    return {
+      ...drawQuestion(game, MEDIA_QUESTIONS, "usedMediaQuestions"),
+      // La trivia de respaldo se elige solo si hace falta; no se consume de antemano.
+      fallbackQuestion: () => drawQuestion(game, QUESTIONS, "usedQuestions"),
+    };
+  }
+  return drawQuestion(game, QUESTIONS, "usedQuestions");
 }
 
 function nextTurn(game) {
@@ -389,6 +405,8 @@ io.on("connection", (socket) => {
       rollNumber: 0,
       challenge: null,
       usedQuestions: [],
+      usedMediaQuestions: [],
+      questionNumber: 0,
     };
 
     room.status = "playing";
@@ -505,6 +523,14 @@ io.on("connection", (socket) => {
     callback?.(challenges.answer(room, socket.id, data));
   });
 
+  socket.on("challenge-media", (data, callback) => {
+    const room = getPlayerRoom(socket);
+    if (!room || room.status !== "playing" || !room.game) {
+      return callback?.({ ok: false, error: "No hay una partida activa." });
+    }
+    callback?.(challenges.mediaStatus(room, socket.id, data));
+  });
+
   // ========================================
   // COMPRAR TROFEO
   // ========================================
@@ -610,6 +636,8 @@ io.on("connection", (socket) => {
     room.game.rollNumber = 0;
     room.game.challenge = null;
     room.game.usedQuestions = [];
+    room.game.usedMediaQuestions = [];
+    room.game.questionNumber = 0;
 
     room.game.message = "✨ ¡Nueva aventura! Jugador 1, lanza el dado.";
 

@@ -374,6 +374,11 @@ test("60 preguntas válidas, dos formatos y ninguna repetida antes de agotar el 
     player.laps = 0;
     session.setDice(3);
     client("roll-dice");
+    if (room.game.challenge.media)
+      client("challenge-media", {
+        challengeId: room.game.challenge.id,
+        status: "failed",
+      });
     const challenge = room.game.challenge;
     const original = questions.find(
       (question) => question.question === challenge.question,
@@ -707,4 +712,198 @@ test("la respuesta de memoria corresponde a la posición preguntada", () => {
     );
     assert.equal(new Set(question.options).size, 4);
   }
+});
+
+function beginVisual(session, { video = false, solo = false } = {}) {
+  session.room.game.questionNumber = 2;
+  session.room.game.usedMediaQuestions = video
+    ? Array.from({ length: 10 }, (_, i) => i)
+    : [];
+  session.setDice(solo ? 1 : 3);
+  session.host("roll-dice");
+  return session.room.game.challenge;
+}
+
+test("visual: nadie responde hasta que ambos carguen y después tienen 20 segundos completos", () => {
+  const s = setup();
+  const c = beginVisual(s);
+  assert.equal(c.phase, "loading");
+  assert.equal(s.view().game.challenge.question, undefined);
+  assert.equal(s.view().game.challenge.options, undefined);
+  assert.equal(s.view().game.challenge.fallbackQuestion, undefined);
+  assert.equal(
+    s.host("answer-challenge", { challengeId: c.id, answer: c.answer }).ok,
+    false,
+  );
+  assert.equal(s.host("roll-dice").ok, false);
+  assert.equal(s.host("buy-trophy").ok, false);
+  assert.equal(
+    s.host("challenge-media", { challengeId: "antiguo", status: "ready" }).ok,
+    false,
+  );
+  assert.equal(
+    s.host("challenge-media", { challengeId: c.id, status: "viewed" }).ok,
+    false,
+  );
+  s.advance(9000);
+  for (let i = 0; i < 2; i++)
+    assert.equal(
+      s.host("challenge-media", { challengeId: c.id, status: "ready" }).ok,
+      true,
+    );
+  assert.equal(c.phase, "loading");
+  assert.equal(c.readyPlayerIds.size, 1);
+  s.guest("challenge-media", { challengeId: c.id, status: "ready" });
+  const visible = s.view().game.challenge;
+  assert.equal(visible.deadlineAt - visible.serverNow, 20_000);
+  assert.equal(visible.phase, "answering");
+  assert.ok(visible.media);
+  assert.equal(visible.answer, undefined);
+  s.advance(19_999);
+  assert.equal(c.phase, "answering");
+  s.host("answer-challenge", { challengeId: c.id, answer: c.answer });
+  s.guest("answer-challenge", { challengeId: c.id, answer: c.answer });
+  assert.equal(c.phase, "results");
+  assert.equal(s.view().game.challenge.media, undefined);
+});
+
+test("clip: pregunta oculta hasta que ambos terminen, con duración mínima y una sola respuesta", () => {
+  const s = setup();
+  const c = beginVisual(s, { video: true });
+  for (const client of [s.host, s.guest])
+    client("challenge-media", { challengeId: c.id, status: "ready" });
+  assert.equal(c.phase, "watching");
+  assert.equal(s.view().game.challenge.question, undefined);
+  assert.equal(
+    s.host("challenge-media", { challengeId: c.id, status: "viewed" }).ok,
+    false,
+  );
+  s.advance(6000);
+  s.host("challenge-media", { challengeId: c.id, status: "viewed" });
+  assert.equal(c.phase, "watching");
+  s.guest("challenge-media", { challengeId: c.id, status: "viewed" });
+  const visible = s.view().game.challenge;
+  assert.equal(c.phase, "answering");
+  assert.equal(visible.media, undefined);
+  assert.equal(visible.deadlineAt - visible.serverNow, 20_000);
+  for (const client of [s.host, s.guest])
+    client("answer-challenge", { challengeId: c.id, answer: c.answer });
+  assert.equal(c.phase, "results");
+  const balances = s.room.game.players.map((p) => p.points);
+  s.host("answer-challenge", { challengeId: c.id, answer: c.answer });
+  assert.deepEqual(
+    s.room.game.players.map((p) => p.points),
+    balances,
+  );
+});
+
+test("fallo de archivo o espera agotada sustituyen el reto sin descontar ni perder el turno", () => {
+  for (const reason of [
+    "failed",
+    "load-timeout",
+    "watch-timeout",
+    "late-ready",
+  ]) {
+    const s = setup();
+    const c = beginVisual(s, { video: reason === "watch-timeout" });
+    s.room.game.players.forEach((p) => (p.points = 50));
+    if (reason === "watch-timeout") {
+      for (const client of [s.host, s.guest])
+        client("challenge-media", { challengeId: c.id, status: "ready" });
+      s.advance(20_000);
+    } else if (reason === "load-timeout") s.advance(10_000);
+    else {
+      if (reason === "late-ready") s.jump(10_000);
+      s.host("challenge-media", {
+        challengeId: c.id,
+        status: reason === "late-ready" ? "ready" : "failed",
+      });
+    }
+    const fallback = s.room.game.challenge;
+    assert.notEqual(fallback.id, c.id);
+    assert.equal(fallback.media, undefined);
+    assert.equal(fallback.phase, "answering");
+    assert.equal(fallback.mode, "duel");
+    assert.ok(fallback.notice);
+    assert.equal(s.room.game.turn, 0);
+    assert.deepEqual(
+      Array.from(s.room.game.players, (p) => p.points),
+      [50, 50],
+    );
+    assert.equal(
+      s.host("challenge-media", { challengeId: c.id, status: "ready" }).ok,
+      false,
+    );
+    for (const client of [s.host, s.guest])
+      client("answer-challenge", {
+        challengeId: fallback.id,
+        answer: fallback.answer,
+      });
+    s.advance(5000);
+    assert.equal(s.room.game.turn, 1);
+    assert.equal(s.room.game.challenge, null);
+  }
+});
+
+test("visual individual: el observador no bloquea, no puede omitirlo y no recibe descuentos", () => {
+  const s = setup();
+  const c = beginVisual(s, { solo: true });
+  s.room.game.players.forEach((p) => (p.points = 50));
+  assert.equal(
+    s.guest("challenge-media", { challengeId: c.id, status: "failed" }).ok,
+    false,
+  );
+  s.host("challenge-media", { challengeId: c.id, status: "ready" });
+  assert.equal(c.phase, "answering");
+  s.host("answer-challenge", { challengeId: c.id, answer: (c.answer + 1) % 4 });
+  assert.deepEqual(
+    Array.from(s.room.game.players, (p) => p.points),
+    [50, 50],
+  );
+});
+
+test("reiniciar o desconectar cancela las esperas de archivos y clips", () => {
+  for (const disconnect of [false, true]) {
+    const s = setup();
+    const c = beginVisual(s, { video: true });
+    for (const client of [s.host, s.guest])
+      client("challenge-media", { challengeId: c.id, status: "ready" });
+    if (disconnect) s.guest("disconnect");
+    else s.host("restart-game");
+    s.advance(40_000);
+    assert.equal(s.room.game?.challenge ?? null, null);
+    assert.equal(s.timers.size, 0);
+    if (!disconnect) assert.equal(s.room.game.questionNumber, 0);
+  }
+});
+
+test("un visual cada tres preguntas y doce recursos sin repetir antes de agotar su banco", () => {
+  const s = setup();
+  const seen = new Set();
+  for (let i = 1; i <= 39; i++) {
+    const client = s.room.game.turn === 0 ? s.host : s.guest;
+    const p = s.room.game.players[s.room.game.turn];
+    p.totalSteps = 0;
+    p.laps = 0;
+    s.setDice(3);
+    client("roll-dice");
+    const c = s.room.game.challenge;
+    assert.equal(Boolean(c.media), i % 3 === 0);
+    if (c.media) {
+      if (i <= 36) assert.equal(seen.has(c.media.src), false);
+      else assert.equal(seen.has(c.media.src), true);
+      seen.add(c.media.src);
+      for (const player of [s.host, s.guest])
+        player("challenge-media", { challengeId: c.id, status: "ready" });
+      if (c.media.type === "video") {
+        s.advance(6000);
+        for (const player of [s.host, s.guest])
+          player("challenge-media", { challengeId: c.id, status: "viewed" });
+      }
+    }
+    for (const player of [s.host, s.guest])
+      player("answer-challenge", { challengeId: c.id, answer: c.answer });
+    s.advance(5000);
+  }
+  assert.equal(seen.size, 12);
 });

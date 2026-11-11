@@ -74,6 +74,40 @@ cuesta 100 monedas; gana quien compre dos.
 El banco mantiene 60 preguntas: 50 de cuatro opciones y 10 de verdadero/falso,
 por categorías, sin repetición hasta agotarse. Las opciones se barajan.
 
+### Retos visuales ligeros
+
+Cada tercera pregunta individual o de duelo usa el catálogo visual: 10
+ilustraciones originales y 2 clips animados de 6 segundos, sin sonido ni
+reproducción automática. Los recursos visuales también se eligen sin repetir
+hasta agotar su catálogo. No se añaden casillas al tablero.
+
+El paquete completo pesa **36.734 bytes (menos de 40 KB)**. Cada navegador
+descarga únicamente el recurso del reto activo desde `public/quiz-media/`, que
+Vite copia a `dist/quiz-media/`. No hay reproductores externos ni descargas de
+todo el catálogo al abrir el juego. Render solo envía las preguntas y sincroniza
+los estados; Netlify sirve las imágenes y los clips como archivos estáticos.
+
+El servidor espera a que los participantes carguen la imagen, o terminen de ver
+el clip, antes de dar los 20 segundos completos para responder. En un individual,
+el observador no bloquea la carga. Los clips se reproducen tocando **Ver clip**;
+la pregunta permanece oculta hasta que terminen los participantes. Las imágenes
+siguen visibles al responder. Se conservan los premios y penalizaciones del modo.
+
+Si falla un archivo, pasan 10 segundos de carga o se agotan 20 segundos para ver
+el clip, se sustituye por una trivia de texto. La sustitución no descuenta monedas
+ni cambia el turno; responder esa trivia mantiene las reglas de individual o duelo.
+Reiniciar o desconectar cancela también estas esperas.
+
+Para publicar esta ampliación, Netlify y Render deben usar la misma versión del
+código. Conserva `npm run build` y `dist` en Netlify, y `npm run server` en Render.
+Tras actualizar ambos, recarga la página y crea una sala nueva. No se necesita
+instalar herramientas de video en ninguno de los dos servicios.
+
+`scripts/build-quiz-media.mjs` permite regenerar los recursos de forma opcional.
+Solo para ese script se necesitan ffmpeg y el Chromium de Playwright. Los archivos
+ya generados están incluidos en el repositorio; las pruebas vigilan un presupuesto
+de 50 KB para el catálogo completo.
+
 ## Comprobar cambios
 
 ```sh
@@ -91,6 +125,7 @@ npm run build
 - `src/BoardScenery.jsx`: mapa ilustrado con castillo, bosque, lago y puente, en SVG local.
 - `src/BoardIcon.jsx`: símbolos vectoriales de casillas y controles.
 - `src/LightningChallenge.jsx`: reloj, respuestas simultáneas y resultados.
+- `src/ChallengeMedia.jsx`: carga de un solo recurso, reproducción manual y avisos al servidor.
 - `src/App.css`: diseño general y pantallas de entrada.
 - `src/MagicBoard.css`: tablero y adaptación a pantallas pequeñas.
 - `shared/characters.json`: catálogo único para navegador y servidor.
@@ -99,6 +134,7 @@ npm run build
 - `server/index.cjs`: salas, turnos, puntuación y validación de acciones.
 - `server/challenges.cjs`: plazos, respuestas privadas y puntuación de los retos.
 - `server/questions.json`: banco de preguntas y soluciones, usado por el servidor.
+- `server/media-questions.json`: preguntas visuales y rutas de los archivos, con soluciones privadas.
 - `server/memory.cjs`: secuencias y preguntas de memoria aleatorias.
 - `server/surprises.cjs`: cartas sorpresa y cambios de saldo.
 
@@ -135,7 +171,7 @@ npm run test:ui
 ```
 
 Estas pruebas arrancan el frontend en el puerto 5174 y el servidor en 3002;
-deben estar disponibles. Las 12 pruebas comprueban inicio, guía, formularios,
+deben estar disponibles. Las 17 pruebas comprueban inicio, guía, formularios,
 sala de espera/lista, partida, errores, victoria, opciones y preguntas sin
 desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430. Incluyen nombres
 de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.
@@ -151,16 +187,26 @@ comprueba respuestas ocultas, bloqueo después de responder, saldos sincronizado
 penalización de duelo, avance automático y un reto individual donde el rival no
 puede responder y fallar no cambia ningún saldo. También memoriza una secuencia,
 responde al desaparecer los símbolos y verifica el premio de +25 y una carta
-sorpresa en ambos navegadores. Solo para estas pruebas, el dado sigue una ruta
+sorpresa en ambos navegadores. En un duelo con clip, un jugador termina primero
+y espera al otro: ambos reciben después los 20 segundos completos, con saldos
+sincronizados al responder. Solo para estas pruebas, el dado sigue una ruta
 determinista mediante `tests/fixtures/fixed-dice.cjs`, precargado por Playwright;
 el servidor normal mantiene su dado aleatorio.
 
-`npm test` ejecuta 25 pruebas: 24 del servidor y una del recorrido automático.
+Las pruebas visuales también reproducen los dos MP4 reales, comprueban que no
+arranquen solos ni descarguen todo el catálogo, simulan una imagen lenta y un
+archivo bloqueado y revisan la imagen, el video y la trivia de respaldo en los
+cinco tamaños horizontales.
+
+`npm test` ejecuta 32 pruebas: 30 del servidor, una del recorrido automático y
+una del presupuesto de los archivos visuales.
 Incluyen las 36 casillas, todos los tipos de actividad, privacidad de las
 respuestas, memoria en dos fases, las seis cartas, penalizaciones limitadas al
 saldo, respuestas tardías o duplicadas, bonos, reinicios y desconexiones. Los
 plazos se comprueban con reloj simulado; el recorrido se verifica con 1, 24, 36,
-48 y 60 casillas.
+48 y 60 casillas. Los retos visuales añaden comprobaciones de carga compartida,
+pregunta oculta durante los clips, duración mínima, vencimientos, sustitución sin
+descuento, observadores y selección de un visual cada tres preguntas.
 
 Para usar un Chromium ya instalado, configura
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con la ruta del ejecutable. Las pruebas

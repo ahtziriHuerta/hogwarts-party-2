@@ -367,6 +367,22 @@ export default function MagicBoard({
     });
   }
 
+  function mediaStatus(challengeId, status, done) {
+    socket
+      .timeout(5000)
+      .emit(
+        "challenge-media",
+        { challengeId, status },
+        (timeoutError, result) => {
+          done(
+            timeoutError
+              ? { ok: false, error: "No se pudo avisar al servidor." }
+              : result,
+          );
+        },
+      );
+  }
+
   return (
     <section className="magic-board-screen">
       <header className="board-toolbar">
@@ -662,6 +678,7 @@ export default function MagicBoard({
           challenge={challenge}
           mySocketId={mySocketId}
           onAnswer={answerChallenge}
+          onMediaStatus={mediaStatus}
         />
       )}
     </section>

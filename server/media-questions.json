@@ -1,0 +1,199 @@
+[
+  {
+    "id": "visual-01",
+    "kind": "visual",
+    "category": "Criaturas",
+    "difficulty": "Fácil",
+    "points": 10,
+    "question": "¿Qué criatura representa esta ilustración?",
+    "options": ["Dragón", "Hipogrifo", "Fénix", "Thestral"],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v01.svg",
+      "alt": "Criatura escamosa con grandes alas, cola larga y una llamarada frente a su boca."
+    }
+  },
+  {
+    "id": "visual-02",
+    "kind": "visual",
+    "category": "Criaturas",
+    "difficulty": "Fácil",
+    "points": 10,
+    "question": "¿Qué criatura ves en la ilustración?",
+    "options": ["Unicornio", "Centauro", "Hipogrifo", "Acromántula"],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v02.svg",
+      "alt": "Animal blanco de cuatro patas, crin plateada y un único cuerno en la frente."
+    }
+  },
+  {
+    "id": "visual-03",
+    "kind": "visual",
+    "category": "Criaturas",
+    "difficulty": "Fácil",
+    "points": 10,
+    "question": "¿Qué animal aparece junto al sobre?",
+    "options": ["Lechuza", "Cuervo", "Gato", "Murciélago"],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v03.svg",
+      "alt": "Ave blanca de cara redonda, ojos grandes y pico corto, posada sobre una rama junto a una carta."
+    }
+  },
+  {
+    "id": "visual-04",
+    "kind": "visual",
+    "category": "Criaturas",
+    "difficulty": "Media",
+    "points": 20,
+    "question": "¿Qué criatura mágica representa esta ave de fuego?",
+    "options": ["Fénix", "Hipogrifo", "Occamy", "Basilisco"],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v04.svg",
+      "alt": "Ave de plumaje rojo y dorado con alas extendidas y una larga cola rodeada de llamas."
+    }
+  },
+  {
+    "id": "visual-05",
+    "kind": "visual",
+    "category": "Criaturas",
+    "difficulty": "Media",
+    "points": 20,
+    "question": "¿Cómo se llama esta criatura con cabeza de águila y cuerpo de caballo?",
+    "options": ["Hipogrifo", "Thestral", "Unicornio", "Centauro"],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v05.svg",
+      "alt": "Criatura de cuatro patas con cuerpo equino, grandes alas de plumas, cabeza de ave y pico curvo."
+    }
+  },
+  {
+    "id": "visual-06",
+    "kind": "visual",
+    "category": "Objetos",
+    "difficulty": "Fácil",
+    "points": 10,
+    "question": "¿Qué objeto mágico está representado?",
+    "options": [
+      "Sombrero Seleccionador",
+      "Capa de Invisibilidad",
+      "Giratiempos",
+      "Pensadero"
+    ],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v06.svg",
+      "alt": "Sombrero marrón de punta doblada, ala ancha y pliegues que forman un rostro."
+    }
+  },
+  {
+    "id": "visual-07",
+    "kind": "visual",
+    "category": "Quidditch",
+    "difficulty": "Fácil",
+    "points": 10,
+    "question": "¿Cómo se llama esta pelota alada de Quidditch?",
+    "options": ["Snitch dorada", "Quaffle", "Bludger", "Recordadora"],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v07.svg",
+      "alt": "Pequeña esfera de oro con líneas grabadas y dos alas largas y plateadas."
+    }
+  },
+  {
+    "id": "visual-08",
+    "kind": "visual",
+    "category": "Herbología",
+    "difficulty": "Media",
+    "points": 20,
+    "question": "¿Qué planta mágica aparece en la maceta?",
+    "options": [
+      "Mandrágora",
+      "Lazo del Diablo",
+      "Branquialgas",
+      "Sauce Boxeador"
+    ],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v08.svg",
+      "alt": "Raíz con rostro, brazos y piernas pequeños que sale de una maceta y tiene hojas verdes en la cabeza."
+    }
+  },
+  {
+    "id": "visual-09",
+    "kind": "visual",
+    "category": "Pociones",
+    "difficulty": "Fácil",
+    "points": 10,
+    "question": "¿Qué recipiente se usa para preparar la poción de la imagen?",
+    "options": ["Caldero", "Pensadero", "Cáliz de Fuego", "Recordadora"],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v09.svg",
+      "alt": "Olla oscura y redonda con tres patas, asas laterales y líquido verde burbujeante."
+    }
+  },
+  {
+    "id": "visual-10",
+    "kind": "visual",
+    "category": "Objetos",
+    "difficulty": "Media",
+    "points": 20,
+    "question": "¿Qué representa el símbolo del triángulo, el círculo y la línea?",
+    "options": [
+      "Las Reliquias de la Muerte",
+      "La Marca Tenebrosa",
+      "Las cuatro casas",
+      "La Orden del Fénix"
+    ],
+    "answer": 0,
+    "media": {
+      "type": "image",
+      "src": "/quiz-media/v10.svg",
+      "alt": "Un triángulo que contiene un círculo y una línea vertical que pasa por el centro de ambos."
+    }
+  },
+  {
+    "id": "clip-01",
+    "kind": "visual",
+    "category": "Observación",
+    "difficulty": "Media",
+    "points": 20,
+    "question": "¿Cuántas estrellas encendió la varita en el clip?",
+    "options": ["Tres", "Dos", "Cuatro", "Cinco"],
+    "answer": 0,
+    "media": {
+      "type": "video",
+      "src": "/quiz-media/c01.mp4",
+      "alt": "Observa las luces que enciende la varita y recuerda cuántas aparecen.",
+      "durationSeconds": 6
+    }
+  },
+  {
+    "id": "clip-02",
+    "kind": "visual",
+    "category": "Observación",
+    "difficulty": "Media",
+    "points": 20,
+    "question": "¿De qué color era la poción al terminar el clip?",
+    "options": ["Dorado", "Azul", "Morado", "Verde"],
+    "answer": 0,
+    "media": {
+      "type": "video",
+      "src": "/quiz-media/c02.mp4",
+      "alt": "Observa los cambios de color de la poción y recuerda el último.",
+      "durationSeconds": 6
+    }
+  }
+]

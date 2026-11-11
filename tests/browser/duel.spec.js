@@ -7,8 +7,19 @@ const questions = JSON.parse(
   ),
 );
 import { expectOnScreen } from "./helpers";
+questions.push(
+  ...JSON.parse(
+    fs.readFileSync(
+      new URL("../../server/media-questions.json", import.meta.url),
+      "utf8",
+    ),
+  ),
+);
 
 async function chooseWrong(page) {
+  await expect(page.locator(".challenge-option").first()).toBeEnabled({
+    timeout: 10000,
+  });
   const text = await page.locator(".challenge-question").innerText();
   const source = questions.find((item) => item.question === text);
   expect(source).toBeTruthy();
@@ -31,7 +42,7 @@ function delta(text) {
 test("dos jugadores: una respuesta, resultado compartido y vencimiento automático", async ({
   context,
 }, testInfo) => {
-  test.setTimeout(100_000);
+  test.setTimeout(120_000);
   const host = await context.newPage();
   const guest = await context.newPage();
   const errors = [];
@@ -229,5 +240,47 @@ test("dos jugadores: una respuesta, resultado compartido y vencimiento automáti
     beforeSurprise[0] + changes[0],
     beforeSurprise[1] + (changes[1] ?? 0),
   ]);
+  // Un duelo de texto lleva después al sexto reto: un clip compartido.
+  await guest.getByRole("button", { name: "Lanzar dado" }).click();
+  for (const page of [host, guest]) await chooseWrong(page);
+  for (const page of [host, guest])
+    await expect(page.locator(".challenge-modal")).toHaveCount(0, {
+      timeout: 8000,
+    });
+  const beforeClip = (
+    await host.locator(".player-stats > strong").allTextContents()
+  ).map(balance);
+  await host.getByRole("button", { name: "Lanzar dado" }).click();
+  for (const page of [host, guest]) {
+    await expect(page.getByRole("button", { name: "Ver clip" })).toBeEnabled();
+    await expect(page.locator("video")).toHaveAttribute(
+      "src",
+      "/quiz-media/c01.mp4",
+    );
+  }
+  await host.getByRole("button", { name: "Ver clip" }).click();
+  await expect(host.locator(".media-waiting")).toBeVisible({ timeout: 9000 });
+  await expect(host.locator(".challenge-option")).toHaveCount(0);
+  await expect(host.locator(".challenge-footer")).toContainText("Esperando");
+  await guest.getByRole("button", { name: "Ver clip" }).click();
+  await expect(guest.locator(".challenge-option").first()).toBeEnabled({
+    timeout: 9000,
+  });
+  for (const page of [host, guest]) {
+    await expect(page.locator("video")).toHaveCount(0);
+    await expect(page.getByRole("timer")).toContainText(/(19|20) s/);
+    await chooseWrong(page);
+  }
+  const clipRewards = await host.locator(".result-earned").allTextContents();
+  await expect(guest.locator(".result-earned")).toHaveText(clipRewards);
+  for (const page of [host, guest])
+    await expect(page.locator(".challenge-modal")).toHaveCount(0, {
+      timeout: 8000,
+    });
+  expect(
+    (await host.locator(".player-stats > strong").allTextContents()).map(
+      balance,
+    ),
+  ).toEqual(beforeClip.map((coins) => Math.max(0, coins - 10)));
   expect(errors).toEqual([]);
 });
