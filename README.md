@@ -23,15 +23,22 @@ con un segundo navegador o dispositivo. El creador inicia la partida.
 Para jugar desde un celular en la misma red, configura `VITE_SERVER_URL` en
 un archivo `.env` con la IP de tu computadora, por ejemplo
 `http://192.168.1.10:3001`, y reinicia Vite. Añade el origen del frontend
-(por ejemplo `http://192.168.1.10:5173`) a `cors.origin` en `server/index.cjs`.
+(por ejemplo `http://192.168.1.10:5173`) a `LOCAL_ORIGINS` en `server/origins.cjs`.
 
 ## Publicar
 
 Configura `VITE_SERVER_URL` con la URL HTTPS de tu servidor **antes** de ejecutar
 `npm run build`. Publica `dist/` como sitio estático y ejecuta `npm run server`
 en un servicio compatible con Node.js y WebSockets. El servidor admite `PORT`.
-Actualiza `cors.origin` con el dominio del frontend. `.env.example` muestra
+Configura los dominios permitidos en `server/origins.cjs`. `.env.example` muestra
 la configuración local; no guardes secretos en variables `VITE_`, son públicas.
+
+`server/origins.cjs` admite `videojuego3d.netlify.app`, el nombre anterior
+`regal-pothos-2022c1.netlify.app` y los enlaces de publicación, rama y vista previa
+de ambos proyectos. Otros sitios de Netlify no tienen permiso. Si cambias el
+nombre del proyecto, actualiza esta lista y vuelve a publicar el servidor en Render.
+Un frontend que carga y muestra «No se pudo conectar» puede estar usando un
+dominio que todavía no figura en los permisos del servidor.
 
 Las salas viven en memoria de un solo proceso. Reiniciar el servidor o perder
 la conexión de un jugador devuelve la sala al estado de espera; no hay guardado
@@ -132,6 +139,7 @@ npm run build
 - `shared/board.json`: mapa único de las casillas y tipos para navegador y servidor.
 - `shared/board-layout.js`: recorrido serpenteante generado a partir del número de casillas.
 - `server/index.cjs`: salas, turnos, puntuación y validación de acciones.
+- `server/origins.cjs`: dominios de Netlify y direcciones locales permitidos para la conexión.
 - `server/challenges.cjs`: plazos, respuestas privadas y puntuación de los retos.
 - `server/questions.json`: banco de preguntas y soluciones, usado por el servidor.
 - `server/media-questions.json`: preguntas visuales y rutas de los archivos, con soluciones privadas.
@@ -198,8 +206,8 @@ arranquen solos ni descarguen todo el catálogo, simulan una imagen lenta y un
 archivo bloqueado y revisan la imagen, el video y la trivia de respaldo en los
 cinco tamaños horizontales.
 
-`npm test` ejecuta 32 pruebas: 30 del servidor, una del recorrido automático y
-una del presupuesto de los archivos visuales.
+`npm test` ejecuta 34 pruebas: 30 del servidor, dos de los dominios permitidos,
+una del recorrido automático y una del presupuesto de los archivos visuales.
 Incluyen las 36 casillas, todos los tipos de actividad, privacidad de las
 respuestas, memoria en dos fases, las seis cartas, penalizaciones limitadas al
 saldo, respuestas tardías o duplicadas, bonos, reinicios y desconexiones. Los
