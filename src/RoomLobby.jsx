@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { socket } from "./socket";
+import botLevels from "../shared/bot-levels.json";
 
 export default function RoomLobby({
   room,
@@ -22,6 +23,8 @@ export default function RoomLobby({
   if (!room) return null;
 
   const isHost = room.players[0]?.id === socket.id;
+  const solo = room.mode === "solo";
+  const level = botLevels.find((entry) => entry.id === room.difficulty);
   const isFull = room.players.length === 2;
   const allSelected =
     isFull && room.players.every((player) => player.character);
@@ -29,31 +32,43 @@ export default function RoomLobby({
   const status = !isFull
     ? "⏳ Esperando al segundo jugador…"
     : !allSelected
-      ? "Ambos deben elegir personaje para comenzar."
+      ? solo
+        ? "Elige tu personaje para comenzar."
+        : "Ambos deben elegir personaje para comenzar."
       : isHost
         ? "✨ ¡Todo listo para comenzar!"
         : "⏳ Esperando que el creador inicie la aventura…";
 
   return (
-    <section className="welcome room-lobby">
+    <section className={`welcome room-lobby ${solo ? "solo-lobby" : ""}`}>
       <header className="lobby-header">
         <button type="button" className="back-button" onClick={onBack}>
           ← Salir de la sala
         </button>
-        <h2>🏰 Sala de espera</h2>
+        <h2>{solo ? "🧙 Aventura individual" : "🏰 Sala de espera"}</h2>
       </header>
 
       {/* Código y jugadores comparten una fila en horizontal; las acciones tienen su propia fila. */}
       <div className="lobby-layout">
         <div className="room-code-display">
-          <span>COMPARTE EL CÓDIGO</span>
-          <h1>{room.code}</h1>
-          <button type="button" className="secondary" onClick={copyCode}>
-            📋 Copiar código
-          </button>
-          <span className="copy-feedback" role="status">
-            {copyMessage}
-          </span>
+          {solo ? (
+            <>
+              <span>RIVAL AUTOMÁTICO</span>
+              <h1>{level?.name}</h1>
+              <p className="solo-rival-description">{level?.description}</p>
+            </>
+          ) : (
+            <>
+              <span>COMPARTE EL CÓDIGO</span>
+              <h1>{room.code}</h1>
+              <button type="button" className="secondary" onClick={copyCode}>
+                📋 Copiar código
+              </button>
+              <span className="copy-feedback" role="status">
+                {copyMessage}
+              </span>
+            </>
+          )}
         </div>
 
         <section
@@ -65,12 +80,14 @@ export default function RoomLobby({
             {room.players.map((player, index) => (
               <div key={player.id} className="room-player">
                 <strong title={player.nickname}>
-                  🧙 J{index + 1} · {player.nickname}
+                  {player.isBot ? "🤖" : "🧙"} J{index + 1} · {player.nickname}
                 </strong>
                 <p>
                   {player.character
                     ? `✨ ${player.character.name} · ${player.character.house}`
-                    : "⏳ Sin personaje"}
+                    : player.isBot
+                      ? "Se prepara al elegir tu personaje"
+                      : "⏳ Sin personaje"}
                 </p>
               </div>
             ))}

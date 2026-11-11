@@ -514,7 +514,11 @@ export default function MagicBoard({
 
             <div>
               <span className="player-status">
-                {player.id === mySocketId ? "TÚ" : "RIVAL"}
+                {player.id === mySocketId
+                  ? "TÚ"
+                  : player.isBot
+                    ? "BOT"
+                    : "RIVAL"}
                 {turn === index && winner === null ? " · EN TURNO" : ""}
               </span>
               <h3 title={player.nickname}>{player.nickname}</h3>

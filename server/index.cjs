@@ -28,6 +28,8 @@ const { createChallengeController } = require("./challenges.cjs");
 const { createMemoryQuestion } = require("./memory.cjs");
 const { SURPRISES, applySurprise } = require("./surprises.cjs");
 const { catalog: spellShop, buySpell } = require("./spells.cjs");
+const botLevels = require("../shared/bot-levels.json");
+const { createBotController } = require("./bot.cjs");
 
 // FUNCIONES DE SALAS
 
@@ -45,11 +47,14 @@ function publicRoom(room) {
   return {
     code: room.code,
     status: room.status,
+    mode: room.mode ?? "multiplayer",
+    difficulty: room.difficulty,
 
     players: room.players.map((player) => ({
       id: player.id,
       nickname: player.nickname,
       character: player.character,
+      isBot: Boolean(player.isBot),
     })),
 
     game: room.game
@@ -70,6 +75,7 @@ function publicRoom(room) {
 }
 
 function updateRoom(room) {
+  bots.sync(room);
   io.to(room.code).emit("room-updated", publicRoom(room));
 }
 
@@ -168,6 +174,154 @@ function nextTurn(game) {
 
 const challenges = createChallengeController({ updateRoom, nextTurn });
 
+function rollDice(room, playerId) {
+  if (!room || room.status !== "playing" || !room.game) {
+    return {
+      ok: false,
+      error: "No hay una partida activa.",
+    };
+  }
+
+  const game = room.game;
+
+  if (game.challenge) {
+    return {
+      ok: false,
+      error: "Primero deben resolver el reto mágico.",
+    };
+  }
+
+  const player = game.players[game.turn];
+
+  if (player.id !== playerId) {
+    return {
+      ok: false,
+      error: "Todavía no es tu turno.",
+    };
+  }
+
+  const result = crypto.randomInt(1, 7);
+
+  // Acumulamos los pasos reales del dado.
+  player.totalSteps = (player.totalSteps ?? 0) + result;
+
+  // La longitud del recorrido viene del mapa compartido.
+  const destination = ((player.totalSteps - 1) % TOTAL) + 1;
+
+  // Calculamos las vueltas completadas.
+  const newLaps = Math.floor(player.totalSteps / TOTAL);
+
+  const completedLap = newLaps > (player.laps ?? 0);
+
+  player.position = destination;
+  player.laps = newLaps;
+
+  game.dice = result;
+  game.rollNumber += 1;
+
+  const space = BOARD[destination - 1];
+  const isChallenge = space.type === "solo" || space.type === "duel";
+
+  // Acreditar la vuelta antes del reto, que mantiene el turno y retorna aquí.
+  const lapBonus = completedLap && destination !== TOTAL ? 20 : 0;
+  player.points += lapBonus;
+
+  if (isChallenge) {
+    challenges.start(room, chooseQuestion(game), space.type);
+    return { ok: true };
+  }
+
+  if (space.type === "memory") {
+    challenges.start(room, createMemoryQuestion(), "solo");
+    return { ok: true };
+  }
+  if (space.type === "surprise") {
+    const event = applySurprise(game, crypto.randomInt(0, SURPRISES.length));
+    challenges.startSurprise(room, event);
+    return { ok: true };
+  }
+
+  const effect = getSpaceEffect(destination, player.nickname);
+
+  player.points = Math.max(0, player.points + effect.points);
+
+  game.message = effect.message;
+
+  if (lapBonus > 0) {
+    game.message += ` 🏰 ¡Vuelta completada! +20 monedas adicionales.`;
+  }
+
+  nextTurn(game);
+
+  updateRoom(room);
+
+  return { ok: true };
+}
+
+function buyTrophy(room, playerId) {
+  if (!room || room.status !== "playing" || !room.game) {
+    return {
+      ok: false,
+      error: "No hay una partida activa.",
+    };
+  }
+
+  const game = room.game;
+
+  if (game.challenge) {
+    return {
+      ok: false,
+      error: "Primero deben resolver el reto mágico.",
+    };
+  }
+
+  const player = game.players.find((p) => p.id === playerId);
+
+  if (!player) {
+    return {
+      ok: false,
+      error: "Jugador no encontrado.",
+    };
+  }
+
+  if (player.points < TROPHY_PRICE) {
+    return {
+      ok: false,
+      error: `Necesitas ${TROPHY_PRICE} monedas para comprar un trofeo.`,
+    };
+  }
+
+  if (player.trophies >= TROPHIES_TO_WIN) {
+    return {
+      ok: false,
+      error: "Ya tienes todos los trofeos.",
+    };
+  }
+
+  player.points -= TROPHY_PRICE;
+  player.trophies += 1;
+
+  if (player.trophies >= TROPHIES_TO_WIN) {
+    game.winner = game.players.findIndex((p) => p.id === playerId);
+
+    room.status = "finished";
+
+    game.message = `🏆 ¡${player.nickname} consiguió 2 trofeos y ganó la Copa de Hogwarts!`;
+  } else {
+    game.message = `🏆 ${player.nickname} compró un trofeo. ¡Le falta uno para ganar!`;
+  }
+
+  updateRoom(room);
+
+  return {
+    ok: true,
+    trophies: player.trophies,
+    points: player.points,
+  };
+}
+
+const bots = createBotController({ rollDice, buyTrophy, buySpell, challenges });
+
 // CONEXIONES MULTIJUGADOR
 
 io.on("connection", (socket) => {
@@ -175,7 +329,7 @@ io.on("connection", (socket) => {
 
   // CREAR SALA
 
-  socket.on("create-room", (data, callback) => {
+  function createRoom(data, callback, solo = false) {
     if (socket.data.roomCode) {
       return callback?.({
         ok: false,
@@ -194,11 +348,17 @@ io.on("connection", (socket) => {
       });
     }
 
+    const difficulty = solo ? (data?.difficulty ?? "wizard") : undefined;
+    if (solo && !botLevels.some((level) => level.id === difficulty))
+      return callback?.({ ok: false, error: "Dificultad no válida." });
+
     const code = generateCode();
 
     const room = {
       code,
-      status: "waiting",
+      status: solo ? "ready" : "waiting",
+      mode: solo ? "solo" : "multiplayer",
+      difficulty,
       players: [
         {
           id: socket.id,
@@ -208,6 +368,14 @@ io.on("connection", (socket) => {
       ],
       game: null,
     };
+
+    if (solo)
+      room.players.push({
+        id: `bot:${crypto.randomUUID()}`,
+        nickname: `Rival ${botLevels.find((level) => level.id === difficulty).name}`,
+        character: null,
+        isBot: true,
+      });
 
     rooms.set(code, room);
 
@@ -220,7 +388,11 @@ io.on("connection", (socket) => {
     });
 
     console.log("Sala creada:", code);
-  });
+  }
+  socket.on("create-room", (data, callback) => createRoom(data, callback));
+  socket.on("create-solo-room", (data, callback) =>
+    createRoom(data, callback, true),
+  );
 
   // UNIRSE A SALA
 
@@ -255,6 +427,9 @@ io.on("connection", (socket) => {
         error: "La sala no existe.",
       });
     }
+
+    if (room.mode === "solo")
+      return callback?.({ ok: false, error: "Esta partida es individual." });
 
     if (room.status !== "waiting") {
       return callback?.({
@@ -324,7 +499,7 @@ io.on("connection", (socket) => {
     }
 
     const occupied = room.players.some(
-      (p) => p.id !== socket.id && p.character?.id === character.id,
+      (p) => p.id !== socket.id && !p.isBot && p.character?.id === character.id,
     );
 
     if (occupied) {
@@ -340,6 +515,12 @@ io.on("connection", (socket) => {
     player.character = {
       ...characters.find((item) => item.id === character.id),
     };
+
+    const bot = room.players.find((entry) => entry.isBot);
+    if (bot && (!bot.character || bot.character.id === character.id))
+      bot.character = {
+        ...characters.find((entry) => entry.id !== character.id),
+      };
 
     updateRoom(room);
 
@@ -377,7 +558,10 @@ io.on("connection", (socket) => {
     ) {
       return callback?.({
         ok: false,
-        error: "Ambos jugadores deben elegir personaje.",
+        error:
+          room.mode === "solo"
+            ? "Elige tu personaje para comenzar."
+            : "Ambos jugadores deben elegir personaje.",
       });
     }
 
@@ -386,6 +570,7 @@ io.on("connection", (socket) => {
         id: p.id,
         nickname: p.nickname,
         character: p.character,
+        isBot: Boolean(p.isBot),
         position: 0,
         points: 0,
         trophies: 0,
@@ -419,89 +604,8 @@ io.on("connection", (socket) => {
   // ========================================
 
   socket.on("roll-dice", (_data, callback) => {
-    const room = getPlayerRoom(socket);
-
-    if (!room || room.status !== "playing" || !room.game) {
-      return callback?.({
-        ok: false,
-        error: "No hay una partida activa.",
-      });
-    }
-
-    const game = room.game;
-
-    if (game.challenge) {
-      return callback?.({
-        ok: false,
-        error: "Primero deben resolver el reto mágico.",
-      });
-    }
-
-    const player = game.players[game.turn];
-
-    if (player.id !== socket.id) {
-      return callback?.({
-        ok: false,
-        error: "Todavía no es tu turno.",
-      });
-    }
-
-    const result = crypto.randomInt(1, 7);
-
-    // Acumulamos los pasos reales del dado.
-    player.totalSteps = (player.totalSteps ?? 0) + result;
-
-    // La longitud del recorrido viene del mapa compartido.
-    const destination = ((player.totalSteps - 1) % TOTAL) + 1;
-
-    // Calculamos las vueltas completadas.
-    const newLaps = Math.floor(player.totalSteps / TOTAL);
-
-    const completedLap = newLaps > (player.laps ?? 0);
-
-    player.position = destination;
-    player.laps = newLaps;
-
-    game.dice = result;
-    game.rollNumber += 1;
-
-    const space = BOARD[destination - 1];
-    const isChallenge = space.type === "solo" || space.type === "duel";
-
-    // Acreditar la vuelta antes del reto, que mantiene el turno y retorna aquí.
-    const lapBonus = completedLap && destination !== TOTAL ? 20 : 0;
-    player.points += lapBonus;
-
-    if (isChallenge) {
-      challenges.start(room, chooseQuestion(game), space.type);
-      return callback?.({ ok: true });
-    }
-
-    if (space.type === "memory") {
-      challenges.start(room, createMemoryQuestion(), "solo");
-      return callback?.({ ok: true });
-    }
-    if (space.type === "surprise") {
-      const event = applySurprise(game, crypto.randomInt(0, SURPRISES.length));
-      challenges.startSurprise(room, event);
-      return callback?.({ ok: true });
-    }
-
-    const effect = getSpaceEffect(destination, player.nickname);
-
-    player.points = Math.max(0, player.points + effect.points);
-
-    game.message = effect.message;
-
-    if (lapBonus > 0) {
-      game.message += ` 🏰 ¡Vuelta completada! +20 monedas adicionales.`;
-    }
-
-    nextTurn(game);
-
-    updateRoom(room);
-
-    callback?.({ ok: true });
+    const result = rollDice(getPlayerRoom(socket), socket.id);
+    callback?.(result);
   });
 
   // ========================================
@@ -551,67 +655,8 @@ io.on("connection", (socket) => {
   // ========================================
 
   socket.on("buy-trophy", (_data, callback) => {
-    const room = getPlayerRoom(socket);
-
-    if (!room || room.status !== "playing" || !room.game) {
-      return callback?.({
-        ok: false,
-        error: "No hay una partida activa.",
-      });
-    }
-
-    const game = room.game;
-
-    if (game.challenge) {
-      return callback?.({
-        ok: false,
-        error: "Primero deben resolver el reto mágico.",
-      });
-    }
-
-    const player = game.players.find((p) => p.id === socket.id);
-
-    if (!player) {
-      return callback?.({
-        ok: false,
-        error: "Jugador no encontrado.",
-      });
-    }
-
-    if (player.points < TROPHY_PRICE) {
-      return callback?.({
-        ok: false,
-        error: `Necesitas ${TROPHY_PRICE} monedas para comprar un trofeo.`,
-      });
-    }
-
-    if (player.trophies >= TROPHIES_TO_WIN) {
-      return callback?.({
-        ok: false,
-        error: "Ya tienes todos los trofeos.",
-      });
-    }
-
-    player.points -= TROPHY_PRICE;
-    player.trophies += 1;
-
-    if (player.trophies >= TROPHIES_TO_WIN) {
-      game.winner = game.players.findIndex((p) => p.id === socket.id);
-
-      room.status = "finished";
-
-      game.message = `🏆 ¡${player.nickname} consiguió 2 trofeos y ganó la Copa de Hogwarts!`;
-    } else {
-      game.message = `🏆 ${player.nickname} compró un trofeo. ¡Le falta uno para ganar!`;
-    }
-
-    updateRoom(room);
-
-    callback?.({
-      ok: true,
-      trophies: player.trophies,
-      points: player.points,
-    });
+    const result = buyTrophy(getPlayerRoom(socket), socket.id);
+    callback?.(result);
   });
 
   // ========================================
@@ -635,6 +680,7 @@ io.on("connection", (socket) => {
       });
     }
 
+    bots.cancel(room);
     challenges.cancel(room);
 
     room.game.players.forEach((p) => {
@@ -674,7 +720,12 @@ io.on("connection", (socket) => {
 
     if (!room) return;
 
+    bots.cancel(room);
     challenges.cancel(room);
+    if (room.mode === "solo") {
+      rooms.delete(code);
+      return;
+    }
     room.players = room.players.filter((p) => p.id !== socket.id);
 
     if (room.players.length === 0) {

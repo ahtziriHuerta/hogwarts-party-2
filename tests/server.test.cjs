@@ -8,11 +8,12 @@ const TOTAL = require("../shared/board.json").length;
 
 // Ejecutar los handlers reales con transportes simulados hace el dado determinista
 // y evita abrir puertos durante las pruebas de reglas del juego.
-function setup() {
+function setup({ solo = false, difficulty = "wizard" } = {}) {
   let connect;
   let dice = 4;
   let time = 1_000_000;
   let timerId = 0;
+  let botRoll = 0;
   const timers = new Map();
   const clock = {
     now: () => time,
@@ -42,6 +43,18 @@ function setup() {
     console: { log() {} },
     process: { env: {} },
     require(name) {
+      if (name === "./bot.cjs") {
+        const { createBotController } = realRequire(name);
+        return {
+          createBotController: (options) =>
+            createBotController({
+              ...options,
+              clock,
+              randomInt: (min, max) =>
+                min === 0 && max === 100 ? botRoll : min,
+            }),
+        };
+      }
       if (name === "./challenges.cjs") {
         const { createChallengeController } = realRequire(name);
         return {
@@ -81,20 +94,24 @@ function setup() {
       join() {},
     };
     connect(socket);
-    return (event, data = {}) => {
+    return (event, data = {}, acknowledge = true) => {
       let response;
-      handlers[event](data, (value) => {
+      const callback = (value) => {
         response = value;
-      });
+      };
+      handlers[event](data, acknowledge ? callback : undefined);
       return response;
     };
   }
   const host = client("host");
   const guest = client("guest");
-  const created = host("create-room", { nickname: "Luna" });
-  guest("join-room", { nickname: "Leo", code: created.room.code });
+  const created = host(solo ? "create-solo-room" : "create-room", {
+    nickname: "Luna",
+    difficulty,
+  });
+  if (!solo) guest("join-room", { nickname: "Leo", code: created.room.code });
   host("select-character", { character: { id: 1, name: {} } });
-  guest("select-character", { character: { id: 2 } });
+  if (!solo) guest("select-character", { character: { id: 2 } });
   host("start-game");
   const room = vm.runInContext("rooms.values().next().value", context);
   return {
@@ -102,10 +119,22 @@ function setup() {
     guest,
     room,
     advance,
+    advanceNext: () =>
+      advance(
+        Math.max(
+          0,
+          Math.min(...[...timers.values()].map((timer) => timer.at)) - time,
+        ),
+      ),
     jump: (ms) => {
       time += ms;
     },
     timers,
+    client,
+    roomCount: () => vm.runInContext("rooms.size", context),
+    setBotRoll: (value) => {
+      botRoll = value;
+    },
     view: () =>
       vm.runInContext("publicRoom(rooms.values().next().value)", context),
     setDice: (value) => {
@@ -1129,4 +1158,271 @@ test("reglas de uso: escudo solo en duelo, pista solo con cuatro opciones y desp
       .ok,
     true,
   );
+});
+
+test("individual: sala privada con rival automático, dificultad válida y personaje diferente", () => {
+  const session = setup({ solo: true });
+  const { room, host, guest, view } = session;
+  assert.equal(room.mode, "solo");
+  assert.equal(room.players.length, 2);
+  assert.equal(room.game.players[1].isBot, true);
+  assert.notEqual(room.players[0].character.id, room.players[1].character.id);
+  assert.equal(view().difficulty, "wizard");
+  assert.equal(
+    guest("join-room", { code: room.code, nickname: "Intruso" }).ok,
+    false,
+  );
+  host("restart-game");
+  assert.equal(room.game.players[1].isBot, true);
+  const outsider = session.client("outsider");
+  assert.equal(
+    outsider("create-solo-room", {
+      nickname: "Alguien",
+      difficulty: "impossible",
+    }).ok,
+    false,
+  );
+  assert.equal(
+    outsider("create-solo-room", { nickname: "", difficulty: "expert" }).ok,
+    false,
+  );
+  assert.equal(session.roomCount(), 1);
+});
+
+test("individual: puedes elegir cualquier personaje y el bot se adapta sin ocupar el tuyo", () => {
+  const session = setup();
+  const solo = session.client("solo");
+  assert.equal(
+    solo("create-solo-room", { nickname: "Nora", difficulty: "apprentice" }).ok,
+    true,
+  );
+  for (let id = 1; id <= 8; id++) {
+    const response = solo("select-character", { character: { id } });
+    assert.equal(response.ok, true);
+    assert.equal(response.room.players[0].character.id, id);
+    assert.notEqual(response.room.players[1].character.id, id);
+    assert.equal(response.room.players[1].isBot, true);
+  }
+});
+
+test("individual: tres dificultades con tiempos distintos y posibilidad de acertar o fallar", () => {
+  for (const [difficulty, threshold, delay] of [
+    ["apprentice", 45, 6000],
+    ["wizard", 65, 3500],
+    ["expert", 82, 2000],
+  ]) {
+    for (const [roll, expected] of [
+      [threshold - 1, true],
+      [threshold, false],
+    ]) {
+      const session = setup({ solo: true, difficulty });
+      session.setBotRoll(roll);
+      const challenge = beginDuel(session);
+      const bot = session.room.game.players[1];
+      session.advance(delay - 1);
+      assert.equal(challenge.responses.size, 0);
+      session.advance(1);
+      assert.equal(challenge.responses.has(bot.id), true);
+      assert.equal(
+        challenge.responses.get(bot.id).answer === challenge.answer,
+        expected,
+      );
+      const visible = session.view().game.challenge;
+      assert.equal(visible.phase, "answering");
+      assert.equal("correctAnswer" in visible, false);
+      assert.equal("responses" in visible, false);
+      // El cliente solo puede contestar por sí mismo.
+      session.host("answer-challenge", {
+        challengeId: challenge.id,
+        answer: challenge.answer,
+        playerId: bot.id,
+      });
+      assert.equal(
+        challenge.results.find((entry) => entry.playerId === bot.id).correct,
+        expected,
+      );
+    }
+  }
+});
+
+test("individual: el bot no reinicia su espera con eventos del usuario y lanza solo en su turno", () => {
+  const session = setup({ solo: true });
+  const challenge = beginDuel(session);
+  session.advance(3000);
+  session.host("answer-challenge", {
+    challengeId: challenge.id,
+    answer: challenge.answer,
+  });
+  session.advance(500);
+  assert.equal(challenge.phase, "results"); // Conservó el plazo original de 3500 ms.
+  session.advance(5000);
+  assert.equal(session.room.game.turn, 1);
+  assert.equal(session.host("roll-dice").ok, false);
+  session.advance(1799);
+  assert.equal(session.room.game.rollNumber, 1);
+  session.advance(1);
+  assert.equal(session.room.game.rollNumber, 2);
+  assert.equal(session.room.game.challenge.mode, "duel");
+});
+
+test("individual: el bot observa la memoria, usa su pista y no revela opciones descartadas", () => {
+  const session = setup({ solo: true });
+  const { room, host, advance, setDice } = session;
+  host("roll-dice"); // Sorpresa, resuelta en 5 s.
+  advance(5000);
+  const bot = room.game.players[1];
+  bot.position = bot.totalSteps = 8;
+  bot.inventory.push("hint");
+  setDice(1);
+  advance(1800);
+  const challenge = room.game.challenge;
+  assert.equal(challenge.kind, "memory");
+  assert.equal(challenge.phase, "memorizing");
+  advance(4999);
+  assert.equal(challenge.responses.size, 0);
+  advance(1 + 3500);
+  assert.equal(challenge.phase, "results");
+  assert.equal(challenge.results[0].earned, 25);
+  assert.equal(bot.inventory.length, 0);
+  assert.equal("hiddenOptions" in session.view().game.challenge, false);
+  assert.equal(
+    challenge.spellEffects.get(bot.id).hiddenOptions.includes(challenge.answer),
+    false,
+  );
+});
+
+test("individual: carga y clip del bot no bloquean al humano ni adelantan sus veinte segundos", () => {
+  const session = setup({ solo: true });
+  const { room, host, advance, setDice } = session;
+  room.game.questionNumber = 2;
+  // El banco visual del VM comienza con una imagen; luego forzamos un clip del catálogo real.
+  const challenge = beginDuel(session);
+  assert.equal(challenge.phase, "loading");
+  challenge.media = {
+    ...require("../server/media-questions.json").find(
+      (entry) => entry.media.type === "video",
+    ).media,
+  };
+  const botId = room.game.players[1].id;
+  advance(250);
+  assert.equal(challenge.readyPlayerIds.has(botId), true);
+  assert.equal(challenge.phase, "loading");
+  host("challenge-media", { challengeId: challenge.id, status: "ready" });
+  assert.equal(challenge.phase, "watching");
+  advance(6000);
+  assert.equal(challenge.viewedPlayerIds.has(botId), false);
+  assert.equal(challenge.responses.size, 0);
+  advance(250);
+  assert.equal(challenge.viewedPlayerIds.has(botId), true);
+  assert.equal(challenge.phase, "watching");
+  assert.equal(
+    host("challenge-media", { challengeId: challenge.id, status: "viewed" }).ok,
+    true,
+  );
+  assert.equal(
+    challenge.deadlineAt - session.view().game.challenge.serverNow,
+    20_000,
+  );
+  advance(3500);
+  assert.equal(challenge.responses.has(botId), true);
+  assert.equal(challenge.phase, "answering");
+  host("answer-challenge", {
+    challengeId: challenge.id,
+    answer: challenge.answer,
+  });
+  advance(5000);
+  setDice(1);
+  room.game.questionNumber = 2;
+  advance(1800); // Individual visual del bot en casilla 1.
+  const botVisual = room.game.challenge;
+  assert.equal(botVisual.mode, "solo");
+  advance(250 + 3500);
+  assert.equal(botVisual.phase, "results"); // No espera una confirmación del observador.
+});
+
+test("individual: el rival compra trofeos y hechizos con su saldo, y el escudo respeta la penalización", () => {
+  const session = setup({ solo: true });
+  const { room, host, advance, setDice } = session;
+  host("roll-dice");
+  advance(5000);
+  const bot = room.game.players[1];
+  bot.points = 150;
+  setDice(3);
+  session.setBotRoll(99);
+  advance(1800);
+  assert.equal(bot.trophies, 1);
+  assert.equal(bot.points, 40);
+  assert.deepEqual(Array.from(bot.inventory), ["hint"]);
+  const challenge = room.game.challenge;
+  advance(3500);
+  assert.equal(challenge.spellEffects.get(bot.id).spellId, "hint");
+  assert.equal(bot.inventory.length, 0);
+  host("answer-challenge", {
+    challengeId: challenge.id,
+    answer: challenge.answer,
+  });
+  assert.equal(bot.points, 30);
+  advance(5000);
+  // Siguiente duelo con escudo, sin pista: fallar conserva sus monedas.
+  room.game.players[0].position = room.game.players[0].totalSteps = 0;
+  bot.inventory.push("shield");
+  const next = beginDuel(session);
+  advance(3500);
+  host("answer-challenge", { challengeId: next.id, answer: next.answer });
+  assert.equal(bot.points, 30);
+  assert.equal(
+    next.results.find((entry) => entry.playerId === bot.id).protectedByShield,
+    true,
+  );
+});
+
+test("individual: reiniciar, ganar o salir cancela todas las acciones pendientes del rival", () => {
+  for (const action of ["restart", "win", "disconnect"]) {
+    const session = setup({ solo: true });
+    const { room, host, advance, timers } = session;
+    host("roll-dice");
+    advance(5000);
+    const old = [...timers.values()].map((timer) => timer.callback);
+    const rollNumber = room.game.rollNumber;
+    if (action === "restart") host("restart-game");
+    if (action === "win") {
+      room.game.players[0].points = 100;
+      room.game.players[0].trophies = 1;
+      assert.equal(host("buy-trophy").ok, true);
+    }
+    if (action === "disconnect") host("disconnect");
+    assert.equal(timers.size, 0);
+    for (const callback of old) callback();
+    advance(60_000);
+    assert.equal(room.game.rollNumber, action === "restart" ? 0 : rollNumber);
+    assert.equal(session.roomCount(), action === "disconnect" ? 0 : 1);
+    if (action === "win") assert.equal(room.status, "finished");
+  }
+});
+
+test("individual: una partida completa puede terminar con victoria del bot sin ciclos pendientes", () => {
+  const session = setup({ solo: true });
+  const { host, room, timers } = session;
+  session.setDice(3);
+  for (let step = 0; step < 600 && room.status === "playing"; step++) {
+    if (!room.game.challenge && room.game.turn === 0) host("roll-dice");
+    if (timers.size) {
+      session.advanceNext();
+    }
+  }
+  assert.equal(room.status, "finished");
+  assert.equal(room.game.winner, 1);
+  assert.equal(room.game.players[1].trophies, 2);
+  assert.equal(timers.size, 0);
+});
+
+test("lanzar y comprar siguen funcionando cuando el cliente no solicita un acuse", () => {
+  const { host, room, advance } = setup();
+  host("roll-dice", {}, false);
+  assert.equal(room.game.rollNumber, 1);
+  advance(5000);
+  room.game.players[0].points = 100;
+  host("buy-trophy", {}, false);
+  assert.equal(room.game.players[0].points, 0);
+  assert.equal(room.game.players[0].trophies, 1);
 });

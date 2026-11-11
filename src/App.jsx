@@ -4,6 +4,7 @@ import CharacterSelection from "./CharacterSelection";
 import MagicBoard from "./MagicBoard";
 import RoomLobby from "./RoomLobby";
 import board from "../shared/board.json";
+import botLevels from "../shared/bot-levels.json";
 import { socket } from "./socket";
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   const [room, setRoom] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [difficulty, setDifficulty] = useState("wizard");
 
   const pendingConnection = useRef(null);
   const guideDialog = useRef(null);
@@ -72,7 +74,8 @@ function App() {
 
     if (!name || loading) return;
 
-    const creating = screen === "create";
+    const solo = screen === "solo";
+    const creating = screen === "create" || solo;
 
     if (!creating && !roomCode.trim()) {
       setError("Ingresa el código de la sala.");
@@ -82,10 +85,14 @@ function App() {
     setError("");
     setLoading(true);
 
-    const eventName = creating ? "create-room" : "join-room";
+    const eventName = solo
+      ? "create-solo-room"
+      : creating
+        ? "create-room"
+        : "join-room";
 
     const payload = creating
-      ? { nickname: name }
+      ? { nickname: name, ...(solo ? { difficulty } : {}) }
       : {
           nickname: name,
           code: roomCode.trim().toUpperCase(),
@@ -225,7 +232,7 @@ function App() {
             </p>
 
             <div className="game-facts">
-              <span>2 jugadores</span>
+              <span>1–2 jugadores</span>
               <span>{board.length} casillas</span>
               <span>Una copa en juego</span>
             </div>
@@ -237,6 +244,20 @@ function App() {
               </p>
             )}
             <div className="buttons">
+              <button
+                type="button"
+                className="primary"
+                aria-label="Jugar solo"
+                onClick={() => {
+                  setNickname("");
+                  setRoomCode("");
+                  setDifficulty("wizard");
+                  setError("");
+                  setScreen("solo");
+                }}
+              >
+                🧙 Jugar solo
+              </button>
               <button
                 type="button"
                 className="primary"
@@ -287,7 +308,9 @@ function App() {
                 </button>
               </header>
               <ol>
-                <li>Crea una sala y comparte el código con tu compañero.</li>
+                <li>
+                  Juega solo contra un rival automático o comparte una sala.
+                </li>
                 <li>Elijan sus personajes. El creador inicia la aventura.</li>
                 <li>
                   Lancen el dado por turnos. Hay retos individuales sin
@@ -300,14 +323,16 @@ function App() {
                 </li>
               </ol>
             </dialog>
-            <p className="footer">Una aventura mágica multijugador</p>
+            <p className="footer">Una aventura para uno o dos</p>
           </div>
         </section>
       )}
 
       {/* CREAR SALA O UNIRSE */}
-      {(screen === "create" || screen === "join") && (
-        <section className="welcome room-form">
+      {["create", "join", "solo"].includes(screen) && (
+        <section
+          className={`welcome room-form ${screen === "solo" ? "solo-form" : ""}`}
+        >
           <button
             type="button"
             className="back-button"
@@ -326,13 +351,19 @@ function App() {
             </div>
 
             <h2>
-              {screen === "create" ? "Crear sala mágica" : "Unirse a sala"}
+              {screen === "solo"
+                ? "Jugar solo"
+                : screen === "create"
+                  ? "Crear sala mágica"
+                  : "Unirse a sala"}
             </h2>
 
             <p className="description">
-              {screen === "create"
-                ? "Escribe tu nombre para crear una sala y compartir el código."
-                : "Escribe tu nombre y el código de la sala."}
+              {screen === "solo"
+                ? "Elige la dificultad de tu rival automático. También puede equivocarse."
+                : screen === "create"
+                  ? "Escribe tu nombre para crear una sala y compartir el código."
+                  : "Escribe tu nombre y el código de la sala."}
             </p>
           </header>
           <form onSubmit={submitRoom}>
@@ -349,6 +380,28 @@ function App() {
                 required
               />
             </div>
+            {screen === "solo" && (
+              <div className="form-field">
+                <label htmlFor="bot-difficulty">Dificultad del rival</label>
+                <select
+                  id="bot-difficulty"
+                  value={difficulty}
+                  onChange={(event) => setDifficulty(event.target.value)}
+                >
+                  {botLevels.map((level) => (
+                    <option key={level.id} value={level.id}>
+                      {level.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="difficulty-description">
+                  {
+                    botLevels.find((level) => level.id === difficulty)
+                      .description
+                  }
+                </p>
+              </div>
+            )}
             {screen === "join" && (
               <div className="form-field">
                 <label htmlFor="room-code">Código de sala</label>
@@ -384,9 +437,11 @@ function App() {
             >
               {loading
                 ? "Conectando..."
-                : screen === "create"
-                  ? "✨ Crear sala"
-                  : "🪄 Unirse a sala"}
+                : screen === "solo"
+                  ? "🧙 Preparar aventura"
+                  : screen === "create"
+                    ? "✨ Crear sala"
+                    : "🪄 Unirse a sala"}
             </button>
           </form>
         </section>
@@ -415,7 +470,7 @@ function App() {
             room.players.findIndex((player) => player.id === socket.id) + 1
           }
           takenCharacterIds={room.players
-            .filter((player) => player.id !== socket.id)
+            .filter((player) => player.id !== socket.id && !player.isBot)
             .map((player) => player.character?.id)
             .filter(Boolean)}
           onBack={() => {

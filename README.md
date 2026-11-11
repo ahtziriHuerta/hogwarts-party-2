@@ -1,6 +1,7 @@
 # Hogwarts Party
 
-Juego por turnos para dos personas, con React, Vite y Socket.IO.
+Juego por turnos para una persona contra un rival automático o para dos personas,
+con React, Vite y Socket.IO.
 
 ## Ejecutar en local
 
@@ -17,8 +18,9 @@ En otra terminal:
 npm run dev -- --host 0.0.0.0
 ```
 
-Abre la dirección de Vite. Crea una sala, comparte el código y elige personajes
-con un segundo navegador o dispositivo. El creador inicia la partida.
+Abre la dirección de Vite. Pulsa **Jugar solo**, elige dificultad y personaje e
+inicia la aventura. Para jugar con otra persona, crea una sala, comparte el código
+y elige personajes con un segundo navegador o dispositivo. El creador inicia.
 
 Para jugar desde un celular en la misma red, configura `VITE_SERVER_URL` en
 un archivo `.env` con la IP de tu computadora, por ejemplo
@@ -40,13 +42,42 @@ nombre del proyecto, actualiza esta lista y vuelve a publicar el servidor en Ren
 Un frontend que carga y muestra «No se pudo conectar» puede estar usando un
 dominio que todavía no figura en los permisos del servidor.
 
-Las salas viven en memoria de un solo proceso. Reiniciar el servidor o perder
-la conexión de un jugador devuelve la sala al estado de espera; no hay guardado
-de partidas ni recuperación de sesión.
+Las salas viven en memoria de un solo proceso. Al desconectar, una sala compartida
+vuelve a esperar jugadores y una individual se elimina junto con sus temporizadores.
+Reiniciar el servidor elimina las partidas; no hay guardado ni recuperación de sesión.
+
+## Jugar solo
+
+En el inicio, **Jugar solo** pide nombre y dificultad. Los ocho personajes están
+disponibles: el rival elige otro automáticamente, incluso si cambias tu selección.
+La sala individual es privada y no se comparte un código para invitar personas.
+
+| Dificultad | Acierto base del rival | Tiempo para responder |
+| ---------- | ---------------------- | --------------------- |
+| Aprendiz   | 45 %                   | 6–9,5 segundos        |
+| Mago       | 65 %                   | 3,5–6,5 segundos      |
+| Experto    | 82 %                   | 2–4 segundos          |
+
+Son probabilidades programadas, no un servicio de IA. El bot puede equivocarse,
+usa el mismo dado aleatorio, recibe las mismas penalizaciones y necesita dos
+trofeos de 100 monedas para ganar. Su turno empieza tras una pausa de 1,8 segundos.
+Compra primero un trofeo si puede y después un hechizo si le quedan al menos
+45 monedas y espacio. Activa como máximo un hechizo por reto; una pista mejora
+su probabilidad de acierto en 12 puntos, hasta un máximo del 95 %.
+
+El rival espera la observación de memoria y la duración de los clips. En duelos
+visuales, los veinte segundos comienzan cuando el humano también termina de cargar
+o ver el recurso. En actividades exclusivas del bot, el observador no bloquea su
+avance. Las respuestas y pistas privadas nunca se incluyen en el estado compartido.
+
+Salir, reiniciar o terminar cancela los turnos y respuestas pendientes. Se mantiene
+la conexión con Render: el modo individual no funciona sin conexión. No se añaden
+dependencias, descargas de medios ni servicios externos para automatizar al rival.
 
 ## Reglas
 
-- Dos jugadores eligen personajes distintos y lanzan un dado por turnos.
+- Dos participantes (dos personas o una persona y el bot) eligen personajes
+  distintos y lanzan un dado por turnos.
 - **36 casillas**, con 28 actividades: 8 individuales 🪄, 8 duelos ⚡,
   6 retos de memoria 🧠 y 6 cartas sorpresa 🎁.
 - Individuales y duelos tienen 20 segundos para responder y 5 de resultados.
@@ -212,7 +243,7 @@ npm run test:ui
 ```
 
 Estas pruebas arrancan el frontend en el puerto 5174 y el servidor en 3002;
-deben estar disponibles. Las 28 pruebas comprueban inicio, guía, formularios,
+deben estar disponibles. Las 34 pruebas comprueban inicio, guía, formularios,
 sala de espera/lista, partida, errores, victoria, opciones y preguntas sin
 desplazamiento en 568×320, 667×375, 740×280, 844×390 y 932×430. Incluyen nombres
 de 20 caracteres, código inexistente y éxito/fallo del permiso para copiar.
@@ -251,7 +282,12 @@ con poco saldo o inventario lleno. Una sala real verifica compras, pista privada
 escudo, giro del dispositivo, saldos sincronizados y cierre de la tienda al lanzar
 el rival. Los botones conservan al menos 44 píxeles de altura.
 
-`npm test` ejecuta 40 pruebas: 36 del servidor, dos de los dominios permitidos,
+El modo individual añade cinco recorridos completos de inicio, dificultad,
+personajes y tablero, en vertical y horizontal, desde 320×568 y 740×280. Una
+partida real de un solo navegador comprueba respuestas y lanzamientos automáticos,
+tienda, pistas en imágenes, giro del dispositivo, reinicio y salida.
+
+`npm test` ejecuta 50 pruebas: 46 del servidor, dos de los dominios permitidos,
 una del recorrido automático y una del presupuesto de los archivos visuales.
 Incluyen las 36 casillas, todos los tipos de actividad, privacidad de las
 respuestas, memoria en dos fases, las seis cartas, penalizaciones limitadas al
@@ -263,6 +299,9 @@ descuento, observadores y selección de un visual cada tres preguntas.
 Las reglas de tienda cubren precios y dueño autoritativos, límite de objetos,
 privacidad, activaciones repetidas, protección por fallo o vencimiento, respuestas
 descartadas, permisos por tipo de pregunta, plazos y reinicio del inventario.
+El rival añade pruebas de las tres dificultades, privacidad, personajes, salas
+individuales, turnos, memoria, carga y reproducción, compras, victoria completa y
+cancelación de acciones al reiniciar, desconectar o terminar.
 
 Para usar un Chromium ya instalado, configura
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` con la ruta del ejecutable. Las pruebas
