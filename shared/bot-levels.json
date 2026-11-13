@@ -1,0 +1,17 @@
+[
+  {
+    "id": "apprentice",
+    "name": "Aprendiz",
+    "description": "Piensa más despacio y se equivoca más."
+  },
+  {
+    "id": "wizard",
+    "name": "Mago",
+    "description": "Un rival equilibrado para practicar."
+  },
+  {
+    "id": "expert",
+    "name": "Experto",
+    "description": "Responde más rápido y suele acertar."
+  }
+]

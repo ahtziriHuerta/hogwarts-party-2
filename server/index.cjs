@@ -1,354 +1,60 @@
-
 const express = require("express");
+const characters = require("../shared/characters.json");
 const http = require("http");
 const crypto = require("crypto");
 const { Server } = require("socket.io");
+const { isAllowedOrigin } = require("./origins.cjs");
 
 const app = express();
 const server = http.createServer(app);
 
-
-
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "http://localhost:5174",
-      "http://127.0.0.1:5174",
-      "https://regal-pothos-2022c1.netlify.app",
-    ],
+    origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
     methods: ["GET", "POST"],
   },
 });
 
-
-
 const rooms = new Map();
 
-const TOTAL = 24;
+const BOARD = require("../shared/board.json");
+const TOTAL = BOARD.length;
 const TROPHY_PRICE = 100;
 const TROPHIES_TO_WIN = 2;
 
-// ==========================================
-// PREGUNTAS DE HARRY POTTER
-// ==========================================
-// answer indica el índice de la respuesta correcta:
-// 0 = A, 1 = B, 2 = C, 3 = D.
+const QUESTIONS = require("./questions.json");
+const MEDIA_QUESTIONS = require("./media-questions.json");
+const { createChallengeController } = require("./challenges.cjs");
+const { createMemoryQuestion } = require("./memory.cjs");
+const { SURPRISES, applySurprise } = require("./surprises.cjs");
+const { catalog: spellShop, buySpell } = require("./spells.cjs");
+const botLevels = require("../shared/bot-levels.json");
+const { createBotController } = require("./bot.cjs");
 
-const QUESTIONS = [
-  {
-    question: "¿A qué casa pertenece Harry Potter?",
-    options: [
-      "Slytherin",
-      "Ravenclaw",
-      "Gryffindor",
-      "Hufflepuff",
-    ],
-    answer: 2,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Cómo se llama la lechuza de Harry?",
-    options: ["Hedwig", "Errol", "Pigwidgeon", "Fawkes"],
-    answer: 0,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Cuál es el hechizo para desarmar?",
-    options: ["Lumos", "Accio", "Protego", "Expelliarmus"],
-    answer: 3,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Quién es el mejor amigo de Harry junto con Hermione?",
-    options: ["Draco", "Ron", "Neville", "Cedric"],
-    answer: 1,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Cuál es la plataforma del Expreso de Hogwarts?",
-    options: ["9¾", "7½", "10", "8¾"],
-    answer: 0,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Quién es el director de Hogwarts al comienzo de la saga?",
-    options: ["Snape", "Hagrid", "Dumbledore", "Lupin"],
-    answer: 2,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Qué deporte practican los estudiantes en escobas?",
-    options: ["Quidditch", "Críquet", "Polo", "Duelo"],
-    answer: 0,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Cuál es el nombre del banco de los magos?",
-    options: ["Azkaban", "Gringotts", "Ollivanders", "Honeydukes"],
-    answer: 1,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Qué hechizo produce luz en la punta de la varita?",
-    options: ["Nox", "Accio", "Lumos", "Reparo"],
-    answer: 2,
-    difficulty: "Fácil",
-    points: 10,
-  },
-  {
-    question: "¿Quién enseña Pociones durante gran parte de la saga?",
-    options: ["McGonagall", "Flitwick", "Hagrid", "Snape"],
-    answer: 3,
-    difficulty: "Fácil",
-    points: 10,
-  },
-
-  // PREGUNTAS MEDIAS
-
-  {
-    question: "¿Cómo se llama el hipogrifo de Hagrid?",
-    options: ["Aragog", "Buckbeak", "Norbert", "Fang"],
-    answer: 1,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué objeto permite a Hermione asistir a varias clases a la vez?",
-    options: ["Giratiempo", "Pensadero", "Traslador", "Recordadora"],
-    answer: 0,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Cuál es el patronus de Harry?",
-    options: ["Lobo", "Cierva", "Ciervo", "Águila"],
-    answer: 2,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué hechizo sirve para atraer objetos?",
-    options: ["Reparo", "Accio", "Alohomora", "Obliviate"],
-    answer: 1,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué criatura vive en la Cámara de los Secretos?",
-    options: ["Dragón", "Acromántula", "Trol", "Basilisco"],
-    answer: 3,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Quién es el padrino de Harry?",
-    options: [
-      "Sirius Black",
-      "Remus Lupin",
-      "Arthur Weasley",
-      "Severus Snape",
-    ],
-    answer: 0,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué objeto elige la casa de cada estudiante?",
-    options: [
-      "Copa de Fuego",
-      "Sombrero Seleccionador",
-      "Varita de Saúco",
-      "Mapa del Merodeador",
-    ],
-    answer: 1,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué hechizo abre cerraduras?",
-    options: [
-      "Expelliarmus",
-      "Expecto Patronum",
-      "Alohomora",
-      "Stupefy",
-    ],
-    answer: 2,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Cómo se llama el elfo doméstico que ayuda a Harry?",
-    options: ["Kreacher", "Winky", "Hokey", "Dobby"],
-    answer: 3,
-    difficulty: "Media",
-    points: 20,
-  },
-  {
-    question: "¿Qué dragón enfrenta Harry en el Torneo de los Tres Magos?",
-    options: [
-      "Colacuerno húngaro",
-      "Bola de Fuego chino",
-      "Hocicorto sueco",
-      "Verde galés",
-    ],
-    answer: 0,
-    difficulty: "Media",
-    points: 20,
-  },
-
-  // PREGUNTAS DIFÍCILES
-
-  {
-    question: "¿Cuál es el segundo nombre de Albus Dumbledore?",
-    options: ["Brian", "Percival", "Wulfric", "Aberforth"],
-    answer: 1,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Quién destruye el último horrocrux de Voldemort?",
-    options: ["Harry", "Hermione", "Neville", "Ron"],
-    answer: 2,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Cuál es el nombre completo de Voldemort antes de cambiarlo?",
-    options: [
-      "Tom Marvolo Riddle",
-      "Tom Sirius Riddle",
-      "Thomas Gaunt",
-      "Tom Salazar",
-    ],
-    answer: 0,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Qué criatura representa el patronus de Snape?",
-    options: ["Lobo", "Ciervo", "Fénix", "Cierva"],
-    answer: 3,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Quién fabricó la primera snitch dorada?",
-    options: [
-      "Garrick Ollivander",
-      "Bowman Wright",
-      "Nicolas Flamel",
-      "Godric Gryffindor",
-    ],
-    answer: 1,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Cómo se llama la madre de Voldemort?",
-    options: [
-      "Merope Gaunt",
-      "Bellatrix Lestrange",
-      "Walburga Black",
-      "Hepzibah Smith",
-    ],
-    answer: 0,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Cuál es el núcleo de la varita de Harry?",
-    options: [
-      "Pelo de unicornio",
-      "Fibra de corazón de dragón",
-      "Pluma de fénix",
-      "Pelo de thestral",
-    ],
-    answer: 2,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Quién fue el primer propietario conocido de la Varita de Saúco?",
-    options: [
-      "Dumbledore",
-      "Antioch Peverell",
-      "Grindelwald",
-      "Draco Malfoy",
-    ],
-    answer: 1,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Qué horrocrux destruye Ron?",
-    options: ["Diadema", "Diario", "Copa", "Guardapelo"],
-    answer: 3,
-    difficulty: "Difícil",
-    points: 30,
-  },
-  {
-    question: "¿Qué casa de Hogwarts fundó Rowena?",
-    options: [
-      "Ravenclaw",
-      "Hufflepuff",
-      "Slytherin",
-      "Gryffindor",
-    ],
-    answer: 0,
-    difficulty: "Difícil",
-    points: 30,
-  },
-];
-
-// ==========================================
 // FUNCIONES DE SALAS
-// ==========================================
 
 function generateCode() {
   let code;
 
   do {
-    code = crypto.randomBytes(3)
-      .toString("hex")
-      .toUpperCase();
+    code = crypto.randomBytes(3).toString("hex").toUpperCase();
   } while (rooms.has(code));
 
   return code;
-}
-
-// No enviamos la respuesta correcta al navegador.
-function publicChallenge(challenge) {
-  if (!challenge) return null;
-
-  return {
-    id: challenge.id,
-    playerId: challenge.playerId,
-    question: challenge.question,
-    options: [...challenge.options],
-    difficulty: challenge.difficulty,
-    points: challenge.points,
-  };
 }
 
 function publicRoom(room) {
   return {
     code: room.code,
     status: room.status,
+    mode: room.mode ?? "multiplayer",
+    difficulty: room.difficulty,
 
     players: room.players.map((player) => ({
       id: player.id,
       nickname: player.nickname,
       character: player.character,
+      isBot: Boolean(player.isBot),
     })),
 
     game: room.game
@@ -359,19 +65,18 @@ function publicRoom(room) {
           winner: room.game.winner,
           message: room.game.message,
           rollNumber: room.game.rollNumber,
-          challenge: publicChallenge(room.game.challenge),
+          challenge: challenges.publicChallenge(room.game.challenge),
           trophyPrice: TROPHY_PRICE,
           trophiesToWin: TROPHIES_TO_WIN,
+          spellShop,
         }
       : null,
   };
 }
 
 function updateRoom(room) {
-  io.to(room.code).emit(
-    "room-updated",
-    publicRoom(room)
-  );
+  bots.sync(room);
+  io.to(room.code).emit("room-updated", publicRoom(room));
 }
 
 function getPlayerRoom(socket) {
@@ -386,87 +91,245 @@ function getPlayerRoom(socket) {
   return room;
 }
 
-// ==========================================
 // EFECTOS DE CASILLAS
-// ==========================================
 
 function getSpaceEffect(position, nickname) {
-  if (position === TOTAL) {
+  if (BOARD[position - 1]?.type === "finish") {
     return {
       points: 20,
-      message:
-        `🏰 ${nickname} completó una vuelta por Hogwarts: +20 puntos.`,
+      message: `🏰 ${nickname} completó una vuelta por Hogwarts: +20 monedas.`,
     };
   }
 
-  if (position % 7 === 0) {
+  if (BOARD[position - 1]?.type === "trap") {
     return {
       points: -10,
-      message:
-        `🕷️ ${nickname} cayó en una trampa: -10 puntos.`,
+      message: `🕷️ ${nickname} cayó en una trampa: -10 monedas.`,
     };
   }
 
-  if (position % 5 === 0) {
+  if (BOARD[position - 1]?.type === "bonus") {
     return {
       points: 20,
-      message:
-        `⭐ ${nickname} encontró magia: +20 puntos.`,
+      message: `🪙 ${nickname} encontró magia: +20 monedas.`,
     };
   }
 
   return {
     points: 0,
-    message:
-      `✨ ${nickname} llegó a la casilla ${position}.`,
+    message: `✨ ${nickname} llegó a la casilla ${position}.`,
   };
 }
 
-// ==========================================
 // PREGUNTAS ALEATORIAS
-// ==========================================
 
-function chooseQuestion(game) {
-  if (game.usedQuestions.length >= QUESTIONS.length) {
-    game.usedQuestions = [];
+function drawQuestion(game, bank, usedKey) {
+  if (!Array.isArray(game[usedKey]) || game[usedKey].length >= bank.length) {
+    game[usedKey] = [];
   }
 
-  const available = QUESTIONS
+  const available = bank
     .map((question, index) => ({
       question,
       index,
     }))
-    .filter(
-      ({ index }) => !game.usedQuestions.includes(index)
-    );
+    .filter(({ index }) => !game[usedKey].includes(index));
 
-  const selected = available[
-    crypto.randomInt(0, available.length)
-  ];
+  const selected = available[crypto.randomInt(0, available.length)];
 
-  game.usedQuestions.push(selected.index);
+  game[usedKey].push(selected.index);
 
+  // Barajar las opciones evita memorizar una letra en lugar de la respuesta.
+  const options = selected.question.options.map((text, index) => ({
+    text,
+    correct: index === selected.question.answer,
+  }));
+  for (let i = options.length - 1; i > 0; i -= 1) {
+    const j = crypto.randomInt(0, i + 1);
+    [options[i], options[j]] = [options[j], options[i]];
+  }
   return {
     ...selected.question,
-    options: [...selected.question.options],
+    options: options.map((option) => option.text),
+    answer: options.findIndex((option) => option.correct),
   };
 }
 
-function nextTurn(game) {
-  game.turn =
-    (game.turn + 1) % game.players.length;
+function chooseQuestion(game) {
+  game.questionNumber = (game.questionNumber ?? 0) + 1;
+  // Un visual cada tres preguntas limita descargas y conserva la variedad del tablero.
+  if (game.questionNumber % 3 === 0) {
+    return {
+      ...drawQuestion(game, MEDIA_QUESTIONS, "usedMediaQuestions"),
+      // La trivia de respaldo se elige solo si hace falta; no se consume de antemano.
+      fallbackQuestion: () => drawQuestion(game, QUESTIONS, "usedQuestions"),
+    };
+  }
+  return drawQuestion(game, QUESTIONS, "usedQuestions");
 }
 
-// ==========================================
+function nextTurn(game) {
+  game.turn = (game.turn + 1) % game.players.length;
+}
+
+const challenges = createChallengeController({ updateRoom, nextTurn });
+
+function rollDice(room, playerId) {
+  if (!room || room.status !== "playing" || !room.game) {
+    return {
+      ok: false,
+      error: "No hay una partida activa.",
+    };
+  }
+
+  const game = room.game;
+
+  if (game.challenge) {
+    return {
+      ok: false,
+      error: "Primero deben resolver el reto mágico.",
+    };
+  }
+
+  const player = game.players[game.turn];
+
+  if (player.id !== playerId) {
+    return {
+      ok: false,
+      error: "Todavía no es tu turno.",
+    };
+  }
+
+  const result = crypto.randomInt(1, 7);
+
+  // Acumulamos los pasos reales del dado.
+  player.totalSteps = (player.totalSteps ?? 0) + result;
+
+  // La longitud del recorrido viene del mapa compartido.
+  const destination = ((player.totalSteps - 1) % TOTAL) + 1;
+
+  // Calculamos las vueltas completadas.
+  const newLaps = Math.floor(player.totalSteps / TOTAL);
+
+  const completedLap = newLaps > (player.laps ?? 0);
+
+  player.position = destination;
+  player.laps = newLaps;
+
+  game.dice = result;
+  game.rollNumber += 1;
+
+  const space = BOARD[destination - 1];
+  const isChallenge = space.type === "solo" || space.type === "duel";
+
+  // Acreditar la vuelta antes del reto, que mantiene el turno y retorna aquí.
+  const lapBonus = completedLap && destination !== TOTAL ? 20 : 0;
+  player.points += lapBonus;
+
+  if (isChallenge) {
+    challenges.start(room, chooseQuestion(game), space.type);
+    return { ok: true };
+  }
+
+  if (space.type === "memory") {
+    challenges.start(room, createMemoryQuestion(), "solo");
+    return { ok: true };
+  }
+  if (space.type === "surprise") {
+    const event = applySurprise(game, crypto.randomInt(0, SURPRISES.length));
+    challenges.startSurprise(room, event);
+    return { ok: true };
+  }
+
+  const effect = getSpaceEffect(destination, player.nickname);
+
+  player.points = Math.max(0, player.points + effect.points);
+
+  game.message = effect.message;
+
+  if (lapBonus > 0) {
+    game.message += ` 🏰 ¡Vuelta completada! +20 monedas adicionales.`;
+  }
+
+  nextTurn(game);
+
+  updateRoom(room);
+
+  return { ok: true };
+}
+
+function buyTrophy(room, playerId) {
+  if (!room || room.status !== "playing" || !room.game) {
+    return {
+      ok: false,
+      error: "No hay una partida activa.",
+    };
+  }
+
+  const game = room.game;
+
+  if (game.challenge) {
+    return {
+      ok: false,
+      error: "Primero deben resolver el reto mágico.",
+    };
+  }
+
+  const player = game.players.find((p) => p.id === playerId);
+
+  if (!player) {
+    return {
+      ok: false,
+      error: "Jugador no encontrado.",
+    };
+  }
+
+  if (player.points < TROPHY_PRICE) {
+    return {
+      ok: false,
+      error: `Necesitas ${TROPHY_PRICE} monedas para comprar un trofeo.`,
+    };
+  }
+
+  if (player.trophies >= TROPHIES_TO_WIN) {
+    return {
+      ok: false,
+      error: "Ya tienes todos los trofeos.",
+    };
+  }
+
+  player.points -= TROPHY_PRICE;
+  player.trophies += 1;
+
+  if (player.trophies >= TROPHIES_TO_WIN) {
+    game.winner = game.players.findIndex((p) => p.id === playerId);
+
+    room.status = "finished";
+
+    game.message = `🏆 ¡${player.nickname} consiguió 2 trofeos y ganó la Copa de Hogwarts!`;
+  } else {
+    game.message = `🏆 ${player.nickname} compró un trofeo. ¡Le falta uno para ganar!`;
+  }
+
+  updateRoom(room);
+
+  return {
+    ok: true,
+    trophies: player.trophies,
+    points: player.points,
+  };
+}
+
+const bots = createBotController({ rollDice, buyTrophy, buySpell, challenges });
+
 // CONEXIONES MULTIJUGADOR
-// ==========================================
 
 io.on("connection", (socket) => {
   console.log("Conectado:", socket.id);
 
   // CREAR SALA
 
-  socket.on("create-room", (data, callback) => {
+  function createRoom(data, callback, solo = false) {
     if (socket.data.roomCode) {
       return callback?.({
         ok: false,
@@ -485,11 +348,17 @@ io.on("connection", (socket) => {
       });
     }
 
+    const difficulty = solo ? (data?.difficulty ?? "wizard") : undefined;
+    if (solo && !botLevels.some((level) => level.id === difficulty))
+      return callback?.({ ok: false, error: "Dificultad no válida." });
+
     const code = generateCode();
 
     const room = {
       code,
-      status: "waiting",
+      status: solo ? "ready" : "waiting",
+      mode: solo ? "solo" : "multiplayer",
+      difficulty,
       players: [
         {
           id: socket.id,
@@ -499,6 +368,14 @@ io.on("connection", (socket) => {
       ],
       game: null,
     };
+
+    if (solo)
+      room.players.push({
+        id: `bot:${crypto.randomUUID()}`,
+        nickname: `Rival ${botLevels.find((level) => level.id === difficulty).name}`,
+        character: null,
+        isBot: true,
+      });
 
     rooms.set(code, room);
 
@@ -511,7 +388,11 @@ io.on("connection", (socket) => {
     });
 
     console.log("Sala creada:", code);
-  });
+  }
+  socket.on("create-room", (data, callback) => createRoom(data, callback));
+  socket.on("create-solo-room", (data, callback) =>
+    createRoom(data, callback, true),
+  );
 
   // UNIRSE A SALA
 
@@ -546,6 +427,9 @@ io.on("connection", (socket) => {
         error: "La sala no existe.",
       });
     }
+
+    if (room.mode === "solo")
+      return callback?.({ ok: false, error: "Esta partida es individual." });
 
     if (room.status !== "waiting") {
       return callback?.({
@@ -593,10 +477,7 @@ io.on("connection", (socket) => {
       });
     }
 
-    if (
-      room.status === "playing" ||
-      room.status === "finished"
-    ) {
+    if (room.status === "playing" || room.status === "finished") {
       return callback?.({
         ok: false,
         error: "La partida ya comenzó.",
@@ -618,9 +499,7 @@ io.on("connection", (socket) => {
     }
 
     const occupied = room.players.some(
-      (p) =>
-        p.id !== socket.id &&
-        p.character?.id === character.id
+      (p) => p.id !== socket.id && !p.isBot && p.character?.id === character.id,
     );
 
     if (occupied) {
@@ -630,21 +509,18 @@ io.on("connection", (socket) => {
       });
     }
 
-    const player = room.players.find(
-      (p) => p.id === socket.id
-    );
+    const player = room.players.find((p) => p.id === socket.id);
 
+    // El cliente elige un ID; los datos visuales válidos vienen del catálogo compartido.
     player.character = {
-      id: character.id,
-      name: character.name,
-      house: character.house,
-      primary: character.primary,
-      secondary: character.secondary,
-      hair: character.hair,
-      skin: character.skin,
-      eyes: character.eyes,
-      hairstyle: character.hairstyle,
+      ...characters.find((item) => item.id === character.id),
     };
+
+    const bot = room.players.find((entry) => entry.isBot);
+    if (bot && (!bot.character || bot.character.id === character.id))
+      bot.character = {
+        ...characters.find((entry) => entry.id !== character.id),
+      };
 
     updateRoom(room);
 
@@ -683,7 +559,9 @@ io.on("connection", (socket) => {
       return callback?.({
         ok: false,
         error:
-          "Ambos jugadores deben elegir personaje.",
+          room.mode === "solo"
+            ? "Elige tu personaje para comenzar."
+            : "Ambos jugadores deben elegir personaje.",
       });
     }
 
@@ -692,24 +570,26 @@ io.on("connection", (socket) => {
         id: p.id,
         nickname: p.nickname,
         character: p.character,
+        isBot: Boolean(p.isBot),
         position: 0,
         points: 0,
         trophies: 0,
         laps: 0,
         totalSteps: 0,
+        inventory: [],
       })),
 
       turn: 0,
       dice: null,
       winner: null,
 
-      message:
-        `🎲 ¡Comienza la aventura! Turno de ${room.players[0].nickname}.`,
+      message: `🎲 ¡Comienza la aventura! Turno de ${room.players[0].nickname}.`,
 
       rollNumber: 0,
       challenge: null,
       usedQuestions: [],
-      nextChallengeId: 0,
+      usedMediaQuestions: [],
+      questionNumber: 0,
     };
 
     room.status = "playing";
@@ -724,127 +604,8 @@ io.on("connection", (socket) => {
   // ========================================
 
   socket.on("roll-dice", (_data, callback) => {
-    const room = getPlayerRoom(socket);
-
-    if (
-      !room ||
-      room.status !== "playing" ||
-      !room.game
-    ) {
-      return callback?.({
-        ok: false,
-        error: "No hay una partida activa.",
-      });
-    }
-
-    const game = room.game;
-
-    if (game.challenge) {
-      return callback?.({
-        ok: false,
-        error:
-          "Primero deben resolver el reto mágico.",
-      });
-    }
-
-    const player = game.players[game.turn];
-
-    if (player.id !== socket.id) {
-      return callback?.({
-        ok: false,
-        error: "Todavía no es tu turno.",
-      });
-    }
-
-    const result = crypto.randomInt(1, 7);
-
-    
-    const previousPosition = player.position;
-
-    // Acumulamos los pasos reales del dado.
-    player.totalSteps = (player.totalSteps ?? 0) + result;
-
-    // Calculamos la posición dentro de las 24 casillas.
-    const destination =
-      ((player.totalSteps - 1) % TOTAL) + 1;
-
-    // Calculamos las vueltas completadas.
-    const newLaps = Math.floor(
-      player.totalSteps / TOTAL
-    );
-
-    const completedLap = newLaps > (player.laps ?? 0);
-
-    player.position = destination;
-    player.laps = newLaps;
-
-
-    game.dice = result;
-    game.rollNumber += 1;
-
-    // PRIORIDAD:
-    // 24 = vuelta completada
-    // múltiplos de 7 = trampa
-    // múltiplos de 5 = bonus
-    // múltiplos de 3 = reto
-
-    const isChallenge =
-      destination !== TOTAL &&
-      destination % 3 === 0 &&
-      destination % 5 !== 0 &&
-      destination % 7 !== 0;
-
-    if (isChallenge) {
-      const question = chooseQuestion(game);
-
-      game.nextChallengeId += 1;
-
-      game.challenge = {
-        id: game.nextChallengeId,
-        playerId: player.id,
-        question: question.question,
-        options: question.options,
-        answer: question.answer,
-        difficulty: question.difficulty,
-        points: question.points,
-      };
-
-      game.message =
-        `🪄 ${player.nickname} debe responder un reto de Harry Potter.`;
-
-      // El turno se mantiene hasta responder.
-      updateRoom(room);
-
-      return callback?.({ ok: true });
-    }
-
-    const effect = getSpaceEffect(
-      destination,
-      player.nickname
-    );
-
-    const lapBonus =
-      completedLap && destination !== TOTAL
-        ? 20
-        : 0;
-
-    player.points = Math.max(
-      0,
-      player.points + effect.points + lapBonus
-    );
-
-    game.message = effect.message;
-
-    if (lapBonus > 0) {
-      game.message +=
-        ` 🏰 ¡Vuelta completada! +20 puntos adicionales.`;
-    }
-
-    nextTurn(game);
-
-    updateRoom(room);
-
-    callback?.({ ok: true });
+    const result = rollDice(getPlayerRoom(socket), socket.id);
+    callback?.(result);
   });
 
   // ========================================
@@ -854,88 +615,39 @@ io.on("connection", (socket) => {
   socket.on("answer-challenge", (data, callback) => {
     const room = getPlayerRoom(socket);
 
-    if (
-      !room ||
-      room.status !== "playing" ||
-      !room.game
-    ) {
+    if (!room || room.status !== "playing" || !room.game) {
       return callback?.({
         ok: false,
         error: "No hay una partida activa.",
       });
     }
 
-    const game = room.game;
-    const challenge = game.challenge;
+    callback?.(challenges.answer(room, socket.id, data));
+  });
 
-    if (!challenge) {
-      return callback?.({
-        ok: false,
-        error: "No hay un reto pendiente.",
-      });
+  socket.on("challenge-media", (data, callback) => {
+    const room = getPlayerRoom(socket);
+    if (!room || room.status !== "playing" || !room.game) {
+      return callback?.({ ok: false, error: "No hay una partida activa." });
     }
+    callback?.(challenges.mediaStatus(room, socket.id, data));
+  });
 
-    if (challenge.playerId !== socket.id) {
-      return callback?.({
-        ok: false,
-        error:
-          "Este reto pertenece al otro jugador.",
-      });
-    }
+  socket.on("buy-spell", (data, callback) => {
+    const room = getPlayerRoom(socket);
+    if (!room || room.status !== "playing" || !room.game)
+      return callback?.({ ok: false, error: "No hay una partida activa." });
+    const result = buySpell(room.game, socket.id, data?.spellId);
+    if (result.ok) updateRoom(room);
+    callback?.(result);
+  });
 
-    if (data?.challengeId !== challenge.id) {
-      return callback?.({
-        ok: false,
-        error: "El reto ya cambió.",
-      });
-    }
-
-    const answer = data?.answer;
-
-    if (
-      !Number.isInteger(answer) ||
-      answer < 0 ||
-      answer >= challenge.options.length
-    ) {
-      return callback?.({
-        ok: false,
-        error: "Selecciona una respuesta válida.",
-      });
-    }
-
-    const player = game.players[game.turn];
-
-    if (player.id !== socket.id) {
-      return callback?.({
-        ok: false,
-        error: "No es tu turno.",
-      });
-    }
-
-    const correct =
-      answer === challenge.answer;
-
-    const earned =
-      correct ? challenge.points : 0;
-
-    player.points += earned;
-
-    game.message = correct
-      ? `✨ ¡${player.nickname} acertó! +${earned} puntos.`
-      : `❌ ${player.nickname} falló el reto. La respuesta era: ${challenge.options[challenge.answer]}.`;
-
-    game.challenge = null;
-
-    nextTurn(game);
-
-    updateRoom(room);
-
-    callback?.({
-      ok: true,
-      correct,
-      earned,
-      correctAnswer: challenge.answer,
-    });
+  socket.on("use-spell", (data, callback) => {
+    const room = getPlayerRoom(socket);
+    if (!room || room.status !== "playing" || !room.game)
+      return callback?.({ ok: false, error: "No hay una partida activa." });
+    // El efecto privado de la pista solo vuelve al socket que la activó.
+    callback?.(challenges.useSpell(room, socket.id, data));
   });
 
   // ========================================
@@ -943,79 +655,8 @@ io.on("connection", (socket) => {
   // ========================================
 
   socket.on("buy-trophy", (_data, callback) => {
-    const room = getPlayerRoom(socket);
-
-    if (
-      !room ||
-      room.status !== "playing" ||
-      !room.game
-    ) {
-      return callback?.({
-        ok: false,
-        error: "No hay una partida activa.",
-      });
-    }
-
-    const game = room.game;
-
-    if (game.challenge) {
-      return callback?.({
-        ok: false,
-        error:
-          "Primero deben resolver el reto mágico.",
-      });
-    }
-
-    const player = game.players.find(
-      (p) => p.id === socket.id
-    );
-
-    if (!player) {
-      return callback?.({
-        ok: false,
-        error: "Jugador no encontrado.",
-      });
-    }
-
-    if (player.points < TROPHY_PRICE) {
-      return callback?.({
-        ok: false,
-        error:
-          `Necesitas ${TROPHY_PRICE} puntos para comprar un trofeo.`,
-      });
-    }
-
-    if (player.trophies >= TROPHIES_TO_WIN) {
-      return callback?.({
-        ok: false,
-        error: "Ya tienes todos los trofeos.",
-      });
-    }
-
-    player.points -= TROPHY_PRICE;
-    player.trophies += 1;
-
-    if (player.trophies >= TROPHIES_TO_WIN) {
-      game.winner = game.players.findIndex(
-        (p) => p.id === socket.id
-      );
-
-      room.status = "finished";
-
-      game.message =
-        `🏆 ¡${player.nickname} consiguió 2 trofeos y ganó la Copa de Hogwarts!`;
-    } else {
-      game.message =
-        `🏆 ${player.nickname} compró un trofeo. ¡Le falta uno para ganar!`;
-    }
-
-    updateRoom(room);
-
-    callback?.({
-      ok: true,
-      trophies: player.trophies,
-      points: player.points,
-    });
+    const result = buyTrophy(getPlayerRoom(socket), socket.id);
+    callback?.(result);
   });
 
   // ========================================
@@ -1028,18 +669,19 @@ io.on("connection", (socket) => {
     if (!room || !room.game) {
       return callback?.({
         ok: false,
-        error:
-          "No hay una partida para reiniciar.",
+        error: "No hay una partida para reiniciar.",
       });
     }
 
     if (room.players[0]?.id !== socket.id) {
       return callback?.({
         ok: false,
-        error:
-          "Solo el creador puede reiniciar.",
+        error: "Solo el creador puede reiniciar.",
       });
     }
+
+    bots.cancel(room);
+    challenges.cancel(room);
 
     room.game.players.forEach((p) => {
       p.position = 0;
@@ -1047,6 +689,7 @@ io.on("connection", (socket) => {
       p.trophies = 0;
       p.laps = 0;
       p.totalSteps = 0;
+      p.inventory = [];
     });
 
     room.game.turn = 0;
@@ -1055,10 +698,10 @@ io.on("connection", (socket) => {
     room.game.rollNumber = 0;
     room.game.challenge = null;
     room.game.usedQuestions = [];
-    room.game.nextChallengeId = 0;
+    room.game.usedMediaQuestions = [];
+    room.game.questionNumber = 0;
 
-    room.game.message =
-      "✨ ¡Nueva aventura! Jugador 1, lanza el dado.";
+    room.game.message = "✨ ¡Nueva aventura! Jugador 1, lanza el dado.";
 
     room.status = "playing";
 
@@ -1077,9 +720,13 @@ io.on("connection", (socket) => {
 
     if (!room) return;
 
-    room.players = room.players.filter(
-      (p) => p.id !== socket.id
-    );
+    bots.cancel(room);
+    challenges.cancel(room);
+    if (room.mode === "solo") {
+      rooms.delete(code);
+      return;
+    }
+    room.players = room.players.filter((p) => p.id !== socket.id);
 
     if (room.players.length === 0) {
       rooms.delete(code);
@@ -1096,14 +743,10 @@ io.on("connection", (socket) => {
   });
 });
 
-// ==========================================
 // SERVIDOR HTTP
-// ==========================================
 
 app.get("/", (_req, res) => {
-  res.send(
-    "Servidor Hogwarts Party funcionando"
-  );
+  res.send("Servidor Hogwarts Party funcionando");
 });
 
 const PORT = process.env.PORT || 3001;

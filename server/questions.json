@@ -1,0 +1,602 @@
+[
+  {
+    "question": "¿A qué casa pertenece Harry Potter?",
+    "options": ["Slytherin", "Ravenclaw", "Gryffindor", "Hufflepuff"],
+    "answer": 2,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Hogwarts",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cómo se llama la lechuza de Harry?",
+    "options": ["Hedwig", "Errol", "Pigwidgeon", "Fawkes"],
+    "answer": 0,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Criaturas",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cuál es el hechizo para desarmar?",
+    "options": ["Lumos", "Accio", "Protego", "Expelliarmus"],
+    "answer": 3,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Hechizos",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién es el mejor amigo de Harry junto con Hermione?",
+    "options": ["Draco", "Ron", "Neville", "Cedric"],
+    "answer": 1,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Personajes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cuál es la plataforma del Expreso de Hogwarts?",
+    "options": ["9¾", "7½", "10", "8¾"],
+    "answer": 0,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Hogwarts",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién es el director de Hogwarts al comienzo de la saga?",
+    "options": ["Snape", "Hagrid", "Dumbledore", "Lupin"],
+    "answer": 2,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Personajes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué deporte practican los estudiantes en escobas?",
+    "options": ["Quidditch", "Críquet", "Polo", "Duelo"],
+    "answer": 0,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Quidditch",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cuál es el nombre del banco de los magos?",
+    "options": ["Azkaban", "Gringotts", "Ollivanders", "Honeydukes"],
+    "answer": 1,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Lugares",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué hechizo produce luz en la punta de la varita?",
+    "options": ["Nox", "Accio", "Lumos", "Reparo"],
+    "answer": 2,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Hechizos",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién enseña Pociones durante gran parte de la saga?",
+    "options": ["McGonagall", "Flitwick", "Hagrid", "Snape"],
+    "answer": 3,
+    "difficulty": "Fácil",
+    "points": 10,
+    "category": "Personajes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cómo se llama el hipogrifo de Hagrid?",
+    "options": ["Aragog", "Buckbeak", "Norbert", "Fang"],
+    "answer": 1,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Criaturas",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué objeto permite a Hermione asistir a varias clases a la vez?",
+    "options": ["Giratiempo", "Pensadero", "Traslador", "Recordadora"],
+    "answer": 0,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Objetos",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cuál es el patronus de Harry?",
+    "options": ["Lobo", "Cierva", "Ciervo", "Águila"],
+    "answer": 2,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Hechizos",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué hechizo sirve para atraer objetos?",
+    "options": ["Reparo", "Accio", "Alohomora", "Obliviate"],
+    "answer": 1,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Hechizos",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué criatura vive en la Cámara de los Secretos?",
+    "options": ["Dragón", "Acromántula", "Trol", "Basilisco"],
+    "answer": 3,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Criaturas",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién es el padrino de Harry?",
+    "options": [
+      "Sirius Black",
+      "Remus Lupin",
+      "Arthur Weasley",
+      "Severus Snape"
+    ],
+    "answer": 0,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Personajes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué objeto elige la casa de cada estudiante?",
+    "options": [
+      "Copa de Fuego",
+      "Sombrero Seleccionador",
+      "Varita de Saúco",
+      "Mapa del Merodeador"
+    ],
+    "answer": 1,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Hogwarts",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué hechizo abre cerraduras?",
+    "options": ["Expelliarmus", "Expecto Patronum", "Alohomora", "Stupefy"],
+    "answer": 2,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Hechizos",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cómo se llama el elfo doméstico que ayuda a Harry?",
+    "options": ["Kreacher", "Winky", "Hokey", "Dobby"],
+    "answer": 3,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Personajes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué dragón enfrenta Harry en el Torneo de los Tres Magos?",
+    "options": [
+      "Colacuerno húngaro",
+      "Bola de Fuego chino",
+      "Hocicorto sueco",
+      "Verde galés"
+    ],
+    "answer": 0,
+    "difficulty": "Media",
+    "points": 20,
+    "category": "Criaturas",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cuál es el segundo nombre de Albus Dumbledore?",
+    "options": ["Brian", "Percival", "Wulfric", "Aberforth"],
+    "answer": 1,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Personajes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién destruye el último horrocrux de Voldemort?",
+    "options": ["Harry", "Hermione", "Neville", "Ron"],
+    "answer": 2,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Horrocruxes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cuál es el nombre completo de Voldemort antes de cambiarlo?",
+    "options": [
+      "Tom Marvolo Riddle",
+      "Tom Sirius Riddle",
+      "Thomas Gaunt",
+      "Tom Salazar"
+    ],
+    "answer": 0,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Personajes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué criatura representa el patronus de Snape?",
+    "options": ["Lobo", "Ciervo", "Fénix", "Cierva"],
+    "answer": 3,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Hechizos",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién fabricó la primera snitch dorada?",
+    "options": [
+      "Garrick Ollivander",
+      "Bowman Wright",
+      "Nicolas Flamel",
+      "Godric Gryffindor"
+    ],
+    "answer": 1,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Quidditch",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cómo se llama la madre de Voldemort?",
+    "options": [
+      "Merope Gaunt",
+      "Bellatrix Lestrange",
+      "Walburga Black",
+      "Hepzibah Smith"
+    ],
+    "answer": 0,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Personajes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cuál es el núcleo de la varita de Harry?",
+    "options": [
+      "Pelo de unicornio",
+      "Fibra de corazón de dragón",
+      "Pluma de fénix",
+      "Pelo de thestral"
+    ],
+    "answer": 2,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Varitas",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién fue el primer propietario conocido de la Varita de Saúco?",
+    "options": [
+      "Dumbledore",
+      "Antioch Peverell",
+      "Grindelwald",
+      "Draco Malfoy"
+    ],
+    "answer": 1,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Objetos",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué horrocrux destruye Ron?",
+    "options": ["Diadema", "Diario", "Copa", "Guardapelo"],
+    "answer": 3,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Horrocruxes",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué casa de Hogwarts fundó Rowena?",
+    "options": ["Ravenclaw", "Hufflepuff", "Slytherin", "Gryffindor"],
+    "answer": 0,
+    "difficulty": "Difícil",
+    "points": 30,
+    "category": "Hogwarts",
+    "kind": "trivia"
+  },
+  {
+    "question": "El patronus de Harry Potter es un ciervo.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 0,
+    "category": "Hechizos",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "Hermione pertenece a Ravenclaw.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 1,
+    "category": "Hogwarts",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "La espada de Gryffindor fue fabricada por duendes.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 0,
+    "category": "Objetos",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "Un dementor puede ser repelido con un patronus.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 0,
+    "category": "Criaturas",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "Cada equipo de Quidditch defiende tres aros.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 0,
+    "category": "Quidditch",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "La capa de invisibilidad de Harry es un horrocrux.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 1,
+    "category": "Objetos",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "Hedwig es un gato.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 1,
+    "category": "Criaturas",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "Felix Felicis es conocida como la suerte líquida.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 0,
+    "category": "Pociones",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "Un animago necesita beber una poción para transformarse.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 1,
+    "category": "Transformaciones",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "Los muggles pueden estudiar magia en Hogwarts.",
+    "options": ["Verdadero", "Falso"],
+    "answer": 1,
+    "category": "Hogwarts",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "true-false"
+  },
+  {
+    "question": "¿Cómo se llama la rata de Ron?",
+    "options": ["Scabbers", "Crookshanks", "Trevor", "Errol"],
+    "answer": 0,
+    "category": "Criaturas",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué objeto se usa para observar recuerdos?",
+    "options": ["Giratiempo", "Pensadero", "Recordadora", "Traslador"],
+    "answer": 1,
+    "category": "Objetos",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué criatura adopta la forma del mayor miedo de quien la ve?",
+    "options": ["Doxy", "Boggart", "Niffler", "Kelpie"],
+    "answer": 1,
+    "category": "Criaturas",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cómo se llama el periódico del mundo mágico?",
+    "options": ["El Profeta", "El Merodeador", "El Guardián", "El Heraldo"],
+    "answer": 0,
+    "category": "Lugares",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué hechizo hace levitar objetos?",
+    "options": ["Aguamenti", "Riddikulus", "Wingardium Leviosa", "Silencio"],
+    "answer": 2,
+    "category": "Hechizos",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién es conocida como la Llorona?",
+    "options": [
+      "Helena Ravenclaw",
+      "Myrtle",
+      "Ariana Dumbledore",
+      "Pomona Sprout"
+    ],
+    "answer": 1,
+    "category": "Personajes",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué casa tiene su sala común cerca de las cocinas?",
+    "options": ["Slytherin", "Gryffindor", "Ravenclaw", "Hufflepuff"],
+    "answer": 3,
+    "category": "Hogwarts",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién enseña Pociones durante el sexto año de Harry?",
+    "options": [
+      "Horace Slughorn",
+      "Remus Lupin",
+      "Filius Flitwick",
+      "Gilderoy Lockhart"
+    ],
+    "answer": 0,
+    "category": "Personajes",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cuántos hermanos mayores tiene Ron?",
+    "options": ["Tres", "Cuatro", "Cinco", "Seis"],
+    "answer": 2,
+    "category": "Personajes",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué tipo de criatura es Fawkes?",
+    "options": ["Hipogrifo", "Fénix", "Lechuza", "Dragón"],
+    "answer": 1,
+    "category": "Criaturas",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cuál era el apellido de Lily antes de casarse con James?",
+    "options": ["Black", "Evans", "Prewett", "Prince"],
+    "answer": 1,
+    "category": "Personajes",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué horrocrux destruye Hermione?",
+    "options": [
+      "La copa de Hufflepuff",
+      "El diario de Riddle",
+      "La diadema de Ravenclaw",
+      "El anillo de Gaunt"
+    ],
+    "answer": 0,
+    "category": "Horrocruxes",
+    "points": 30,
+    "difficulty": "Difícil",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cómo se llama el hermano de Albus Dumbledore?",
+    "options": ["Percival", "Aberforth", "Elphias", "Wulfric"],
+    "answer": 1,
+    "category": "Personajes",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Quién NO fue uno de los Merodeadores?",
+    "options": ["Severus Snape", "James Potter", "Sirius Black", "Remus Lupin"],
+    "answer": 0,
+    "category": "Personajes",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué animal representa el patronus de Hermione?",
+    "options": ["Liebre", "Gato", "Nutria", "Zorro"],
+    "answer": 2,
+    "category": "Hechizos",
+    "points": 30,
+    "difficulty": "Difícil",
+    "kind": "trivia"
+  },
+  {
+    "question": "En la novela, ¿quién le entrega las branquialgas a Harry?",
+    "options": ["Neville", "Dobby", "Hagrid", "Cedric"],
+    "answer": 1,
+    "category": "Objetos",
+    "points": 30,
+    "difficulty": "Difícil",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué criaturas tiran de los carruajes de Hogwarts?",
+    "options": ["Unicornios", "Thestrals", "Hipogrifos", "Grifos"],
+    "answer": 1,
+    "category": "Criaturas",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cómo se llama la tienda de bromas de Fred y George?",
+    "options": [
+      "Sortilegios Weasley",
+      "Zonko",
+      "Honeydukes",
+      "Flourish y Blotts"
+    ],
+    "answer": 0,
+    "category": "Lugares",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Cómo se llama la serpiente de Voldemort?",
+    "options": ["Basilisk", "Nagini", "Norberta", "Aragog"],
+    "answer": 1,
+    "category": "Criaturas",
+    "points": 10,
+    "difficulty": "Fácil",
+    "kind": "trivia"
+  },
+  {
+    "question": "¿Qué poción permite adoptar la apariencia de otra persona?",
+    "options": ["Amortentia", "Veritaserum", "Multijugos", "Matalobos"],
+    "answer": 2,
+    "category": "Pociones",
+    "points": 20,
+    "difficulty": "Media",
+    "kind": "trivia"
+  }
+]

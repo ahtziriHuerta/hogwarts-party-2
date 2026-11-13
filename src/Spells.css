@@ -1,0 +1,250 @@
+.spell-shop-modal {
+  width: min(720px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  box-sizing: border-box;
+  padding: 20px;
+  overflow: auto;
+  color: #f4e8ca;
+  background: linear-gradient(145deg, #1e2941, #101a2c);
+  border: 1px solid #9d8960;
+  border-radius: 22px;
+  box-shadow: 0 20px 70px #0009;
+}
+.spell-shop-modal::backdrop {
+  background: #020914c9;
+}
+.spell-shop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.spell-shop-header h2 {
+  margin: 0;
+  color: #f1d58d;
+  font-size: 24px;
+}
+.spell-shop-header button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+}
+.spell-wallet {
+  margin: 6px 0;
+  font-size: 14px;
+}
+.spell-inventory {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+.spell-inventory > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  padding: 5px;
+  border: 1px dashed #8b7e66;
+  border-radius: 8px;
+  color: #ddd4bd;
+  font-size: 12px;
+}
+.spell-inventory .board-icon {
+  width: 18px;
+  height: 18px;
+}
+.spell-shop-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.spell-shop-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #dfc67b55;
+  border-radius: 14px;
+  background: #ffffff06;
+  min-width: 0;
+}
+.spell-shop-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 18px;
+}
+.spell-shop-card .board-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.spell-shop-card p {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.spell-shop-card button {
+  min-height: 44px;
+  padding: 8px 4px;
+  font-size: 13px;
+}
+.spell-shop-feedback {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  min-height: 17px;
+}
+.challenge-spells {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.challenge-modal .challenge-spells {
+  margin: 0 0 6px;
+}
+.spell-guidance strong {
+  color: #f4d582;
+}
+.challenge-visual-layout.with-spells > .challenge-spells {
+  grid-row: 1;
+  margin: 0;
+}
+.challenge-visual-layout.with-spells > .challenge-options {
+  grid-row: 2;
+}
+.board-inventory {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #f5d58b;
+}
+.challenge-spell-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.challenge-spell-buttons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.challenge-spell-buttons .board-icon {
+  width: 21px;
+  height: 21px;
+}
+.challenge-spell-buttons small {
+  display: block;
+  font-size: 10px;
+}
+.challenge-option.eliminated {
+  opacity: 0.28;
+  text-decoration: line-through;
+}
+@media (max-width: 600px) and (orientation: portrait) {
+  .challenge-visual-layout.with-spells > .challenge-media {
+    grid-row: 1;
+  }
+  .challenge-visual-layout.with-spells > .challenge-spells {
+    grid-row: 2;
+  }
+  .challenge-visual-layout.with-spells > .challenge-options {
+    grid-row: 3;
+  }
+  .spell-shop-modal {
+    padding: 12px;
+  }
+  .spell-shop-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .spell-shop-card {
+    padding: 10px;
+  }
+  .shop-trophy-card {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 10px;
+  }
+  .shop-trophy-card p {
+    grid-column: 1;
+  }
+  .shop-trophy-card button {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .challenge-modal.has-spells {
+    padding: 8px 12px;
+  }
+  .challenge-modal.has-spells .challenge-meta {
+    margin: 2px 0;
+  }
+  .challenge-modal.has-spells .challenge-question {
+    margin: 4px 0;
+    font-size: 15px;
+  }
+  .spell-shop-modal {
+    padding: 8px 12px;
+    max-height: calc(100dvh - 12px);
+  }
+  .spell-shop-header h2 {
+    font-size: 20px;
+  }
+  .spell-wallet {
+    margin: 0;
+    position: absolute;
+    top: 21px;
+    right: 74px;
+    font-size: 12px;
+  }
+  .spell-inventory {
+    margin: 0 0 6px;
+  }
+  .spell-shop-card {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  .spell-shop-card h3 {
+    font-size: 16px;
+  }
+  .spell-shop-card p {
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  .spell-shop-feedback {
+    margin-top: 5px;
+    font-size: 11px;
+  }
+  .challenge-modal .challenge-spells {
+    margin: 0 0 4px;
+    font-size: 10px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    line-height: 1.2;
+  }
+  .challenge-spells > span {
+    max-width: 180px;
+  }
+  .challenge-spell-buttons {
+    flex-shrink: 0;
+    gap: 4px;
+  }
+  .challenge-spell-buttons button {
+    padding-inline: 6px;
+    font-size: 12px;
+  }
+}

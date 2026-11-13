@@ -1,0 +1,18 @@
+{
+  "inventoryLimit": 2,
+  "maxUsesPerTurn": 1,
+  "items": [
+    {
+      "id": "shield",
+      "name": "Escudo",
+      "cost": 5,
+      "description": "Actívalo antes de responder un duelo: evita perder monedas en ese reto."
+    },
+    {
+      "id": "hint",
+      "name": "Pista",
+      "cost": 10,
+      "description": "Descarta dos respuestas incorrectas en preguntas de cuatro opciones."
+    }
+  ]
+}

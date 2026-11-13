@@ -1,50 +1,51 @@
-
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { socket } from "./socket";
 import MagicCharacter from "./MagicCharacter";
+import LightningChallenge from "./LightningChallenge";
+import SpellShop from "./SpellShop";
+import BoardScenery from "./BoardScenery";
+import BoardIcon from "./BoardIcon";
+import spaces from "../shared/board.json";
+import { createBoardPath } from "../shared/board-layout";
 import "./MagicBoard.css";
 
-const TOTAL = 24;
+const TOTAL = spaces.length;
 const STEP_DURATION = 420;
 
-const path = [
-  [9, 82], [21, 82], [33, 82], [45, 82],
-  [57, 82], [69, 82], [81, 82], [90, 70],
-  [81, 58], [69, 58], [57, 58], [45, 58],
-  [33, 58], [21, 58], [10, 46], [21, 34],
-  [33, 34], [45, 34], [57, 34], [69, 34],
-  [81, 34], [90, 22], [78, 12], [65, 12],
-];
+const landscapePath = createBoardPath(TOTAL);
+const portraitPath = createBoardPath(TOTAL, 9);
+const portraitQuery = "(orientation: portrait) and (max-width: 600px)";
 
-const spaces = Array.from({ length: TOTAL }, (_, i) => {
-  const number = i + 1;
+function subscribeOrientation(onChange) {
+  const query = window.matchMedia(portraitQuery);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
 
-  if (number === TOTAL) {
-    return { number, type: "finish", icon: "🏰" };
-  }
+function isPortrait() {
+  return window.matchMedia(portraitQuery).matches;
+}
 
-  if (number % 7 === 0) {
-    return { number, type: "trap", icon: "🕷️" };
-  }
+// Curvas entre las mismas coordenadas que usan las casillas y las fichas.
+function createRoute(path) {
+  return path
+    .map(([x, y], index) => {
+      if (index === 0) return `M${x * 10},${y * 6}`;
+      const before = path[Math.max(0, index - 2)];
+      const previous = path[index - 1];
+      const after = path[Math.min(path.length - 1, index + 1)];
+      return `C${(previous[0] + (x - before[0]) / 6) * 10},${(previous[1] + (y - before[1]) / 6) * 6} ${(x - (after[0] - previous[0]) / 6) * 10},${(y - (after[1] - previous[1]) / 6) * 6} ${x * 10},${y * 6}`;
+    })
+    .join(" ");
+}
 
-  if (number % 5 === 0) {
-    return { number, type: "bonus", icon: "⭐" };
-  }
+const landscapeRoute = createRoute(landscapePath);
+const portraitRoute = createRoute(portraitPath);
 
-  if (number % 3 === 0) {
-    return { number, type: "challenge", icon: "🪄" };
-  }
+function getCoordinates(position, path) {
+  if (position === 0) return [path[0][0] - 5.5, path[0][1]];
 
-  return { number, type: "normal", icon: "✨" };
-});
-
-function getCoordinates(position) {
-  if (position === 0) return [5, 82];
-
-  const safe = Math.max(
-    1,
-    Math.min(TOTAL, Number(position) || 1)
-  );
+  const safe = Math.max(1, Math.min(TOTAL, Number(position) || 1));
 
   return path[safe - 1];
 }
@@ -63,11 +64,9 @@ function CharacterAvatar({ character, size = 70 }) {
   );
 }
 
-// ==========================================
 // MOVIMIENTO ANIMADO DE LOS JUGADORES
-// ==========================================
 
-function AnimatedToken({ player, index, resetKey }) {
+function AnimatedToken({ player, index, resetKey, path }) {
   const targetSteps = Number(player.totalSteps) || 0;
 
   const [visualSteps, setVisualSteps] = useState(targetSteps);
@@ -114,11 +113,11 @@ function AnimatedToken({ player, index, resetKey }) {
       return;
     }
 
-    let cancelled = false;
+    const movement = new AbortController();
     setMoving(true);
 
     function advance() {
-      if (cancelled) return;
+      if (movement.signal.aborted) return;
 
       if (currentRef.current >= targetSteps) {
         setMoving(false);
@@ -133,36 +132,29 @@ function AnimatedToken({ player, index, resetKey }) {
       setVisualSteps(next);
 
       const previousPosition =
-        previous === 0
-          ? 0
-          : ((previous - 1) % TOTAL) + 1;
+        previous === 0 ? 0 : ((previous - 1) % TOTAL) + 1;
 
-      const [x, y] = getCoordinates(previousPosition);
       const id = ++trailIdRef.current;
 
+      // Guardar la casilla permite recolocar también el rastro al girar el celular.
       setTrail((items) => [
         ...items.slice(-8),
-        { id, x, y },
+        { id, position: previousPosition },
       ]);
 
       const trailTimer = setTimeout(() => {
-        setTrail((items) =>
-          items.filter((star) => star.id !== id)
-        );
+        setTrail((items) => items.filter((star) => star.id !== id));
       }, 800);
 
       trailTimersRef.current.push(trailTimer);
 
-      timerRef.current = setTimeout(
-        advance,
-        STEP_DURATION
-      );
+      timerRef.current = setTimeout(advance, STEP_DURATION);
     }
 
     advance();
 
     return () => {
-      cancelled = true;
+      movement.abort();
 
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -181,26 +173,27 @@ function AnimatedToken({ player, index, resetKey }) {
   }, []);
 
   const visualPosition =
-    visualSteps === 0
-      ? 0
-      : ((visualSteps - 1) % TOTAL) + 1;
+    visualSteps === 0 ? 0 : ((visualSteps - 1) % TOTAL) + 1;
 
-  const [x, y] = getCoordinates(visualPosition);
+  const [x, y] = getCoordinates(visualPosition, path);
 
   return (
     <>
-      {trail.map((star) => (
-        <div
-          key={star.id}
-          className={`magic-trail magic-trail-${index + 1}`}
-          style={{
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-          }}
-        >
-          ✦
-        </div>
-      ))}
+      {trail.map((star) => {
+        const [starX, starY] = getCoordinates(star.position, path);
+        return (
+          <div
+            key={star.id}
+            className={`magic-trail magic-trail-${index + 1}`}
+            style={{
+              left: `${starX}%`,
+              top: `${starY}%`,
+            }}
+          >
+            ✦
+          </div>
+        );
+      })}
 
       <div
         className={`moving-player player-${index + 1} ${
@@ -212,130 +205,68 @@ function AnimatedToken({ player, index, resetKey }) {
         }}
       >
         <div className="moving-player-character">
-          <CharacterAvatar
-            character={player.character}
-            size={70}
-          />
+          <CharacterAvatar character={player.character} size={70} />
         </div>
 
-        <span className="moving-player-label">
-          J{index + 1}
-        </span>
+        <span className="moving-player-label">J{index + 1}</span>
       </div>
     </>
   );
 }
 
-// ==========================================
-// VENTANA DE PREGUNTAS
-// ==========================================
+// El diálogo nativo administra el foco, Escape y el regreso al botón de opciones.
+function BoardOptions({ isHost, busy, onRestart, onClose }) {
+  const dialog = useRef(null);
 
-function ChallengeModal({
-  challenge,
-  mySocketId,
-  onAnswer,
-}) {
-  const [selected, setSelected] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  const isMyChallenge =
-    challenge.playerId === mySocketId;
-
-  function submitAnswer() {
-    if (!isMyChallenge || selected === null || busy) {
-      return;
-    }
-
-    setBusy(true);
-    setError("");
-
-    onAnswer(challenge.id, selected, (result) => {
-      setBusy(false);
-
-      if (!result?.ok) {
-        setError(
-          result?.error || "No se pudo enviar la respuesta."
-        );
-      }
-    });
-  }
+  useEffect(() => {
+    const element = dialog.current;
+    if (!element.open) element.showModal();
+  }, []);
 
   return (
-    <div className="challenge-overlay">
-      <div
-        className="challenge-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Reto de Harry Potter"
-      >
-        <div className="challenge-icon">🪄</div>
-
-        <h2>Desafío de Hogwarts</h2>
-
-        <div className="challenge-meta">
-          <span>{challenge.difficulty}</span>
-          <span>⭐ {challenge.points} puntos</span>
-        </div>
-
-        <p className="challenge-question">
-          {challenge.question}
-        </p>
-
-        {!isMyChallenge && (
-          <p className="challenge-waiting">
-            ⏳ El otro jugador está respondiendo...
-          </p>
-        )}
-
-        <div className="challenge-options">
-          {challenge.options.map((option, index) => (
-            <button
-              key={index}
-              type="button"
-              className={`challenge-option ${
-                selected === index ? "selected" : ""
-              }`}
-              disabled={!isMyChallenge || busy}
-              onClick={() => setSelected(index)}
-            >
-              <span className="challenge-letter">
-                {String.fromCharCode(65 + index)}
-              </span>
-
-              <span>{option}</span>
-            </button>
-          ))}
-        </div>
-
-        {error && (
-          <p className="room-error" role="alert">
-            ⚠️ {error}
-          </p>
-        )}
-
-        {isMyChallenge ? (
-          <button
-            type="button"
-            className="primary challenge-submit"
-            disabled={selected === null || busy}
-            onClick={submitAnswer}
-          >
-            {busy ? "Comprobando..." : "✨ Responder"}
-          </button>
-        ) : (
-          <p className="challenge-waiting">
-            Esperando la respuesta...
-          </p>
-        )}
-      </div>
-    </div>
+    <dialog
+      ref={dialog}
+      className="board-options"
+      onClose={onClose}
+      aria-labelledby="board-options-title"
+    >
+      <header>
+        <h2 id="board-options-title">Guía de la partida</h2>
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => dialog.current.close()}
+        >
+          Cerrar
+        </button>
+      </header>
+      <p>{TOTAL} casillas · Gana dos trofeos de 100 monedas.</p>
+      <ul>
+        <li>🪙 Bono/vuelta: +20 monedas.</li>
+        <li>🕷️ Trampa: −10; saldo mínimo 0.</li>
+        <li>🪄 Individual, 20 s: +10–30; fallo sin pérdida.</li>
+        <li>⚡ Duelo, 20 s: +10–40; fallo/tiempo −10.</li>
+        <li>🧠 Memoria: observa 5 s; acierto +25, fallo 0.</li>
+        <li>🎁 Sorpresa: premios, pérdidas o monedas del rival.</li>
+      </ul>
+      {isHost && (
+        <button
+          type="button"
+          className="secondary"
+          disabled={busy}
+          onClick={() => {
+            onRestart();
+            dialog.current.close();
+          }}
+        >
+          ↻ Reiniciar partida para ambos
+        </button>
+      )}
+    </dialog>
   );
 }
 
-// ==========================================
 // TABLERO PRINCIPAL
-// ==========================================
 
 export default function MagicBoard({
   game,
@@ -348,6 +279,16 @@ export default function MagicBoard({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [showOptions, setShowOptions] = useState(false);
+  // Una tirada del rival cierra la tienda y no la reabre al terminar el reto.
+  const [shopRoll, setShopRoll] = useState(null);
+  const portrait = useSyncExternalStore(
+    subscribeOrientation,
+    isPortrait,
+    () => false,
+  );
+  const path = portrait ? portraitPath : landscapePath;
+  const route = portrait ? portraitRoute : landscapeRoute;
 
   const previousRollRef = useRef(game?.rollNumber ?? 0);
 
@@ -369,9 +310,7 @@ export default function MagicBoard({
     );
   }
 
-  const players = Array.isArray(game.players)
-    ? game.players
-    : [];
+  const players = Array.isArray(game.players) ? game.players : [];
 
   if (players.length !== 2) {
     return (
@@ -392,20 +331,22 @@ export default function MagicBoard({
 
   const current = players[turn] || players[0];
 
-  const myPlayer = players.find(
-    (player) => player.id === mySocketId
-  );
+  const myPlayer = players.find((player) => player.id === mySocketId);
+  const inventory = myPlayer?.inventory ?? [];
+  const inventoryNames = game.spellShop?.items
+    ?.filter((item) => inventory.includes(item.id))
+    .map((item) => {
+      const count = inventory.filter((id) => id === item.id).length;
+      return `${item.name}${count > 1 ? ` ×${count}` : ""}`;
+    })
+    .join(" · ");
 
-  const winningPlayer =
-    winner === null ? null : players[winner] || null;
+  const winningPlayer = winner === null ? null : players[winner] || null;
 
   const trophyPrice = game.trophyPrice ?? 100;
   const trophiesToWin = game.trophiesToWin ?? 2;
 
-  const isMyTurn =
-    winner === null &&
-    !challenge &&
-    current.id === mySocketId;
+  const isMyTurn = winner === null && !challenge && current.id === mySocketId;
 
   const canBuyTrophy =
     Boolean(myPlayer) &&
@@ -425,38 +366,17 @@ export default function MagicBoard({
       setBusy(false);
 
       if (!result?.ok) {
-        setError(
-          result?.error || "No se pudo completar la acción."
-        );
+        setError(result?.error || "No se pudo completar la acción.");
       }
     });
   }
 
   function answerChallenge(challengeId, answer, done) {
-    socket.timeout(10000).emit(
-      "answer-challenge",
-      { challengeId, answer },
-      (timeoutError, result) => {
-        if (timeoutError) {
-          done({
-            ok: false,
-            error: "El servidor no respondió.",
-          });
-          return;
-        }
-
-        done(result);
-      }
-    );
-  }
-
-  function buyTrophy() {
-    if (!canBuyTrophy) return;
-
-    performAction((done) => {
-      socket.timeout(10000).emit(
-        "buy-trophy",
-        {},
+    socket
+      .timeout(10000)
+      .emit(
+        "answer-challenge",
+        { challengeId, answer },
         (timeoutError, result) => {
           if (timeoutError) {
             done({
@@ -467,40 +387,123 @@ export default function MagicBoard({
           }
 
           done(result);
-        }
+        },
       );
+  }
+
+  function buyTrophy() {
+    if (!canBuyTrophy) return;
+
+    performAction((done) => {
+      socket.timeout(10000).emit("buy-trophy", {}, (timeoutError, result) => {
+        if (timeoutError) {
+          done({
+            ok: false,
+            error: "El servidor no respondió.",
+          });
+          return;
+        }
+
+        done(result);
+      });
     });
+  }
+
+  function buyItem(id, done) {
+    socket
+      .timeout(5000)
+      .emit(
+        id === "trophy" ? "buy-trophy" : "buy-spell",
+        id === "trophy" ? {} : { spellId: id },
+        (timeoutError, result) =>
+          done(
+            timeoutError
+              ? {
+                  ok: false,
+                  error:
+                    "No hubo respuesta. Revisa tu saldo antes de reintentar.",
+                }
+              : result,
+          ),
+      );
+  }
+
+  function useSpell(challengeId, spellId, done) {
+    socket
+      .timeout(5000)
+      .emit("use-spell", { challengeId, spellId }, (timeoutError, result) =>
+        done(
+          timeoutError
+            ? {
+                ok: false,
+                error: "Sin respuesta. Puedes reintentar el mismo hechizo.",
+              }
+            : result,
+        ),
+      );
+  }
+
+  function mediaStatus(challengeId, status, done) {
+    socket
+      .timeout(5000)
+      .emit(
+        "challenge-media",
+        { challengeId, status },
+        (timeoutError, result) => {
+          done(
+            timeoutError
+              ? { ok: false, error: "No se pudo avisar al servidor." }
+              : result,
+          );
+        },
+      );
   }
 
   return (
     <section className="magic-board-screen">
-
-      {/* ENCABEZADO */}
-
-      <button
-        type="button"
-        className="back-button"
-        onClick={onBack}
-      >
-        ← Salir de la partida
-      </button>
-
-      <h2>🏰 El tablero mágico</h2>
-
-      <p className="board-turn-description">
-        {winningPlayer
-          ? "🏆 ¡La aventura ha terminado!"
-          : challenge
-          ? "🪄 ¡Hay un reto mágico pendiente!"
-          : isMyTurn
-          ? "🎲 ¡Es tu turno!"
-          : `⏳ Esperando a ${current.nickname}`}
-      </p>
-
-      <p className="trophy-goal">
-        🏆 Consigue {trophiesToWin} trofeos para ganar.
-        Cada uno cuesta {trophyPrice} ⭐.
-      </p>
+      <header className="board-toolbar">
+        <button
+          type="button"
+          className="back-button"
+          onClick={onBack}
+          aria-label="Salir de la partida"
+        >
+          ← Salir
+        </button>
+        <div className="board-heading">
+          <h2>Hogwarts Party</h2>
+          <p className="board-turn-description" title={current.nickname}>
+            {winningPlayer
+              ? `🏆 Ganó ${winningPlayer.nickname}`
+              : challenge
+                ? challenge.kind === "surprise"
+                  ? "🎁 Carta sorpresa"
+                  : challenge.kind === "memory"
+                    ? "🧠 Reto de memoria"
+                    : challenge.mode === "solo"
+                      ? "🪄 Reto individual"
+                      : "⚡ Duelo contra rival"
+                : isMyTurn
+                  ? "🎲 ¡Es tu turno!"
+                  : `⏳ Turno de ${current.nickname}`}
+          </p>
+        </div>
+        <div
+          className="dice-display"
+          aria-label={`Último dado: ${dice ?? "sin lanzar"}`}
+        >
+          <BoardIcon type="dice" />
+          <span className="dice-number">{dice ?? "–"}</span>
+        </div>
+        <button
+          type="button"
+          className="secondary board-options-button"
+          aria-label="Opciones de la partida"
+          onClick={() => setShowOptions(true)}
+        >
+          ☰ <span>Opciones</span>
+        </button>
+      </header>
 
       {/* TARJETAS DE LOS JUGADORES */}
 
@@ -509,234 +512,293 @@ export default function MagicBoard({
           <div
             key={player.id}
             className={`board-player ${
-              turn === index && winner === null
-                ? "board-player-active"
-                : ""
+              turn === index && winner === null ? "board-player-active" : ""
             }`}
+            style={{
+              "--player-accent": player.character?.primary ?? "#edce87",
+            }}
           >
-            <CharacterAvatar
-              character={player.character}
-              size={85}
-            />
+            <CharacterAvatar character={player.character} size={85} />
 
             <div>
-              <h3>{player.nickname}</h3>
+              <span className="player-status">
+                {player.id === mySocketId
+                  ? "TÚ"
+                  : player.isBot
+                    ? "BOT"
+                    : "RIVAL"}
+                {turn === index && winner === null ? " · EN TURNO" : ""}
+              </span>
+              <h3 title={player.nickname}>{player.nickname}</h3>
 
-              <p>
-                {player.character?.name ?? "Estudiante"}
-                {" · "}
+              <p className="player-character">
+                {player.character?.name ?? "Estudiante"} ·{" "}
                 {player.character?.house ?? "Hogwarts"}
               </p>
-
-              <strong>
-                ⭐ {player.points ?? 0} puntos
-              </strong>
-
-              <p>
-                🏆 {player.trophies ?? 0}/{trophiesToWin} trofeos
-              </p>
-
-              <p>
-                Casilla: {player.position ?? 0}/{TOTAL}
-              </p>
-
-              <p>
-                🔄 Vueltas: {player.laps ?? 0}
-              </p>
+              <div className="player-stats">
+                <strong>
+                  🪙 {player.points ?? 0}
+                  <span className="stat-label"> monedas</span>
+                </strong>
+                <span>
+                  🏆 {player.trophies ?? 0}/{trophiesToWin}
+                </span>
+                <span className="player-position">
+                  Casilla {player.position ?? 0}/{TOTAL}
+                </span>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
+      <p className="board-legend" aria-label="Tipos de casilla">
+        <span>
+          <BoardIcon type="bonus" /> Bono +20
+        </span>
+        <span>
+          <BoardIcon type="trap" /> Trampa −10
+        </span>
+        <span>
+          <BoardIcon type="solo" /> Individual +10–30
+        </span>
+        <span>
+          <BoardIcon type="duel" /> Duelo +10–40 / −10
+        </span>
+        <span>
+          <BoardIcon type="memory" /> Memoria +25
+        </span>
+        <span>
+          <BoardIcon type="surprise" /> Sorpresa
+        </span>
+        <span>
+          <BoardIcon type="finish" /> Vuelta +20
+        </span>
+      </p>
       {/* CONTENEDOR DEL TABLERO Y LOS CONTROLES */}
 
       <div className="board-game-layout">
-
         {/* TABLERO */}
 
         <div className="board-landscape">
-          <div className="board-moon">☾</div>
-          <div className="board-castle">🏰</div>
-          <div className="board-trees">🌲 🌲 🌲</div>
+          <div className="board-map">
+            <BoardScenery />
+            <div className="map-place map-place-forest" aria-hidden="true">
+              Bosque Prohibido
+            </div>
+            <div className="map-place map-place-lake" aria-hidden="true">
+              Lago Negro
+            </div>
+            <div className="map-place map-place-castle" aria-hidden="true">
+              Hogwarts
+            </div>
+            <svg
+              className="board-path"
+              viewBox="0 0 1000 600"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <path
+                className="route-shadow"
+                d={route}
+                vectorEffect="non-scaling-stroke"
+              />
+              <path
+                className="route-edge"
+                d={route}
+                vectorEffect="non-scaling-stroke"
+              />
+              <path
+                className="route-surface"
+                d={route}
+                vectorEffect="non-scaling-stroke"
+              />
+              <path
+                className="route-dashes"
+                d={route}
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
 
-          <svg
-            className="board-path"
-            viewBox="0 0 1000 600"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <polyline
-              points={path
-                .map(([x, y]) => `${x * 10},${y * 6}`)
-                .join(" ")}
-              fill="none"
-              stroke="#12132c"
-              strokeWidth="65"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            {/* CASILLAS DEL MAPA COMPARTIDO */}
 
-            <polyline
-              points={path
-                .map(([x, y]) => `${x * 10},${y * 6}`)
-                .join(" ")}
-              fill="none"
-              stroke="#b9945d"
-              strokeWidth="48"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+            {spaces.map((space, index) => {
+              const [x, y] = path[index];
 
-          {/* LAS 24 CASILLAS */}
+              return (
+                <div
+                  key={space.number}
+                  className={`path-space ${space.type} ${current.position === space.number ? "space-current" : ""}`}
+                  aria-label={`Casilla ${space.number}: ${
+                    {
+                      solo: "reto individual",
+                      duel: "duelo contra rival",
+                      memory: "reto de memoria",
+                      surprise: "carta sorpresa",
+                      bonus: "bono de 20 monedas",
+                      trap: "trampa de 10 monedas",
+                      normal: "camino",
+                      finish: "vuelta completa",
+                    }[space.type]
+                  }`}
+                  style={{
+                    left: `${x}%`,
+                    top: `${y}%`,
+                  }}
+                >
+                  <small>{space.number}</small>
+                  <BoardIcon type={space.type} />
+                </div>
+              );
+            })}
 
-          {spaces.map((space, index) => {
-            const [x, y] = path[index];
+            {/* FICHAS ANIMADAS */}
 
-            return (
-              <div
-                key={space.number}
-                className={`path-space ${space.type}`}
-                style={{
-                  left: `${x}%`,
-                  top: `${y}%`,
-                }}
-              >
-                <small>{space.number}</small>
-                <span>{space.icon}</span>
-              </div>
-            );
-          })}
-
-          {/* FICHAS ANIMADAS */}
-
-          {players.map((player, index) => (
-            <AnimatedToken
-              key={player.id}
-              player={player}
-              index={index}
-              resetKey={resetKey}
-            />
-          ))}
+            {players.map((player, index) => (
+              <AnimatedToken
+                key={player.id}
+                player={player}
+                index={index}
+                resetKey={resetKey}
+                path={path}
+              />
+            ))}
+          </div>
         </div>
 
         {/* CONTROLES */}
 
-        <div className="board-controls">
-          {winningPlayer ? (
-            <div className="board-victory">
-              <h2>🏆 ¡Tenemos un ganador!</h2>
-              <h3>{winningPlayer.nickname}</h3>
-
-              <p>
-                {winningPlayer.character?.name ?? "Estudiante"}
-                {" · "}
-                {winningPlayer.character?.house ?? "Hogwarts"}
-              </p>
-
-              <strong>
-                🏆 {winningPlayer.trophies} trofeos
-              </strong>
+        <div className="board-controls" data-finished={Boolean(winningPlayer)}>
+          <div className="board-adventure" aria-hidden="true">
+            <span className="adventure-caption">LA COPA TE ESPERA</span>
+            <div className="adventure-crest">
+              <BoardIcon type="trophy" />
             </div>
-          ) : (
-            <h3>🎮 Turno de {current.nickname}</h3>
-          )}
-
-          <div
-            key={game.rollNumber ?? 0}
-            className="dice-display magical-dice"
-          >
-            <span className="dice-sparkle">✦</span>
-            <span className="dice-number">
-              {dice === null ? "🎲" : `🎲 ${dice}`}
-            </span>
-            <span className="dice-sparkle">✧</span>
+            <h3>Que comience la magia</h3>
+            <p>Cada casilla, una nueva aventura.</p>
           </div>
-
-          <p className="board-message" role="status">
-            {game.message}
-          </p>
-
-          {error && (
-            <p className="room-error" role="alert">
-              ⚠️ {error}
-            </p>
+          {winningPlayer && (
+            <div className="board-victory">
+              <h3>🏆 ¡Ganó {winningPlayer.nickname}!</h3>
+              <p>La Copa de Hogwarts es tuya.</p>
+            </div>
           )}
 
           <button
             type="button"
-            className="primary"
+            className="primary board-roll-button"
             disabled={!isMyTurn || busy}
             onClick={() => performAction(onRollDice)}
           >
-            {busy
-              ? "Procesando..."
-              : winningPlayer
-              ? "🏆 Partida terminada"
-              : challenge
-              ? "🪄 Resuelve el reto"
-              : isMyTurn
-              ? "🎲 Lanzar dado"
-              : "⏳ Esperando tu turno"}
+            <BoardIcon type="dice" />
+            <span>
+              {busy
+                ? "Procesando..."
+                : winningPlayer
+                  ? "🏆 Partida terminada"
+                  : challenge
+                    ? "Actividad en curso"
+                    : isMyTurn
+                      ? "Lanzar dado"
+                      : "⏳ Esperando tu turno"}
+            </span>
           </button>
 
           {/* TIENDA DE TROFEOS */}
 
           <div className="trophy-shop">
-            <h3>🏆 Tienda de trofeos</h3>
-
-            <p>
-              Tus puntos: ⭐ {myPlayer?.points ?? 0}
+            <p
+              className={`trophy-price ${inventoryNames ? "board-inventory" : ""}`}
+              title={
+                inventoryNames
+                  ? `Hechizos guardados: ${inventoryNames}. Se usan durante las preguntas.`
+                  : undefined
+              }
+            >
+              {inventoryNames
+                ? `🎒 ${inventoryNames}`
+                : `🏆 Meta: ${trophiesToWin} trofeos · ${trophyPrice} 🪙 c/u`}
             </p>
-
-            <p>
-              Tus trofeos: 🏆 {myPlayer?.trophies ?? 0}/
-              {trophiesToWin}
-            </p>
+            <div className="trophy-progress" aria-hidden="true">
+              <span
+                style={{
+                  width: `${Math.min(100, ((myPlayer?.points ?? 0) / trophyPrice) * 100)}%`,
+                }}
+              />
+            </div>
 
             <button
               type="button"
               className="primary trophy-buy-button"
-              disabled={!canBuyTrophy}
-              onClick={buyTrophy}
+              disabled={
+                game.spellShop
+                  ? Boolean(winningPlayer || challenge || busy)
+                  : !canBuyTrophy
+              }
+              onClick={
+                game.spellShop
+                  ? () => setShopRoll(game.rollNumber ?? 0)
+                  : buyTrophy
+              }
             >
-              🏆 Comprar trofeo — {trophyPrice} ⭐
+              <BoardIcon type={game.spellShop ? "bag" : "trophy"} />
+              {game.spellShop
+                ? `Tienda · ${myPlayer?.inventory?.length ?? 0}/${game.spellShop.inventoryLimit}`
+                : "Comprar trofeo"}
             </button>
 
             {!winningPlayer &&
               !challenge &&
               (myPlayer?.points ?? 0) < trophyPrice && (
                 <p className="trophy-hint">
-                  Te faltan{" "}
-                  {trophyPrice - (myPlayer?.points ?? 0)}{" "}
-                  puntos para comprar un trofeo.
+                  {inventoryNames
+                    ? "Activa tus hechizos durante las preguntas, antes de responder."
+                    : `Te faltan ${trophyPrice - (myPlayer?.points ?? 0)} monedas para comprar un trofeo.`}
                 </p>
               )}
           </div>
-
-          {isHost && (
-            <button
-              type="button"
-              className="secondary"
-              disabled={busy}
-              onClick={() => performAction(onRestart)}
-            >
-              ↻ Reiniciar partida para ambos
-            </button>
-          )}
         </div>
-
+        <p className="board-message" role="status">
+          {error || game.message}
+        </p>
       </div>
       {/* FIN DE board-game-layout */}
 
+      {showOptions && (
+        <BoardOptions
+          isHost={isHost}
+          busy={busy}
+          onRestart={() => performAction(onRestart)}
+          onClose={() => setShowOptions(false)}
+        />
+      )}
       {/* PREGUNTA ALEATORIA */}
 
+      {shopRoll !== null &&
+        shopRoll === (game.rollNumber ?? 0) &&
+        !challenge &&
+        !winningPlayer &&
+        myPlayer &&
+        game.spellShop && (
+          <SpellShop
+            player={myPlayer}
+            catalog={game.spellShop}
+            trophyPrice={trophyPrice}
+            trophiesToWin={trophiesToWin}
+            onBuy={buyItem}
+            onClose={() => setShopRoll(null)}
+          />
+        )}
+
       {challenge && (
-        <ChallengeModal
+        <LightningChallenge
           key={challenge.id}
           challenge={challenge}
           mySocketId={mySocketId}
           onAnswer={answerChallenge}
+          onMediaStatus={mediaStatus}
+          inventory={myPlayer?.inventory ?? []}
+          onUseSpell={game.spellShop ? useSpell : undefined}
         />
       )}
     </section>

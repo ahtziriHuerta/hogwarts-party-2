@@ -1,0 +1,182 @@
+[
+  {
+    "number": 1,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 2,
+    "type": "memory",
+    "icon": "🧠"
+  },
+  {
+    "number": 3,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 4,
+    "type": "surprise",
+    "icon": "🎁"
+  },
+  {
+    "number": 5,
+    "type": "bonus",
+    "icon": "🪙"
+  },
+  {
+    "number": 6,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 7,
+    "type": "trap",
+    "icon": "🕷️"
+  },
+  {
+    "number": 8,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 9,
+    "type": "memory",
+    "icon": "🧠"
+  },
+  {
+    "number": 10,
+    "type": "bonus",
+    "icon": "🪙"
+  },
+  {
+    "number": 11,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 12,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 13,
+    "type": "surprise",
+    "icon": "🎁"
+  },
+  {
+    "number": 14,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 15,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 16,
+    "type": "memory",
+    "icon": "🧠"
+  },
+  {
+    "number": 17,
+    "type": "surprise",
+    "icon": "🎁"
+  },
+  {
+    "number": 18,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 19,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 20,
+    "type": "bonus",
+    "icon": "🪙"
+  },
+  {
+    "number": 21,
+    "type": "memory",
+    "icon": "🧠"
+  },
+  {
+    "number": 22,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 23,
+    "type": "surprise",
+    "icon": "🎁"
+  },
+  {
+    "number": 24,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 25,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 26,
+    "type": "memory",
+    "icon": "🧠"
+  },
+  {
+    "number": 27,
+    "type": "trap",
+    "icon": "🕷️"
+  },
+  {
+    "number": 28,
+    "type": "surprise",
+    "icon": "🎁"
+  },
+  {
+    "number": 29,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 30,
+    "type": "duel",
+    "icon": "⚡"
+  },
+  {
+    "number": 31,
+    "type": "bonus",
+    "icon": "🪙"
+  },
+  {
+    "number": 32,
+    "type": "memory",
+    "icon": "🧠"
+  },
+  {
+    "number": 33,
+    "type": "surprise",
+    "icon": "🎁"
+  },
+  {
+    "number": 34,
+    "type": "solo",
+    "icon": "🪄"
+  },
+  {
+    "number": 35,
+    "type": "normal",
+    "icon": "✨"
+  },
+  {
+    "number": 36,
+    "type": "finish",
+    "icon": "🏰"
+  }
+]

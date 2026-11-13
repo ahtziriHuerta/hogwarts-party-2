@@ -1,0 +1,28 @@
+{
+  "verified_at_utc": "2026-11-11T20:24:37Z",
+  "game_commit": "f5eabc233e2b17d74185c5899f99cf7c10ff5cc0",
+  "node": "v24.22.1",
+  "npm": "11.9.0",
+  "logic": {
+    "passed": 56,
+    "failed": 0
+  },
+  "browser": {
+    "startTime": "2026-11-11T20:15:53.356Z",
+    "duration": 341832.57300000003,
+    "expected": 38,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "lint": "aprobado sin advertencias",
+  "build": "aprobado",
+  "assets": {
+    "media_bytes": 36734,
+    "js_kb": 317.19,
+    "js_gzip_kb": 99.47,
+    "css_kb": 41.75,
+    "css_gzip_kb": 9.1
+  },
+  "scope": "Pruebas locales; Chromium con emulación de pantalla, sin ensayo de carga ni validación formal de dispositivos físicos."
+}

@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Configuración privada; conservar solo el ejemplo
+.env
+.env.*
+!.env.example
+
+# Resultados de pruebas de navegador
+playwright-report/
+test-results/

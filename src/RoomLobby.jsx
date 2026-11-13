@@ -1,5 +1,6 @@
-
+import { useState } from "react";
 import { socket } from "./socket";
+import botLevels from "../shared/bot-levels.json";
 
 export default function RoomLobby({
   room,
@@ -8,114 +9,124 @@ export default function RoomLobby({
   onStartGame,
   error,
 }) {
+  const [copyMessage, setCopyMessage] = useState("");
+
+  async function copyCode() {
+    try {
+      await navigator.clipboard.writeText(room.code);
+      setCopyMessage("¡Código copiado!");
+    } catch {
+      setCopyMessage("Selecciona el código para copiarlo.");
+    }
+  }
+
   if (!room) return null;
 
   const isHost = room.players[0]?.id === socket.id;
+  const solo = room.mode === "solo";
+  const level = botLevels.find((entry) => entry.id === room.difficulty);
   const isFull = room.players.length === 2;
   const allSelected =
-    isFull && room.players.every((p) => p.character);
-
-  const myPlayer = room.players.find(
-    (p) => p.id === socket.id
-  );
+    isFull && room.players.every((player) => player.character);
+  const myPlayer = room.players.find((player) => player.id === socket.id);
+  const status = !isFull
+    ? "⏳ Esperando al segundo jugador…"
+    : !allSelected
+      ? solo
+        ? "Elige tu personaje para comenzar."
+        : "Ambos deben elegir personaje para comenzar."
+      : isHost
+        ? "✨ ¡Todo listo para comenzar!"
+        : "⏳ Esperando que el creador inicie la aventura…";
 
   return (
-    <section className="welcome room-lobby">
-      <button
-        type="button"
-        className="back-button"
-        onClick={onBack}
-      >
-        ← Salir de la sala
-      </button>
-
-      <div className="castle">🏰</div>
-      <h2>¡Sala mágica creada!</h2>
-
-      <p className="description">
-        Comparte este código con el segundo jugador.
-      </p>
-
-      <div className="room-code-display">
-        <span>CÓDIGO DE SALA</span>
-        <h1>{room.code}</h1>
-
-        <button
-          type="button"
-          className="secondary"
-          onClick={() =>
-            navigator.clipboard.writeText(room.code)
-          }
-        >
-          📋 Copiar código
+    <section className={`welcome room-lobby ${solo ? "solo-lobby" : ""}`}>
+      <header className="lobby-header">
+        <button type="button" className="back-button" onClick={onBack}>
+          ← Salir de la sala
         </button>
-      </div>
+        <h2>{solo ? "🧙 Aventura individual" : "🏰 Sala de espera"}</h2>
+      </header>
 
-      <h3>
-        Jugadores conectados ({room.players.length}/2)
-      </h3>
+      {/* Código y jugadores comparten una fila en horizontal; las acciones tienen su propia fila. */}
+      <div className="lobby-layout">
+        <div className="room-code-display">
+          {solo ? (
+            <>
+              <span>RIVAL AUTOMÁTICO</span>
+              <h1>{level?.name}</h1>
+              <p className="solo-rival-description">{level?.description}</p>
+            </>
+          ) : (
+            <>
+              <span>COMPARTE EL CÓDIGO</span>
+              <h1>{room.code}</h1>
+              <button type="button" className="secondary" onClick={copyCode}>
+                📋 Copiar código
+              </button>
+              <span className="copy-feedback" role="status">
+                {copyMessage}
+              </span>
+            </>
+          )}
+        </div>
 
-      <div className="room-player-list">
-        {room.players.map((player, index) => (
-          <div key={player.id} className="room-player">
-            🧙 Jugador {index + 1}: {player.nickname}
-
-            <p>
-              {player.character
-                ? `✨ ${player.character.name} · ${player.character.house}`
-                : "⏳ Sin personaje"}
-            </p>
+        <section
+          className="lobby-players"
+          aria-labelledby="lobby-players-title"
+        >
+          <h3 id="lobby-players-title">Jugadores ({room.players.length}/2)</h3>
+          <div className="room-player-list">
+            {room.players.map((player, index) => (
+              <div key={player.id} className="room-player">
+                <strong title={player.nickname}>
+                  {player.isBot ? "🤖" : "🧙"} J{index + 1} · {player.nickname}
+                </strong>
+                <p>
+                  {player.character
+                    ? `✨ ${player.character.name} · ${player.character.house}`
+                    : player.isBot
+                      ? "Se prepara al elegir tu personaje"
+                      : "⏳ Sin personaje"}
+                </p>
+              </div>
+            ))}
+            {!isFull && (
+              <div className="room-player empty-slot">
+                <strong>🪄 Jugador 2 · Libre</strong>
+                <p>Invita a tu compañero con el código.</p>
+              </div>
+            )}
           </div>
-        ))}
+        </section>
       </div>
 
-      {error && (
-        <p className="room-error" role="alert">
-          ⚠️ {error}
+      <footer className="lobby-actions">
+        <p
+          className={error ? "room-error" : "lobby-status"}
+          role={error ? "alert" : "status"}
+        >
+          {error || status}
         </p>
-      )}
-
-      {!isFull ? (
-        <p className="description">
-          ⏳ Esperando al segundo jugador...
-        </p>
-      ) : (
-        <>
-          <p className="description">
-            ✨ ¡Los dos jugadores están conectados!
-          </p>
-
-          <button
-            type="button"
-            className="secondary"
-            onClick={onChooseCharacter}
-          >
-            {myPlayer?.character
-              ? "🪄 Cambiar mi personaje"
-              : "🪄 Elegir personaje"}
-          </button>
-
-          {allSelected ? (
-            isHost ? (
-              <button
-                type="button"
-                className="primary"
-                onClick={onStartGame}
-              >
+        {isFull && (
+          <div className="lobby-buttons">
+            <button
+              type="button"
+              className="secondary"
+              onClick={onChooseCharacter}
+            >
+              {myPlayer?.character
+                ? "🪄 Cambiar mi personaje"
+                : "🪄 Elegir personaje"}
+            </button>
+            {allSelected && isHost && (
+              <button type="button" className="primary" onClick={onStartGame}>
                 🏰 Comenzar aventura
               </button>
-            ) : (
-              <p className="description">
-                ⏳ Esperando que el creador inicie la aventura...
-              </p>
-            )
-          ) : (
-            <p className="description">
-              Ambos deben elegir personaje para comenzar.
-            </p>
-          )}
-        </>
-      )}
+            )}
+          </div>
+        )}
+      </footer>
     </section>
   );
 }
