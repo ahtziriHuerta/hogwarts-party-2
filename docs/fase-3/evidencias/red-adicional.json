@@ -1,0 +1,839 @@
+{
+  "executedAtUtc": "2026-11-13T19:36:47.901Z",
+  "timeZoneForReport": "America/Mexico_City",
+  "codeRevision": "da129ed32c9265e820b6f0656b31518fa81aa67d",
+  "gameRevision": "f5eabc233e2b17d74185c5899f99cf7c10ff5cc0",
+  "environment": {
+    "node": "v24.22.1",
+    "platform": "linux",
+    "chromium": "156.0.8078.79",
+    "frontend": "http://127.0.0.1:5174",
+    "server": "http://localhost:3002",
+    "viewport": {
+      "width": 740,
+      "height": 280
+    },
+    "transports": [
+      "websocket",
+      "websocket"
+    ],
+    "deterministicDiceFixture": true
+  },
+  "checks": [
+    {
+      "id": "C01",
+      "expected": "Dos clientes en la misma sala",
+      "passed": true
+    },
+    {
+      "id": "C02",
+      "expected": "Rechazar un lanzamiento fuera de turno",
+      "passed": true,
+      "error": "Todavía no es tu turno."
+    },
+    {
+      "id": "C03",
+      "expected": "Mismo dado, reto y opciones",
+      "passed": true
+    },
+    {
+      "id": "C04",
+      "expected": "Ocultar respuestas hasta cerrar el reto",
+      "passed": true
+    },
+    {
+      "id": "C05",
+      "expected": "Rechazar otra respuesta del mismo jugador",
+      "passed": true,
+      "error": "Ya enviaste tu respuesta."
+    },
+    {
+      "id": "C06",
+      "expected": "Rechazar un índice de respuesta inválido",
+      "passed": true,
+      "error": "Selecciona una respuesta válida."
+    },
+    {
+      "id": "C07",
+      "expected": "Resultados y saldos coincidentes tras acertar ambos",
+      "passed": true,
+      "points": [
+        20,
+        20
+      ]
+    },
+    {
+      "id": "C08",
+      "expected": "Descontar diez monedas al rival con saldo suficiente",
+      "passed": true,
+      "pointsBefore": [
+        20,
+        20
+      ],
+      "pointsAfter": [
+        40,
+        10
+      ],
+      "earned": [
+        20,
+        -10
+      ]
+    },
+    {
+      "id": "C09",
+      "expected": "Al desconectar al rival se cancela la partida activa",
+      "passed": true
+    }
+  ],
+  "acks": [
+    {
+      "client": "A",
+      "event": "create-room",
+      "startUtcMs": 1794598593046,
+      "roundTripMs": 54.10000000055879,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "A",
+      "event": "select-character",
+      "startUtcMs": 1794598599314,
+      "roundTripMs": 56.59999999962747,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "A",
+      "event": "start-game",
+      "startUtcMs": 1794598600625,
+      "roundTripMs": 14.200000000186265,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "A",
+      "event": "roll-dice",
+      "startUtcMs": 1794598600844,
+      "roundTripMs": 104.40000000037253,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "A",
+      "event": "answer-challenge",
+      "startUtcMs": 1794598601152,
+      "roundTripMs": 12.5,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "A",
+      "event": "answer-challenge",
+      "startUtcMs": 1794598601479,
+      "roundTripMs": 1.900000000372529,
+      "ok": false,
+      "error": "Ya enviaste tu respuesta."
+    },
+    {
+      "client": "A",
+      "event": "answer-challenge",
+      "startUtcMs": 1794598607296,
+      "roundTripMs": 17.5,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "B",
+      "event": "join-room",
+      "startUtcMs": 1794598593512,
+      "roundTripMs": 14.100000000558794,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "B",
+      "event": "select-character",
+      "startUtcMs": 1794598599546,
+      "roundTripMs": 55.5,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "B",
+      "event": "roll-dice",
+      "startUtcMs": 1794598600815,
+      "roundTripMs": 1.5,
+      "ok": false,
+      "error": "Todavía no es tu turno."
+    },
+    {
+      "client": "B",
+      "event": "answer-challenge",
+      "startUtcMs": 1794598601483,
+      "roundTripMs": 0.8999999994412065,
+      "ok": false,
+      "error": "Selecciona una respuesta válida."
+    },
+    {
+      "client": "B",
+      "event": "answer-challenge",
+      "startUtcMs": 1794598601545,
+      "roundTripMs": 14,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "B",
+      "event": "roll-dice",
+      "startUtcMs": 1794598606993,
+      "roundTripMs": 127.20000000018626,
+      "ok": true,
+      "error": null
+    },
+    {
+      "client": "B",
+      "event": "answer-challenge",
+      "startUtcMs": 1794598607366,
+      "roundTripMs": 29.5,
+      "ok": true,
+      "error": null
+    }
+  ],
+  "singleBroadcast": {
+    "clientAFromSendMs": 104,
+    "clientBFromSendMs": 2,
+    "arrivalDifferenceMs": 102
+  },
+  "snapshots": {
+    "firstChallenge": {
+      "code": "065401",
+      "status": "playing",
+      "mode": "multiplayer",
+      "players": [
+        {
+          "id": "cliente-A",
+          "nickname": "Cliente A",
+          "character": {
+            "id": 6,
+            "name": "Luna",
+            "house": "Ravenclaw",
+            "hairstyle": "braids",
+            "primary": "#315d9b",
+            "secondary": "#bc9365",
+            "hair": "#e1ba72",
+            "skin": "#ffe0bc",
+            "eyes": "#668cbd"
+          },
+          "isBot": false
+        },
+        {
+          "id": "cliente-B",
+          "nickname": "Cliente B",
+          "character": {
+            "id": 7,
+            "name": "Emma",
+            "house": "Hufflepuff",
+            "hairstyle": "ponytail",
+            "primary": "#d9ae39",
+            "secondary": "#252530",
+            "hair": "#a45d38",
+            "skin": "#e7ac82",
+            "eyes": "#648c61"
+          },
+          "isBot": false
+        }
+      ],
+      "game": {
+        "players": [
+          {
+            "id": "cliente-A",
+            "nickname": "Cliente A",
+            "character": {
+              "id": 6,
+              "name": "Luna",
+              "house": "Ravenclaw",
+              "hairstyle": "braids",
+              "primary": "#315d9b",
+              "secondary": "#bc9365",
+              "hair": "#e1ba72",
+              "skin": "#ffe0bc",
+              "eyes": "#668cbd"
+            },
+            "isBot": false,
+            "position": 3,
+            "points": 0,
+            "trophies": 0,
+            "laps": 0,
+            "totalSteps": 3,
+            "inventory": []
+          },
+          {
+            "id": "cliente-B",
+            "nickname": "Cliente B",
+            "character": {
+              "id": 7,
+              "name": "Emma",
+              "house": "Hufflepuff",
+              "hairstyle": "ponytail",
+              "primary": "#d9ae39",
+              "secondary": "#252530",
+              "hair": "#a45d38",
+              "skin": "#e7ac82",
+              "eyes": "#648c61"
+            },
+            "isBot": false,
+            "position": 0,
+            "points": 0,
+            "trophies": 0,
+            "laps": 0,
+            "totalSteps": 0,
+            "inventory": []
+          }
+        ],
+        "turn": 0,
+        "dice": 3,
+        "winner": null,
+        "message": "⚡ Duelo: ambos responden. Fallar o dejar pasar el tiempo resta 10 monedas.",
+        "rollNumber": 1,
+        "challenge": {
+          "id": "5f3f0e95-c3a8-491a-80a7-389904095092",
+          "phase": "answering",
+          "category": "Hogwarts",
+          "kind": "trivia",
+          "difficulty": "Fácil",
+          "points": 10,
+          "mode": "duel",
+          "playerName": "Cliente A",
+          "participantIds": [
+            "cliente-A",
+            "cliente-B"
+          ],
+          "wrongPenalty": 10,
+          "maxSpeedBonus": 10,
+          "deadlineAt": 1794598620845,
+          "durationMs": 20000,
+          "serverNow": 1794598600845,
+          "participantCount": 2,
+          "answeredPlayerIds": [],
+          "spellUses": [],
+          "question": "¿A qué casa pertenece Harry Potter?",
+          "options": [
+            "Slytherin",
+            "Hufflepuff",
+            "Gryffindor",
+            "Ravenclaw"
+          ]
+        },
+        "trophyPrice": 100,
+        "trophiesToWin": 2,
+        "spellShop": {
+          "inventoryLimit": 2,
+          "maxUsesPerTurn": 1,
+          "items": [
+            {
+              "id": "shield",
+              "name": "Escudo",
+              "cost": 5,
+              "description": "Actívalo antes de responder un duelo: evita perder monedas en ese reto."
+            },
+            {
+              "id": "hint",
+              "name": "Pista",
+              "cost": 10,
+              "description": "Descarta dos respuestas incorrectas en preguntas de cuatro opciones."
+            }
+          ]
+        }
+      }
+    },
+    "pending": {
+      "code": "065401",
+      "status": "playing",
+      "mode": "multiplayer",
+      "players": [
+        {
+          "id": "cliente-A",
+          "nickname": "Cliente A",
+          "character": {
+            "id": 6,
+            "name": "Luna",
+            "house": "Ravenclaw",
+            "hairstyle": "braids",
+            "primary": "#315d9b",
+            "secondary": "#bc9365",
+            "hair": "#e1ba72",
+            "skin": "#ffe0bc",
+            "eyes": "#668cbd"
+          },
+          "isBot": false
+        },
+        {
+          "id": "cliente-B",
+          "nickname": "Cliente B",
+          "character": {
+            "id": 7,
+            "name": "Emma",
+            "house": "Hufflepuff",
+            "hairstyle": "ponytail",
+            "primary": "#d9ae39",
+            "secondary": "#252530",
+            "hair": "#a45d38",
+            "skin": "#e7ac82",
+            "eyes": "#648c61"
+          },
+          "isBot": false
+        }
+      ],
+      "game": {
+        "players": [
+          {
+            "id": "cliente-A",
+            "nickname": "Cliente A",
+            "character": {
+              "id": 6,
+              "name": "Luna",
+              "house": "Ravenclaw",
+              "hairstyle": "braids",
+              "primary": "#315d9b",
+              "secondary": "#bc9365",
+              "hair": "#e1ba72",
+              "skin": "#ffe0bc",
+              "eyes": "#668cbd"
+            },
+            "isBot": false,
+            "position": 3,
+            "points": 0,
+            "trophies": 0,
+            "laps": 0,
+            "totalSteps": 3,
+            "inventory": []
+          },
+          {
+            "id": "cliente-B",
+            "nickname": "Cliente B",
+            "character": {
+              "id": 7,
+              "name": "Emma",
+              "house": "Hufflepuff",
+              "hairstyle": "ponytail",
+              "primary": "#d9ae39",
+              "secondary": "#252530",
+              "hair": "#a45d38",
+              "skin": "#e7ac82",
+              "eyes": "#648c61"
+            },
+            "isBot": false,
+            "position": 0,
+            "points": 0,
+            "trophies": 0,
+            "laps": 0,
+            "totalSteps": 0,
+            "inventory": []
+          }
+        ],
+        "turn": 0,
+        "dice": 3,
+        "winner": null,
+        "message": "⚡ Duelo: ambos responden. Fallar o dejar pasar el tiempo resta 10 monedas.",
+        "rollNumber": 1,
+        "challenge": {
+          "id": "5f3f0e95-c3a8-491a-80a7-389904095092",
+          "phase": "answering",
+          "category": "Hogwarts",
+          "kind": "trivia",
+          "difficulty": "Fácil",
+          "points": 10,
+          "mode": "duel",
+          "playerName": "Cliente A",
+          "participantIds": [
+            "cliente-A",
+            "cliente-B"
+          ],
+          "wrongPenalty": 10,
+          "maxSpeedBonus": 10,
+          "deadlineAt": 1794598620845,
+          "durationMs": 20000,
+          "serverNow": 1794598601152,
+          "participantCount": 2,
+          "answeredPlayerIds": [
+            "cliente-A"
+          ],
+          "spellUses": [],
+          "question": "¿A qué casa pertenece Harry Potter?",
+          "options": [
+            "Slytherin",
+            "Hufflepuff",
+            "Gryffindor",
+            "Ravenclaw"
+          ]
+        },
+        "trophyPrice": 100,
+        "trophiesToWin": 2,
+        "spellShop": {
+          "inventoryLimit": 2,
+          "maxUsesPerTurn": 1,
+          "items": [
+            {
+              "id": "shield",
+              "name": "Escudo",
+              "cost": 5,
+              "description": "Actívalo antes de responder un duelo: evita perder monedas en ese reto."
+            },
+            {
+              "id": "hint",
+              "name": "Pista",
+              "cost": 10,
+              "description": "Descarta dos respuestas incorrectas en preguntas de cuatro opciones."
+            }
+          ]
+        }
+      }
+    },
+    "firstResults": {
+      "code": "065401",
+      "status": "playing",
+      "mode": "multiplayer",
+      "players": [
+        {
+          "id": "cliente-A",
+          "nickname": "Cliente A",
+          "character": {
+            "id": 6,
+            "name": "Luna",
+            "house": "Ravenclaw",
+            "hairstyle": "braids",
+            "primary": "#315d9b",
+            "secondary": "#bc9365",
+            "hair": "#e1ba72",
+            "skin": "#ffe0bc",
+            "eyes": "#668cbd"
+          },
+          "isBot": false
+        },
+        {
+          "id": "cliente-B",
+          "nickname": "Cliente B",
+          "character": {
+            "id": 7,
+            "name": "Emma",
+            "house": "Hufflepuff",
+            "hairstyle": "ponytail",
+            "primary": "#d9ae39",
+            "secondary": "#252530",
+            "hair": "#a45d38",
+            "skin": "#e7ac82",
+            "eyes": "#648c61"
+          },
+          "isBot": false
+        }
+      ],
+      "game": {
+        "players": [
+          {
+            "id": "cliente-A",
+            "nickname": "Cliente A",
+            "character": {
+              "id": 6,
+              "name": "Luna",
+              "house": "Ravenclaw",
+              "hairstyle": "braids",
+              "primary": "#315d9b",
+              "secondary": "#bc9365",
+              "hair": "#e1ba72",
+              "skin": "#ffe0bc",
+              "eyes": "#668cbd"
+            },
+            "isBot": false,
+            "position": 3,
+            "points": 20,
+            "trophies": 0,
+            "laps": 0,
+            "totalSteps": 3,
+            "inventory": []
+          },
+          {
+            "id": "cliente-B",
+            "nickname": "Cliente B",
+            "character": {
+              "id": 7,
+              "name": "Emma",
+              "house": "Hufflepuff",
+              "hairstyle": "ponytail",
+              "primary": "#d9ae39",
+              "secondary": "#252530",
+              "hair": "#a45d38",
+              "skin": "#e7ac82",
+              "eyes": "#648c61"
+            },
+            "isBot": false,
+            "position": 0,
+            "points": 20,
+            "trophies": 0,
+            "laps": 0,
+            "totalSteps": 0,
+            "inventory": []
+          }
+        ],
+        "turn": 0,
+        "dice": 3,
+        "winner": null,
+        "message": "✨ Reto terminado. ¡Mira los resultados!",
+        "rollNumber": 1,
+        "challenge": {
+          "id": "5f3f0e95-c3a8-491a-80a7-389904095092",
+          "phase": "results",
+          "category": "Hogwarts",
+          "kind": "trivia",
+          "difficulty": "Fácil",
+          "points": 10,
+          "mode": "duel",
+          "playerName": "Cliente A",
+          "participantIds": [
+            "cliente-A",
+            "cliente-B"
+          ],
+          "wrongPenalty": 10,
+          "maxSpeedBonus": 10,
+          "deadlineAt": 1794598620845,
+          "durationMs": 20000,
+          "serverNow": 1794598601547,
+          "participantCount": 2,
+          "answeredPlayerIds": [
+            "cliente-A",
+            "cliente-B"
+          ],
+          "spellUses": [],
+          "question": "¿A qué casa pertenece Harry Potter?",
+          "options": [
+            "Slytherin",
+            "Hufflepuff",
+            "Gryffindor",
+            "Ravenclaw"
+          ],
+          "correctAnswer": 2,
+          "results": [
+            {
+              "playerId": "cliente-A",
+              "nickname": "Cliente A",
+              "answer": 2,
+              "correct": true,
+              "timedOut": false,
+              "basePoints": 10,
+              "speedBonus": 10,
+              "penalty": 0,
+              "protectedByShield": false,
+              "earned": 20
+            },
+            {
+              "playerId": "cliente-B",
+              "nickname": "Cliente B",
+              "answer": 2,
+              "correct": true,
+              "timedOut": false,
+              "basePoints": 10,
+              "speedBonus": 10,
+              "penalty": 0,
+              "protectedByShield": false,
+              "earned": 20
+            }
+          ],
+          "revealUntil": 1794598606547
+        },
+        "trophyPrice": 100,
+        "trophiesToWin": 2,
+        "spellShop": {
+          "inventoryLimit": 2,
+          "maxUsesPerTurn": 1,
+          "items": [
+            {
+              "id": "shield",
+              "name": "Escudo",
+              "cost": 5,
+              "description": "Actívalo antes de responder un duelo: evita perder monedas en ese reto."
+            },
+            {
+              "id": "hint",
+              "name": "Pista",
+              "cost": 10,
+              "description": "Descarta dos respuestas incorrectas en preguntas de cuatro opciones."
+            }
+          ]
+        }
+      }
+    },
+    "secondResults": {
+      "code": "065401",
+      "status": "playing",
+      "mode": "multiplayer",
+      "players": [
+        {
+          "id": "cliente-A",
+          "nickname": "Cliente A",
+          "character": {
+            "id": 6,
+            "name": "Luna",
+            "house": "Ravenclaw",
+            "hairstyle": "braids",
+            "primary": "#315d9b",
+            "secondary": "#bc9365",
+            "hair": "#e1ba72",
+            "skin": "#ffe0bc",
+            "eyes": "#668cbd"
+          },
+          "isBot": false
+        },
+        {
+          "id": "cliente-B",
+          "nickname": "Cliente B",
+          "character": {
+            "id": 7,
+            "name": "Emma",
+            "house": "Hufflepuff",
+            "hairstyle": "ponytail",
+            "primary": "#d9ae39",
+            "secondary": "#252530",
+            "hair": "#a45d38",
+            "skin": "#e7ac82",
+            "eyes": "#648c61"
+          },
+          "isBot": false
+        }
+      ],
+      "game": {
+        "players": [
+          {
+            "id": "cliente-A",
+            "nickname": "Cliente A",
+            "character": {
+              "id": 6,
+              "name": "Luna",
+              "house": "Ravenclaw",
+              "hairstyle": "braids",
+              "primary": "#315d9b",
+              "secondary": "#bc9365",
+              "hair": "#e1ba72",
+              "skin": "#ffe0bc",
+              "eyes": "#668cbd"
+            },
+            "isBot": false,
+            "position": 3,
+            "points": 40,
+            "trophies": 0,
+            "laps": 0,
+            "totalSteps": 3,
+            "inventory": []
+          },
+          {
+            "id": "cliente-B",
+            "nickname": "Cliente B",
+            "character": {
+              "id": 7,
+              "name": "Emma",
+              "house": "Hufflepuff",
+              "hairstyle": "ponytail",
+              "primary": "#d9ae39",
+              "secondary": "#252530",
+              "hair": "#a45d38",
+              "skin": "#e7ac82",
+              "eyes": "#648c61"
+            },
+            "isBot": false,
+            "position": 3,
+            "points": 10,
+            "trophies": 0,
+            "laps": 0,
+            "totalSteps": 3,
+            "inventory": []
+          }
+        ],
+        "turn": 1,
+        "dice": 3,
+        "winner": null,
+        "message": "✨ Reto terminado. ¡Mira los resultados!",
+        "rollNumber": 2,
+        "challenge": {
+          "id": "6eaf48f7-bbbf-4da2-849a-8242ca303a7f",
+          "phase": "results",
+          "category": "Criaturas",
+          "kind": "trivia",
+          "difficulty": "Fácil",
+          "points": 10,
+          "mode": "duel",
+          "playerName": "Cliente B",
+          "participantIds": [
+            "cliente-A",
+            "cliente-B"
+          ],
+          "wrongPenalty": 10,
+          "maxSpeedBonus": 10,
+          "deadlineAt": 1794598626994,
+          "durationMs": 20000,
+          "serverNow": 1794598607367,
+          "participantCount": 2,
+          "answeredPlayerIds": [
+            "cliente-A",
+            "cliente-B"
+          ],
+          "spellUses": [],
+          "question": "¿Cómo se llama la lechuza de Harry?",
+          "options": [
+            "Errol",
+            "Hedwig",
+            "Fawkes",
+            "Pigwidgeon"
+          ],
+          "correctAnswer": 1,
+          "results": [
+            {
+              "playerId": "cliente-A",
+              "nickname": "Cliente A",
+              "answer": 1,
+              "correct": true,
+              "timedOut": false,
+              "basePoints": 10,
+              "speedBonus": 10,
+              "penalty": 0,
+              "protectedByShield": false,
+              "earned": 20
+            },
+            {
+              "playerId": "cliente-B",
+              "nickname": "Cliente B",
+              "answer": 0,
+              "correct": false,
+              "timedOut": false,
+              "basePoints": 0,
+              "speedBonus": 0,
+              "penalty": 10,
+              "protectedByShield": false,
+              "earned": -10
+            }
+          ],
+          "revealUntil": 1794598612367
+        },
+        "trophyPrice": 100,
+        "trophiesToWin": 2,
+        "spellShop": {
+          "inventoryLimit": 2,
+          "maxUsesPerTurn": 1,
+          "items": [
+            {
+              "id": "shield",
+              "name": "Escudo",
+              "cost": 5,
+              "description": "Actívalo antes de responder un duelo: evita perder monedas en ese reto."
+            },
+            {
+              "id": "hint",
+              "name": "Pista",
+              "cost": 10,
+              "description": "Descarta dos respuestas incorrectas en preguntas de cuatro opciones."
+            }
+          ]
+        }
+      }
+    }
+  },
+  "pageErrors": [],
+  "limitations": "Medición puntual sobre loopback; no mide Internet, capacidad concurrente ni latencia de usuarios físicos. IDs de cliente anonimizados."
+}

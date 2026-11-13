@@ -2,6 +2,12 @@
 
 Material preparado **sin portada**, para incorporar la portada propia de la estudiante.
 
+## Revisión del informe: 13 de noviembre de 2026
+
+El informe desarrolla el planteamiento del problema, objetivos, requisitos, decisiones técnicas, estados, eventos y fragmentos reales del servidor. Añade casos con precondiciones, pasos, resultados esperados y obtenidos, cinco capturas nuevas, mediciones locales, conclusiones y referencias. El anexo B relaciona la evidencia con cada criterio de la consigna.
+
+Se conserva la fecha de la batería completa del **11 de noviembre**: 56 pruebas de lógica y 38 de navegador. La [verificación adicional del 13 de noviembre](evidencias/red-adicional.json) registra **nueve comprobaciones** con dos clientes conectados, transporte WebSocket observado, rechazos de acciones inválidas, resultados y desconexión. Son comprobaciones adicionales de una secuencia, no una nueva ejecución de los 94 casos históricos. Las mediciones son locales y no representan capacidad ni latencia por Internet.
+
 ## Archivos
 
 - [Informe final](INFORME_FINAL.md): sistema de red, organización del código, resultados y optimizaciones futuras.
@@ -9,7 +15,29 @@ Material preparado **sin portada**, para incorporar la portada propia de la estu
 - [Guion de exposición y demostración](GUION_PRESENTACION.md): recorrido de 8–10 minutos y preguntas técnicas.
 - [Resumen de verificación](evidencias/resultados.json) y salidas de [lógica](evidencias/unitarias.txt), [interfaz](evidencias/interfaz.txt), [análisis estático](evidencias/lint.txt) y [compilación](evidencias/build.txt).
 - Entregables exportados: [informe PDF](entregables/Informe_final.pdf), [informe Word](entregables/Informe_final.docx), [presentación PowerPoint](entregables/Presentacion_clase.pptx), [diapositivas PDF](entregables/Presentacion_clase.pdf) y [guion PDF](entregables/Guion_presentacion.pdf).
-- `assets/`: arquitectura y capturas de las pruebas. `sala-compartida.png` y `resultados-duelo.png` proceden de clientes reales de navegador contra el servidor local. `hechizos-visibles.png` es un escenario visual determinista, identificado como tal.
+- `assets/`: arquitectura y capturas de las pruebas. `red-sala.png`, `red-pregunta-a.png`, `red-pregunta-b.png`, `red-resultados-a.png` y `red-resultados-b.png` proceden de la ejecución adicional y se incluyen en el informe revisado. Las capturas anteriores se conservan para las diapositivas; `hechizos-visibles.png` es un escenario visual determinista.
+
+## Reproducir la evidencia adicional
+
+Desde la raíz del repositorio, después de `npm ci` y `npx playwright install chromium`, ejecutar en tres terminales de macOS/Linux:
+
+```bash
+# Terminal 1: servidor con recorrido de prueba; no usar este fixture en producción.
+PORT=3002 node --require ./tests/fixtures/fixed-dice.cjs server/index.cjs
+```
+
+```bash
+# Terminal 2: cliente conectado al servidor de prueba.
+VITE_SERVER_URL=http://localhost:3002 npm run dev -- \
+  --mode browser-tests --host 127.0.0.1 --port 5174 --strictPort
+```
+
+```bash
+# Terminal 3: regenerar el JSON y las cinco capturas como un mismo conjunto.
+node docs/fase-3/evidencias/verificar-red.mjs
+```
+
+Se puede indicar un Chromium del sistema con `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH`. El [script](evidencias/verificar-red.mjs) fuerza dos duelos mediante un fixture existente y elige respuestas consultando el banco del servidor. Los clientes y sus sockets son reales; el azar y las respuestas están controlados para verificar saldos. El servidor normal sigue usando un dado aleatorio. Al terminar, detener los dos servidores. Para ejecutar después `npm run test:ui`, los puertos 3002 y 5174 deben estar libres.
 
 ## Correspondencia con la consigna
 
