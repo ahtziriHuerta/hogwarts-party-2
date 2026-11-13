@@ -6,7 +6,7 @@
 
 ## Resumen
 
-Hogwarts Party es un videojuego web de tablero para dos participantes que comparten una sala por Internet. Esta fase integra la creación de salas, selección de personajes, turnos, retos simultáneos, compras y resultados mediante una arquitectura cliente-servidor. React presenta la interfaz y un servidor Node.js valida las acciones y conserva el estado de la partida. Socket.IO transporta las solicitudes y distribuye las actualizaciones. El informe explica las decisiones técnicas, relaciona el código con los requisitos y presenta evidencias verificables. Se documentan 56 pruebas de lógica y 38 de navegador ejecutadas el 11 de noviembre, además de nueve comprobaciones de red realizadas el 13 de noviembre. También se identifican límites de persistencia, disponibilidad y medición del desempeño, junto con mejoras futuras.
+Hogwarts Party es un videojuego web de tablero con dos modalidades: multijugador entre dos personas e individual contra la máquina. En la segunda, una persona compite contra un rival automático con dificultad seleccionable. Ambas modalidades utilizan una arquitectura cliente-servidor para gestionar salas, personajes, turnos, retos, compras y resultados. React presenta la interfaz; Node.js valida las acciones y conserva la partida; Socket.IO transporta las solicitudes y actualizaciones. El informe explica estas decisiones y presenta evidencias verificables: 56 pruebas de lógica y 38 de navegador ejecutadas el 11 de noviembre, incluidas las del modo individual, y nueve comprobaciones adicionales de red del 13 de noviembre. También identifica límites de persistencia, disponibilidad y desempeño, junto con mejoras futuras.
 
 **Contenido:** 1. Introducción; 2. Objetivos y requisitos; 3. Tecnologías; 4. Arquitectura; 5. Implementación; 6. Funcionamiento; 7. Metodología; 8. Casos y evidencias; 9. Resultados y desempeño; 10. Problemas y soluciones; 11. Limitaciones y mejoras; 12. Conclusiones; Referencias y anexos.
 
@@ -24,7 +24,7 @@ El cliente se publica en <https://videojuego3d.netlify.app/> y el servidor en <h
 
 ### 2.1 Objetivo general
 
-Implementar y verificar una conexión en red que permita a dos jugadores participar en una misma partida de Hogwarts Party, con reglas y resultados controlados por el servidor y una interfaz utilizable desde computadora o navegador móvil.
+Implementar y verificar Hogwarts Party con conexión cliente-servidor, reglas y resultados controlados por el servidor y dos modalidades de juego: multijugador entre dos personas e individual contra la máquina, con una interfaz utilizable desde computadora o navegador móvil.
 
 ### 2.2 Objetivos específicos
 
@@ -34,6 +34,7 @@ Implementar y verificar una conexión en red que permita a dos jugadores partici
 4. Resolver retos con un plazo común y proteger las respuestas individuales mientras el duelo siga abierto.
 5. Manejar esperas, errores de conexión, cancelaciones y desconexiones de forma explícita.
 6. Documentar la estructura del código, ejecutar pruebas reproducibles y delimitar lo que sus resultados permiten concluir.
+7. Permitir que una persona juegue contra un rival automático con dificultad seleccionable, utilizando las mismas reglas de turnos, recompensas y victoria.
 
 ### 2.3 Requisitos y alcance de la entrega
 
@@ -45,6 +46,7 @@ Implementar y verificar una conexión en red que permita a dos jugadores partici
 | RF4 | Resolver retos individuales y duelos. | El servidor acepta una respuesta por participante, controla el plazo y calcula el resultado. |
 | RF5 | Gestionar monedas, objetos y victoria. | Compras sujetas a saldo e inventario; victoria al reunir dos trofeos. |
 | RF6 | Tratar interrupciones. | Se informa la espera y se limpia el estado al cancelar, reiniciar o desconectar. |
+| RF7 | Jugar individualmente contra la máquina. | Una persona crea una partida privada, elige dificultad y personaje, y compite contra un bot que actúa automáticamente. |
 | RNF1 | Mantener consistencia. | Ningún cliente puede proponer directamente el dado, premio o saldo válido. |
 | RNF2 | Adaptar la presentación. | Tablero, formularios y retos utilizables en los tamaños emulados documentados. |
 | RNF3 | Facilitar revisión y reproducción. | Código modular, comandos, pruebas y evidencias localizables. |
@@ -74,6 +76,8 @@ En producción los proveedores reciben conexiones HTTPS. Cuando Socket.IO utiliz
 ![Arquitectura del sistema.](assets/arquitectura.png)
 
 **Figura 1.** Dos navegadores se conectan al mismo servidor. Netlify entrega archivos; Render ejecuta la lógica de la partida. Los clientes no se envían acciones directamente.
+
+La figura representa el modo multijugador. En el modo individual se conecta un solo navegador humano; el segundo participante es un bot ejecutado dentro del servidor, sin un segundo navegador ni una segunda persona.
 
 ### 4.1 Distribución de responsabilidades
 
@@ -201,15 +205,35 @@ Al diagnosticar un fallo conviene comprobar, en este orden, la dirección real d
 
 ## 6. Funcionamiento y uso del videojuego
 
+### 6.1 Multijugador: dos personas conectadas
+
 Para jugar en red, una persona elige «Crear partida», escribe su nombre y comparte el código. La otra selecciona «Unirse a partida» e ingresa ese código. Ambas eligen personaje y el creador inicia la aventura. El jugador en turno lanza el dado; la casilla aplica su efecto o abre una actividad.
 
 Los retos individuales involucran al jugador activo. Los duelos permiten responder a ambos dentro de un plazo común. Las casillas de memoria, bono, trampa y sorpresa aportan variedad. Las monedas permiten comprar objetos y trofeos; la condición de victoria es conseguir dos trofeos de cien monedas cada uno. Los objetos se compran en la tienda y se activan desde los controles del reto cuando cumplen sus condiciones; por ejemplo, el escudo se utiliza antes de responder un duelo y protege su penalización según las reglas.
 
-El modo individual añade un rival automático con dificultad seleccionable. Utiliza reglas del servidor y puede equivocarse. Su existencia ayuda a practicar, pero una partida contra el bot no demuestra por sí sola la interacción entre dos personas conectadas.
-
 ![Sala compartida con los dos participantes preparados.](assets/red-sala.png)
 
 **Figura 2.** Captura de un navegador conectado al servidor local durante la verificación del 13 de noviembre. Los nombres «Cliente A» y «Cliente B» identifican a los dos clientes de prueba.
+
+### 6.2 Modo individual: una persona contra la máquina
+
+El inicio también ofrece **«Jugar solo»**. La persona escribe su nombre, selecciona la dificultad del rival, pulsa «Preparar aventura», elige uno de los ocho personajes y comienza. El servidor crea una sala privada mediante `create-solo-room`, incorpora un rival identificado como **BOT** y le asigna un personaje diferente. No se necesita invitar a otra persona; el servidor rechaza los intentos de ingreso a esa sala individual.
+
+| Dificultad | Probabilidad base de acierto | Pausa programada antes de responder |
+| --- | --- | --- |
+| Aprendiz | 45 % | Entre 6 y 9,5 segundos. |
+| Mago | 65 % | Entre 3,5 y 6,5 segundos. |
+| Experto | 82 % | Entre 2 y 4 segundos. |
+
+Estos valores proceden de `server/bot.cjs`. Son probabilidades programadas, no porcentajes de victoria medidos. El rival puede equivocarse incluso en Experto. Si utiliza una pista válida, su probabilidad de acierto aumenta doce puntos porcentuales, con un límite del 95 %. No utiliza un modelo de IA ni un servicio externo: el servidor elige una respuesta correcta o incorrecta según la dificultad y aplica una pausa para su envío.
+
+El bot lanza el dado automáticamente en su turno después de 1,8 segundos, responde duelos y actividades propias, respeta las fases de memoria y medios, y puede comprar y usar hechizos. Prioriza la compra de trofeos cuando tiene saldo; gana con los mismos dos trofeos de cien monedas que necesita la persona. Las acciones se ejecutan mediante las funciones comunes del servidor para mantener las reglas de premios, penalizaciones e inventario.
+
+Reiniciar, finalizar o salir cancela las acciones pendientes de la máquina. Al salir de una partida individual se elimina su sala. **Jugar solo también requiere conexión al servidor**, porque allí se ejecutan el bot y las reglas; no es un modo sin Internet. La demostración de interacción entre dos personas se realiza aparte, con la modalidad multijugador.
+
+![Preparación de una partida individual contra Rival Mago.](assets/individual-maquina.png)
+
+**Figura 3.** Modo individual con una persona y «Rival Mago». Captura conservada de la batería de Playwright del 11 de noviembre, en vista de 932 × 430 píxeles. El nombre de veinte letras forma parte de la prueba del formulario; no representa a un segundo jugador humano.
 
 ## 7. Metodología de verificación
 
@@ -262,11 +286,11 @@ La validación de C02 demuestra por qué no basta con deshabilitar un botón: la
 
 ![Cliente A: respuesta enviada y espera del otro participante.](assets/red-pregunta-a.png)
 
-**Figura 3.** Cliente A después de responder. El reto continúa abierto para el otro participante.
+**Figura 4.** Cliente A después de responder. El reto continúa abierto para el otro participante.
 
 ![Cliente B: mismo duelo y opciones mientras su respuesta sigue pendiente.](assets/red-pregunta-b.png)
 
-**Figura 4.** Cliente B en ese mismo reto. Se muestra el avance de respuestas sin revelar el acierto de A. Las figuras 3–6 recortan el cuadro del reto para facilitar su lectura; proceden de navegadores conectados al servidor local.
+**Figura 5.** Cliente B en ese mismo reto. Se muestra el avance de respuestas sin revelar el acierto de A. Las figuras 4–7 recortan el cuadro del reto para facilitar su lectura; proceden de navegadores conectados al servidor local.
 
 ### 8.3 Resultados, penalización y desconexión
 
@@ -280,13 +304,27 @@ La validación de C02 demuestra por qué no basta con deshabilitar un botón: la
 
 ![Resultado del segundo duelo en el cliente A.](assets/red-resultados-a.png)
 
-**Figura 5.** El servidor asigna el premio de A y la penalización de B. Los valores corresponden al recorrido controlado de la prueba, no a todos los premios posibles del catálogo.
+**Figura 6.** El servidor asigna el premio de A y la penalización de B. Los valores corresponden al recorrido controlado de la prueba, no a todos los premios posibles del catálogo.
 
 ![Resultado del segundo duelo en el cliente B.](assets/red-resultados-b.png)
 
-**Figura 6.** El otro cliente recibe los mismos resultados. La perspectiva del usuario cambia, pero la decisión y los saldos de la partida son comunes.
+**Figura 7.** El otro cliente recibe los mismos resultados. La perspectiva del usuario cambia, pero la decisión y los saldos de la partida son comunes.
 
 C09 confirma el comportamiento actual y documenta una limitación: el sistema puede reconectar el transporte, pero no restaura automáticamente la partida anterior. El registro JSON incluye los acuses, los estados públicos y los transportes observados; los identificadores de cliente se sustituyeron por `cliente-A` y `cliente-B` para facilitar su lectura.
+
+### 8.4 Pruebas del modo individual contra la máquina
+
+La batería del **11 de noviembre** incluye nueve pruebas de lógica específicas del bot en `tests/server.test.cjs` y seis escenarios de interfaz en `tests/browser/solo.spec.js`. Ya forman parte de los 56 y 38 casos informados; no se suman otra vez ni se presentan como pruebas nuevas del 13 de noviembre.
+
+| Comportamiento comprobado | Resultado conservado en los registros |
+| --- | --- |
+| Sala privada, dificultad y personajes. | Aprobado: se rechaza el ingreso de otro cliente y una dificultad inválida; los ocho personajes se pueden elegir sin que el bot ocupe el mismo. |
+| Decisiones de la máquina y alternancia de turnos. | Aprobado: las tres dificultades pueden acertar o fallar y usan sus pausas; el bot responde y lanza automáticamente cuando corresponde. |
+| Memoria, clips, tienda y hechizos. | Aprobado: respeta las fases, utiliza objetos y compra con su saldo; la pista privada no se revela en el estado compartido. |
+| Reinicio, salida y victoria del rival. | Aprobado: se cancelan tareas anteriores y una partida completa puede terminar con victoria del bot sin temporizadores pendientes, en la prueba con reloj simulado. |
+| Recorrido de una sola persona en navegador. | Aprobado: cinco tamaños emulados permiten preparar e iniciar; otro escenario comprueba respuesta automática, dado, tienda, reinicio y salida sin un segundo navegador. |
+
+Las salidas están en `evidencias/unitarias.txt` y `evidencias/interfaz.txt`; la figura 3 conserva una captura del modo. La partida completa de la prueba de lógica utiliza reloj simulado. El escenario de interfaz comprueba varias actividades con servidor local, sin afirmar que se haya medido una partida completa en todos los dispositivos físicos.
 
 ## 9. Resultados, análisis y desempeño
 
@@ -357,6 +395,8 @@ Actualmente un reinicio del servidor elimina las salas porque viven en memoria d
 
 La implementación resuelve el objetivo de interacción en red en los escenarios verificados: dos clientes se incorporan a una sala, comparten personajes y turno, participan en el mismo reto y reciben resultados consistentes. El modelo de autoridad del servidor permite rechazar solicitudes fuera de turno y respuestas repetidas o inválidas sin depender exclusivamente de los controles de interfaz.
 
+El producto también permite jugar individualmente contra la máquina: una sola persona prepara la aventura y el servidor automatiza al rival según la dificultad elegida. Las pruebas documentan sus turnos, respuestas, compras y cancelación de tareas, manteniendo las reglas compartidas de la partida. Esta modalidad amplía el uso del juego cuando no hay otra persona disponible.
+
 La separación entre estado público e información interna evita revelar anticipadamente la solución y las respuestas individuales durante el duelo. Las pruebas de dos clientes muestran tanto coincidencia de resultados como diferencias temporales de recepción, lo que permite explicar de manera concreta la sincronización implementada.
 
 Las pruebas y la compilación aportan evidencia reproducible para la entrega, con fechas y alcances explícitos. El producto conserva límites que deben explicarse durante la presentación: las partidas no son persistentes, una desconexión cancela la partida activa y el desempeño bajo carga no está medido. Las siguientes mejoras deben concentrarse en recuperación de sesión, persistencia y evaluación en dispositivos y redes reales.
@@ -421,7 +461,8 @@ Para una partida manual normal se usan `npm run server` y, en otra terminal, `np
 | Videojuego funcional con conexión en red. | Flujo de la sección 6; casos C01–C08; código cliente y servidor. | Implementado y verificado localmente en los escenarios descritos. |
 | Código fuente actualizado y documentado. | Rama indicada, mapa de archivos de la sección 5.6, README y protocolo. | Código y documentación entregables desde el repositorio. |
 | Explicación de la conexión en red. | Secciones 3–5: arquitectura, transportes, eventos, acuses y autoridad. | Incluida. |
-| Pruebas realizadas y resultados. | Secciones 7–9, JSON, registros y figuras 2–6. | Incluidos con fecha y límites de cobertura. |
+| Modo individual contra la máquina. | Secciones 6.2 y 8.4, figura 3 y controlador del bot. | Implementado; pruebas específicas incluidas en la batería del 11 de noviembre. |
+| Pruebas realizadas y resultados. | Secciones 7–9, JSON, registros y figuras 2–7. | Incluidos con fecha y límites de cobertura. |
 | Mejoras y optimizaciones futuras. | Sección 11, prioridades y forma de validación. | Incluidas como trabajo futuro, no como funciones ya implementadas. |
 | Estabilidad y desempeño. | Rechazos, temporizadores, desconexión, tamaños de recursos y mediciones locales. | Evidencia funcional disponible; ensayo formal de carga pendiente. |
 | Presentación clara y demostración efectiva. | `GUION_PRESENTACION.md`, diapositivas y recorrido con dos personas. | Material preparado; exposición y demostración ante la clase pendientes de realizar. |

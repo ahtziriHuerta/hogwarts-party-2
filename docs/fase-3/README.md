@@ -4,7 +4,7 @@ Material preparado **sin portada**, para incorporar la portada propia de la estu
 
 ## Revisión del informe: 13 de noviembre de 2026
 
-El informe desarrolla el planteamiento del problema, objetivos, requisitos, decisiones técnicas, estados, eventos y fragmentos reales del servidor. Añade casos con precondiciones, pasos, resultados esperados y obtenidos, cinco capturas nuevas, mediciones locales, conclusiones y referencias. El anexo B relaciona la evidencia con cada criterio de la consigna.
+El informe desarrolla el planteamiento del problema, objetivos, requisitos, decisiones técnicas, estados, eventos y fragmentos reales del servidor. Añade casos con precondiciones, pasos, resultados esperados y obtenidos, cinco capturas nuevas, mediciones locales, conclusiones y referencias. El anexo B relaciona la evidencia con cada criterio de la consigna. El modo **individual contra la máquina** tiene un apartado propio (6.2), con dificultades y funcionamiento del bot, y sus pruebas se desarrollan en 8.4. `assets/individual-maquina.png` conserva una captura de la batería del 11 de noviembre.
 
 Se conserva la fecha de la batería completa del **11 de noviembre**: 56 pruebas de lógica y 38 de navegador. La [verificación adicional del 13 de noviembre](evidencias/red-adicional.json) registra **nueve comprobaciones** con dos clientes conectados, transporte WebSocket observado, rechazos de acciones inválidas, resultados y desconexión. Son comprobaciones adicionales de una secuencia, no una nueva ejecución de los 94 casos históricos. Las mediciones son locales y no representan capacidad ni latencia por Internet.
 
